@@ -13,16 +13,16 @@ def asym_ls(X, y, asym_factor=0.1):
     r"""
     Perform an asymmetric least squares regression.
 
-    A linear regression is performed where negative (default) or positive
-    residuals are more strongly penalized.
+    A linear regression is performed where either negative (default) or
+    positive residuals are more strongly penalized.
     `asym_factor` defines the asymmetry of the regression.
 
     Parameters
     ----------
     X : (n, m) ndarray
-
+        coefficient matrix
     y : (n, 1) ndarray
-        response
+        dependent variables
 
     Returns
     -------
@@ -63,7 +63,6 @@ def asym_ls(X, y, asym_factor=0.1):
     w_new = np.ones([m, 1])
     X_scaled = X
     y_scaled = y
-
     # iterate weighted ls, until it converges to a solution
     while not np.all(w == w_new):
         # update weights
@@ -84,8 +83,59 @@ def asym_ls(X, y, asym_factor=0.1):
     return beta
 
 
-def plot_colored_series(x, y, reference=None):
+def emsc(D, p_order=2, background=None, normalize=False, algorithm='als'):
+    r"""
+    Perform extended multiplicative scatter correction (EMSC) on `D`
+
+    `emsc` is a spectral pretreatment which is based on a linear decomposition
+    of data into baseline contributions and chemical information. Baseline
+    contributions are modelled by polynomial terms up to order `p_order`. The
+    chemical information is summarized by the mean spectrum orthogonalized to
+    the baseline terms. `emsc` additionally provides a the functionality for
+    orthogonalizing spectra with respect to background information and for
+    normalizing the returned spectra.
+
+    Parameters
+    ----------
+    D : (n, m) ndarray
+        Data to be pretreated. ``n`` samples x ``m`` variables (typically
+        wavelengths)
+    p_order : int
+        Polynoms up to order `p_order` are included for baseline subtraction.
+    background : {None (default), (o, m) ndarray}
+        Perform additional orthogonalization with respect to background. If
+        ``None`` omitted. Otherwise, ``o`` background spectra x ``m`` variables
+    normalize : {False (default), True}
+        Perform normalization of results
+    algorithm : {'als' (default)}
+        choice of algorithms for regression. Currently, only asymmetric least
+        squares is supported
+
+    Returns
+    -------
+    D_pretreated : (n, m) ndarray
+        Pretreated data.
+    coefficients : (n, k) ndarray
+        Coefficient matrix summarizing regression coefficients of EMSC.
+
+    References
+    ----------
+    An introduction to EMSC is given in [1]. Asymmetric least squares
+    regression may be looked up at [2].
+    .. [1] Nils Kristian Afseth, Achim Kohler, Extended multiplicative signal
+    correction in vibrational spectroscopy, a tutorial, Chemometrics and
+    Intelligent Laboratory Systems, vol. 117, pp. 92-99, 2012.
+    .. [2] Hans F.M. Boelens, Reyer J. Dijkstra, Paul H.C. Eilers, Fiona
+    Fitzpatrick, Johan A. Westerhuis, New background correction method for
+    liquid chromatography with diode array detection, infrared spectroscopic
+    detection and Raman spectroscopic detection, J. Chromatogr. A, vol. 1057,
+    pp. 21-30, 2004.
     """
+    pass
+
+
+def plot_colored_series(x, y, reference=None):
+    r"""
     Plot spectra colored by position or intensity
     """
     # define number of input series for line plot
@@ -106,7 +156,7 @@ def plot_colored_series(x, y, reference=None):
 
 
 def generate_spectra(n_wl, n_band, bandwidth):
-    """
+    r"""
     Generate a dummy spectra with n_band
     """
     wl = np.arange(n_wl)
@@ -123,7 +173,7 @@ def generate_spectra(n_wl, n_band, bandwidth):
 
 
 def _gaussian_fun(x, mu, sigma):
-    """
+    r"""
     Generates Gaussian profile
     """
     return np.exp(-((x - mu) / sigma) ** 2 / 2)

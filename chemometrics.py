@@ -21,12 +21,12 @@ def asym_ls(X, y, asym_factor=0.1):
     ----------
     X : (n, m) ndarray
         coefficient matrix
-    y : (n, 1) ndarray
+    y : (n, o) ndarray
         dependent variables
 
     Returns
     -------
-    beta : (m, 1) ndarray
+    beta : (m, o) ndarray
         regression coefficients
 
     Notes
@@ -37,8 +37,8 @@ def asym_ls(X, y, asym_factor=0.1):
     .. math:: \hat{\beta} = \argmin_\beta (w(y-Xb))^2
 
     with :math:`w` being a diagonal matrix of weights.
-    If :math:`(y-Xb)>0: w_ii=asym_factor`
-    otherwise :math:`w_ii = 1 - asym_factor`
+    If :math:`(y-Xb)>0: w_{ii}=asym_factor`
+    otherwise :math:`w_{ii} = 1 - asym_factor`
 
     The problem is solved by iteratively adjusting :math:`w` and using a normal
     least-squares regression [1]. The alogrithm stops as soon as the weights
@@ -58,28 +58,31 @@ def asym_ls(X, y, asym_factor=0.1):
     y = np.random.normal(size=[10,1])
     beta = chem.asym_als(X, y)
     """
-    # initialize variables for iterative regression
-    m = np.shape(y)[0]
-    w = np.zeros([m, 1])
-    w_new = np.ones([m, 1])
-    max_cycles = 10
-    cycle = 0
-    # iterate weighted least square regression, until algorithm converges to a
-    # solution
-    while not np.all(w == w_new) and cycle < max_cycles:
-        # update weights
-        w = w_new.copy()
-        # update variables for weighted regression
-        X_scaled = w * X
-        y_scaled = w * y
-        # solve weighted least squares problem
-        beta = np.linalg.lstsq(X_scaled, y_scaled, rcond=None)[0]
-        # calculate new weights
-        residuals = y - np.dot(X, beta)
-        w_new[residuals > 0] = asym_factor
-        w_new[residuals <= 0] = 1 - asym_factor
-        # increase counter
-        cycle += 1
+    n, m = X.shape
+    o = y.shape[1]
+    beta = np.zeros(shape=[m, o])
+    # iterate over each regression
+    for i in range(n_regressions):
+        # initialize variables for iterative regression
+        w = np.zeros([n, 1])
+        w_new = np.ones([n, 1])
+        max_cycles = 10
+        cycle = 0
+        # iterate linear regression until weights converge
+        while not np.all(w == w_new) and cycle < max_cycles:
+            # update weights
+            w = w_new.copy()
+            # update variables for weighted regression
+            X_scaled = w * X
+            y_scaled = w * y
+            # solve weighted least squares problem
+            beta[:, i] = np.linalg.lstsq(X_scaled, y_scaled, rcond=None)[0]
+            # calculate new weights
+            residuals = y - np.dot(X, beta)
+            w_new[residuals > 0] = asym_factor
+            w_new[residuals <= 0] = 1 - asym_factor
+            # increase counter
+            cycle += 1
     return beta
 
 
@@ -131,7 +134,34 @@ def emsc(D, p_order=2, background=None, normalize=False, algorithm='als'):
     detection and Raman spectroscopic detection, J. Chromatogr. A, vol. 1057,
     pp. 21-30, 2004.
     """
-    pass
+    n_series, n_variables = D.shape
+    # generate matrix of baseline polynomials
+    baseline = np.zeros([n_variables, p_order+1])
+    multiplier = np.linspace(-1, 1, num=n_variables)
+    for i in range(0, p_order+1):
+        baseline[:, i] = multiplier ** i
+    # matrix for summarizing all factors
+    regressor = baseline.copy()
+
+    # if included: prepare background data
+    if background:
+        # orthogonalize background to baseline information
+        beta_background = asym_ls(baseline, background)
+        background_pretreated = background - np.dot(baseline, beta_background)
+        regressor = np.array([regressor, background_pretreated])
+
+    # prepare estimate of chemical information
+    D_bar = np.mean(D, axis=0)  # mean spectra
+    beta_D_bar = asym_ls(regressor, D_bar)
+    D_bar_pretreated = D_bar - np.dot(regressor, beta_D_bar)
+    regressor = np.array([regressor, D_bar_pretreated])
+
+    # perform EMSC on data
+    coefficients = asym_ls(regressor, D)
+    D_pretreated = D - np.dot(regressor[:, :-1], coefficients[:-1, :])
+    if normalize:
+        D_pretreated = D_pretreated * np.diag(1/coefficients[-1, :])
+    return D_pretreated, coefficients
 
 
 def plot_colored_series(x, Y, reference=None):
@@ -183,7 +213,7 @@ def generate_spectra(n_wl, n_band, bandwidth):
     spectra = np.zeros(n_wl)
     for i in range(n_band):
         center_wl = np.random.choice(wl)
-        bandwidth_i = np.random.gamma(shape=bandwidth*1.2, scale=bandwidth)
+        bandwidth_i = np.random.gamma(shape=bandwidth, scale=bandwidth)
         intensity = np.random.poisson(lam=5)*np.random.normal(loc=1, scale=0.2)
         current_spectra = intensity * _gaussian_fun(wl, center_wl, bandwidth_i)
         spectra += current_spectra

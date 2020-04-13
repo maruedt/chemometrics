@@ -50,15 +50,64 @@ class TestAsym_ls(unittest.TestCase):
             self.assertTrue(current_beta > last_beta)
 
 
+class TestEmsc(unittest.TestCase):
+    r"""
+    Test the `emsc` function
+    """
+
+    def test_shape(self):
+        r"""
+        Check the shape of the return matrix
+        """
+        n_series, n_variables = (10, 50)
+        # generate dummy data and background
+        scaler = np.arange(n_variables)
+        D = np.ones([n_series, n_variables]) * scaler[:, None].T
+        background = 0.5 * D[0, :]
+        background_list = [None, background]
+        # iterate over different inputs
+        for bg in background_list:
+            D_pretreated, coefficients = cm.emsc(D, p_order=0, background=bg)
+            self.assertTrue(D_pretreated.shape == (n_series, n_variables))
+            self.assertTrue(coefficients.shape[0] == n_series)
+
+    def test_background_subtraction(self):
+        r"""
+        Test wether background subtraction works
+        """
+        n_series, n_variables = (10, 50)
+        # generate dummy data and background
+        scaler = np.arange(n_variables)
+        D = np.ones([n_series, n_variables]) * scaler[:, None].T
+        background = 0.5 * D[0, :]
+        D_pretreated = cm.emsc(D, p_order=0, background=background)
+        self.assertTrue(np.all(np.isclose(0, D_pretreated)))
+
+
 class TestGenerate_spectra(unittest.TestCase):
+    r"""
+    Test the `generate_spectra` function.
+    """
+
     def test_shape(self):
         """
         Test if correct shape is generated
         """
         n_wl = 200
-        expected_shape = (200,)
+        expected_shape = (n_wl,)
         output_shape = cm.generate_spectra(n_wl, 2, 50).shape
         self.assertEqual(expected_shape, output_shape)
+
+    def test_no_bands(self):
+        """
+        Test if ``n_band = 0`` returns zero vector.
+        """
+        n_wl = 10
+        n_bands = 0
+        bandwidth = 100
+        self.assertTrue(
+            np.isclose(0, cm.generate_spectra(n_wl, n_bands, bandwidth))
+        )
 
 
 if __name__ == '__main__':

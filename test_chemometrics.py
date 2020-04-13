@@ -3,13 +3,18 @@ import numpy as np
 import unittest
 import pdb
 
+
 class TestAsym_ls(unittest.TestCase):
+    """
+    Test cases for `asym_ls`
+    """
+
     def test_shape(self):
         """
         Test that output shape is as expected
         """
-        shape_x = [10,3]
-        shape_y = [10,1]
+        shape_x = [10, 3]
+        shape_y = [10, 1]
         expected_shape = (shape_x[1], shape_y[1])
 
         X = np.random.normal(size=shape_x)
@@ -21,9 +26,8 @@ class TestAsym_ls(unittest.TestCase):
         """
         Test if symmetric weights results in least squares solution
         """
-
-        shape_x = [10,3]
-        shape_y = [10,1]
+        shape_x = [10, 3]
+        shape_y = [10, 1]
         X = np.random.normal(size=shape_x)
         y = np.random.normal(size=shape_y)
 
@@ -35,15 +39,15 @@ class TestAsym_ls(unittest.TestCase):
         """
         Test if different asym_factors produce qualitatively correct effect
         """
-        shape = [10,1]
+        shape = [10, 1]
         asym_factors = [0.001, 0.0011, 0.5, 0.9, 0.99]
         x = np.ones(shape)
-        y = np.arange(shape[0])[:,None]
+        y = np.arange(shape[0])[:, None]
         last_beta = 0
 
         for factor_i in asym_factors:
             current_beta = cm.asym_ls(x, y, asym_factor=factor_i)
-            self.assertTrue(current_beta>last_beta)
+            self.assertTrue(current_beta > last_beta)
 
 
 class TestGenerate_spectra(unittest.TestCase):

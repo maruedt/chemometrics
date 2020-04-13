@@ -76,12 +76,13 @@ def asym_ls(X, y, asym_factor=0.1):
 
         # calculate new asymmetry weights
         residuals = y - np.dot(X, beta)
-        w_new[residuals>0] = asym_factor
-        w_new[residuals<=0] = 1 - asym_factor
-        #small_res = np.abs(residuals) < eps
-        #w_new[small_res] = 1 - asym_factor + (residuals[small_res]/eps + 1) *\
+        w_new[residuals > 0] = asym_factor
+        w_new[residuals <= 0] = 1 - asym_factor
+        # small_res = np.abs(residuals) < eps
+        # w_new[small_res] = 1 - asym_factor + (residuals[small_res]/eps + 1) *
         #    (asym_factor - 0.5)
     return beta
+
 
 def plot_colored_series(x, y, reference=None):
     """
@@ -99,9 +100,10 @@ def plot_colored_series(x, y, reference=None):
     colors = myMapper.to_rgba(reference)
     lines = []
     for i in range(n_series):
-        line_i = plt.plot(x, y[:,i], color=colors[i,:])
+        line_i = plt.plot(x, y[:, i], color=colors[i, :])
         lines.append(line_i)
     return lines
+
 
 def generate_spectra(n_wl, n_band, bandwidth):
     """
@@ -111,13 +113,14 @@ def generate_spectra(n_wl, n_band, bandwidth):
     spectra = np.zeros(n_wl)
     for i in range(n_band):
         center_wl = np.random.choice(wl)
-        bandwidth_i = np.random.gamma(shape = bandwidth*1.2, scale = bandwidth)
-        intensity = np.random.poisson(lam = 5)*np.random.normal(loc = 1,
-                                                                scale = 0.2)
+        bandwidth_i = np.random.gamma(shape=bandwidth*1.2, scale=bandwidth)
+        intensity = np.random.poisson(lam=5)*np.random.normal(loc=1,
+                                                              scale=0.2)
 
         current_spectra = intensity * _gaussian_fun(wl, center_wl, bandwidth_i)
         spectra += current_spectra
     return spectra
+
 
 def _gaussian_fun(x, mu, sigma):
     """

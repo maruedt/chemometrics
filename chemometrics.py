@@ -58,28 +58,28 @@ def asym_ls(X, y, asym_factor=0.1):
     y = np.random.normal(size=[10,1])
     beta = chem.asym_als(X, y)
     """
+    # initialize variables for iterative regression
     m = np.shape(y)[0]
     w = np.zeros([m, 1])
     w_new = np.ones([m, 1])
-    X_scaled = X
-    y_scaled = y
-    # iterate weighted ls, until it converges to a solution
-    while not np.all(w == w_new):
+    max_cycles = 10
+    cycle = 0
+    # iterate weighted least square regression, until algorithm converges to a
+    # solution
+    while not np.all(w == w_new) and cycle < max_cycles:
         # update weights
         w = w_new.copy()
         # update variables for weighted regression
         X_scaled = w * X
         y_scaled = w * y
-        # solve weighted ls
+        # solve weighted least squares problem
         beta = np.linalg.lstsq(X_scaled, y_scaled, rcond=None)[0]
-
-        # calculate new asymmetry weights
+        # calculate new weights
         residuals = y - np.dot(X, beta)
         w_new[residuals > 0] = asym_factor
         w_new[residuals <= 0] = 1 - asym_factor
-        # small_res = np.abs(residuals) < eps
-        # w_new[small_res] = 1 - asym_factor + (residuals[small_res]/eps + 1) *
-        #    (asym_factor - 0.5)
+        # increase counter
+        cycle += 1
     return beta
 
 

@@ -62,7 +62,7 @@ def asym_ls(X, y, asym_factor=0.1):
     o = y.shape[1]
     beta = np.zeros(shape=[m, o])
     # iterate over each regression
-    for i in range(n_regressions):
+    for i in range(o):
         # initialize variables for iterative regression
         w = np.zeros([n, 1])
         w_new = np.ones([n, 1])

@@ -21,7 +21,7 @@ def asym_ls(X, y, asym_factor=0.1):
     ----------
     X : (n, m) ndarray
         coefficient matrix
-    y : (n, o) ndarray
+    y : {(n,) ndarray, (n, o) ndarray}
         dependent variables
 
     Returns
@@ -59,6 +59,8 @@ def asym_ls(X, y, asym_factor=0.1):
     beta = chem.asym_als(X, y)
     """
     n, m = X.shape
+    if y.ndim == 1:
+        y = y[:, None]
     o = y.shape[1]
     beta = np.zeros(shape=[m, o])
     # iterate over each regression
@@ -74,11 +76,11 @@ def asym_ls(X, y, asym_factor=0.1):
             w = w_new.copy()
             # update variables for weighted regression
             X_scaled = w * X
-            y_scaled = w * y
+            y_scaled = w * y[:, i][:, None]
             # solve weighted least squares problem
-            beta[:, i] = np.linalg.lstsq(X_scaled, y_scaled, rcond=None)[0]
+            beta[:, i] = np.linalg.lstsq(X_scaled, y_scaled, rcond=-1)[0].T
             # calculate new weights
-            residuals = y - np.dot(X, beta)
+            residuals = y[:, i] - np.dot(X, beta[:, i])
             w_new[residuals > 0] = asym_factor
             w_new[residuals <= 0] = 1 - asym_factor
             # increase counter
@@ -144,24 +146,24 @@ def emsc(D, p_order=2, background=None, normalize=False, algorithm='als'):
     regressor = baseline.copy()
 
     # if included: prepare background data
-    if background:
+    if background is not None:
         # orthogonalize background to baseline information
         beta_background = asym_ls(baseline, background)
         background_pretreated = background - np.dot(baseline, beta_background)
-        regressor = np.array([regressor, background_pretreated])
+        regressor = np.concatenate([regressor, background_pretreated], axis=1)
 
     # prepare estimate of chemical information
-    D_bar = np.mean(D, axis=0)  # mean spectra
+    D_bar = np.mean(D, axis=0)[:, None]  # mean spectra
     beta_D_bar = asym_ls(regressor, D_bar)
     D_bar_pretreated = D_bar - np.dot(regressor, beta_D_bar)
-    regressor = np.array([regressor, D_bar_pretreated])
+    regressor = np.concatenate((regressor, D_bar_pretreated), axis=1)
 
     # perform EMSC on data
-    coefficients = asym_ls(regressor, D)
-    D_pretreated = D - np.dot(regressor[:, :-1], coefficients[:-1, :])
+    coefficients = asym_ls(regressor, D.T)
+    D_pretreated = D.T - np.dot(regressor[:, :-1], coefficients[:-1, :])
     if normalize:
         D_pretreated = D_pretreated * np.diag(1/coefficients[-1, :])
-    return D_pretreated, coefficients
+    return D_pretreated.T, coefficients.T
 
 
 def plot_colored_series(x, Y, reference=None):

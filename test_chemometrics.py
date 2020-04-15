@@ -14,7 +14,7 @@ class TestAsym_ls(unittest.TestCase):
         Test that output shape is as expected
         """
         shape_x = [10, 3]
-        shape_y = [10, 1]
+        shape_y = [10, 2]
         expected_shape = (shape_x[1], shape_y[1])
 
         X = np.random.normal(size=shape_x)
@@ -32,7 +32,7 @@ class TestAsym_ls(unittest.TestCase):
         y = np.random.normal(size=shape_y)
 
         beta_als = cm.asym_ls(X, y, asym_factor=0.5)
-        beta_ls = np.linalg.lstsq(X, y, rcond=None)[0]
+        beta_ls = np.linalg.lstsq(X, y, rcond=-1)[0]
         self.assertTrue(np.all(np.isclose(beta_als, beta_ls)))
 
     def test_location(self):
@@ -61,9 +61,10 @@ class TestEmsc(unittest.TestCase):
         """
         n_series, n_variables = (10, 50)
         # generate dummy data and background
-        scaler = np.arange(n_variables)
+        scaler = np.linspace(0, 10, num=n_variables)
         D = np.ones([n_series, n_variables]) * scaler[:, None].T
         background = 0.5 * D[0, :]
+        background = background[:, None]
         background_list = [None, background]
         # iterate over different inputs
         for bg in background_list:
@@ -80,8 +81,14 @@ class TestEmsc(unittest.TestCase):
         scaler = np.arange(n_variables)
         D = np.ones([n_series, n_variables]) * scaler[:, None].T
         background = 0.5 * D[0, :]
-        D_pretreated = cm.emsc(D, p_order=0, background=background)
-        self.assertTrue(np.all(np.isclose(0, D_pretreated)))
+        background = background[:, None]
+        D_pretreated, coefficients = cm.emsc(
+            D,
+            p_order=0,
+            background=background
+        )
+        self.assertTrue(np.all(np.isclose(np.zeros([n_series, n_variables]),
+                        D_pretreated)))
 
 
 class TestGenerate_spectra(unittest.TestCase):
@@ -96,7 +103,7 @@ class TestGenerate_spectra(unittest.TestCase):
         n_wl = 200
         expected_shape = (n_wl,)
         output_shape = cm.generate_spectra(n_wl, 2, 50).shape
-        self.assertEqual(expected_shape, output_shape)
+        self.assertTrue(np.all(expected_shape == output_shape))
 
     def test_no_bands(self):
         """
@@ -105,9 +112,9 @@ class TestGenerate_spectra(unittest.TestCase):
         n_wl = 10
         n_bands = 0
         bandwidth = 100
-        self.assertTrue(
-            np.isclose(0, cm.generate_spectra(n_wl, n_bands, bandwidth))
-        )
+        spectra = cm.generate_spectra(n_wl, n_bands, bandwidth)
+        isZero = np.all(np.isclose(np.zeros(n_wl), spectra))
+        self.assertTrue(isZero)
 
 
 if __name__ == '__main__':

@@ -212,7 +212,7 @@ def plot_colored_series(x, Y, reference=None):
     lines = []
     for i in range(n_series):
         line_i = plt.plot(x, Y[:, i], color=colors[i, :])
-        lines.append(line_i)
+        lines.append(line_i[0])
     return lines
 
 

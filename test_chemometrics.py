@@ -134,6 +134,7 @@ class TestPlot_colored_spectra(unittest.TestCase):
                                                              num=n_series)
         lines = cm.plot_colored_series(x, Y)
         self.assertTrue(type(lines) == list)
+        self.assertEqual(n_series, len(lines))
         for line in lines:
             self.assertTrue(type(line) == matplotlib.lines.Line2D)
 

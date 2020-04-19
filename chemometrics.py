@@ -88,7 +88,8 @@ def asym_ls(X, y, asym_factor=0.1):
     return beta
 
 
-def emsc(D, p_order=2, background=None, normalize=False, algorithm='als'):
+def emsc(D, p_order=2, background=None, normalize=False, algorithm='als',
+         **kwargs):
     r"""
     Perform extended multiplicative scatter correction (EMSC) on `D`
 
@@ -136,6 +137,12 @@ def emsc(D, p_order=2, background=None, normalize=False, algorithm='als'):
     detection and Raman spectroscopic detection, J. Chromatogr. A, vol. 1057,
     pp. 21-30, 2004.
     """
+    # prepare asymmetry factor for als
+    if 'asym_factor' in kwargs:
+        asym_factor = kwargs['asym_factor']
+    else:
+        asym_factor = 0.1
+
     n_series, n_variables = D.shape
     # generate matrix of baseline polynomials
     baseline = np.zeros([n_variables, p_order+1])
@@ -148,18 +155,19 @@ def emsc(D, p_order=2, background=None, normalize=False, algorithm='als'):
     # if included: prepare background data
     if background is not None:
         # orthogonalize background to baseline information
-        beta_background = asym_ls(baseline, background)
+        beta_background = asym_ls(baseline, background,
+                                  asym_factor=asym_factor)
         background_pretreated = background - np.dot(baseline, beta_background)
         regressor = np.concatenate([regressor, background_pretreated], axis=1)
 
     # prepare estimate of chemical information
     D_bar = np.mean(D, axis=0)[:, None]  # mean spectra
-    beta_D_bar = asym_ls(regressor, D_bar)
+    beta_D_bar = asym_ls(regressor, D_bar, asym_factor=asym_factor)
     D_bar_pretreated = D_bar - np.dot(regressor, beta_D_bar)
     regressor = np.concatenate((regressor, D_bar_pretreated), axis=1)
 
     # perform EMSC on data
-    coefficients = asym_ls(regressor, D.T)
+    coefficients = asym_ls(regressor, D.T, asym_factor=asym_factor)
     D_pretreated = D.T - np.dot(regressor[:, :-1], coefficients[:-1, :])
     if normalize:
         D_pretreated = D_pretreated * np.diag(1/coefficients[-1, :])
@@ -195,7 +203,8 @@ def plot_colored_series(x, Y, reference=None):
         n_series = Y.shape[1]
     else:
         n_series = 1
-    # if no reference is given a dummy reference is needed
+    # if no reference is given a dummy reference is needed (sequential
+    # coloring)
     if reference is None:
         reference = np.arange(n_series)
     myMapper = matplotlib.cm.ScalarMappable(cmap='viridis')

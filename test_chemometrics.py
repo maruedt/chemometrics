@@ -1,6 +1,7 @@
 import chemometrics as cm
 import numpy as np
 import unittest
+import matplotlib
 import pdb
 
 
@@ -115,6 +116,26 @@ class TestGenerate_spectra(unittest.TestCase):
         spectra = cm.generate_spectra(n_wl, n_bands, bandwidth)
         isZero = np.all(np.isclose(np.zeros(n_wl), spectra))
         self.assertTrue(isZero)
+
+
+class TestPlot_colored_spectra(unittest.TestCase):
+    r"""
+    Test the `plot_colored_spectra` function.
+    """
+
+    def test_return_arguments(self):
+        """
+        Test if the correct shape and object type is returend.
+        """
+        n_series, n_variables = (10, 50)
+        # generate dummy data
+        x = np.arange(0, n_variables)
+        Y = np.ones([n_series, n_variables]).T * np.linspace(0, 10,
+                                                             num=n_series)
+        lines = cm.plot_colored_series(x, Y)
+        self.assertTrue(type(lines) == list)
+        for line in lines:
+            self.assertTrue(type(line) == matplotlib.lines.Line2D)
 
 
 if __name__ == '__main__':

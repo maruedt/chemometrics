@@ -2,7 +2,6 @@ import chemometrics as cm
 import numpy as np
 import unittest
 import matplotlib
-import pdb
 
 
 class TestAsym_ls(unittest.TestCase):
@@ -137,6 +136,34 @@ class TestPlot_colored_spectra(unittest.TestCase):
         self.assertEqual(n_series, len(lines))
         for line in lines:
             self.assertTrue(type(line) == matplotlib.lines.Line2D)
+
+
+class TestPlot_svd(unittest.TestCase):
+    r"""
+    Test the `plot_svd` function.
+    """
+
+    def test_return_arguments(self):
+        n_series, n_variables = (50, 100)
+        n_comp = 3
+        n_eigenvalues = 12
+        mean = np.zeros(n_variables)
+        x = np.arange(n_variables)[:, None]
+        dist = x.T - x
+        cov = np.exp(-(dist / n_variables * 5)**2)
+
+        # draw a few samples from gaussian process as data
+        D = np.random.multivariate_normal(mean, cov, size=n_series)
+
+        # execute function with artificial data
+        fig = cm.plot_svd(D, n_comp=n_comp, n_eigenvalues=n_eigenvalues)
+
+        self.assertTrue(type(fig) is matplotlib.figure.Figure)
+        self.assertEqual(len(fig.axes), 3)
+        self.assertEqual(len(fig.axes[0].lines), n_comp)
+        self.assertEqual(len(fig.axes[1].lines), n_eigenvalues)
+        self.assertEqual(len(fig.axes[1].lines[0].get_xdata()), n_eigenvalues)
+        self.assertEqual(len(fig.axes[2].lines), n_comp)
 
 
 if __name__ == '__main__':

@@ -162,7 +162,6 @@ class TestPlot_svd(unittest.TestCase):
         self.assertEqual(len(fig.axes), 3)
         self.assertEqual(len(fig.axes[0].lines), n_comp)
         self.assertEqual(len(fig.axes[1].lines), n_eigenvalues)
-        self.assertEqual(len(fig.axes[1].lines[0].get_xdata()), n_eigenvalues)
         self.assertEqual(len(fig.axes[2].lines), n_comp)
 
 

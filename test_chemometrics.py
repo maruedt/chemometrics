@@ -131,7 +131,7 @@ class TestPlot_colored_spectra(unittest.TestCase):
         x = np.arange(0, n_variables)
         Y = np.ones([n_series, n_variables]).T * np.linspace(0, 10,
                                                              num=n_series)
-        lines = cm.plot_colored_series(x, Y)
+        lines = cm.plot_colored_series(Y, x=x)
         self.assertTrue(type(lines) == list)
         self.assertEqual(n_series, len(lines))
         for line in lines:

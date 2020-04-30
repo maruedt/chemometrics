@@ -8,7 +8,6 @@ import matplotlib.pyplot as plt
 import matplotlib.cm
 import scipy.linalg as linalg
 
-
 def asym_ls(X, y, asym_factor=0.1):
     r"""
     Perform an asymmetric least squares regression.
@@ -108,9 +107,9 @@ def emsc(D, p_order=2, background=None, normalize=False, algorithm='als',
         wavelengths)
     p_order : int
         Polynoms up to order `p_order` are included for baseline subtraction.
-    background : {None (default), (o, m) ndarray}
+    background : {None (default), (m, o) ndarray}
         Perform additional orthogonalization with respect to background. If
-        ``None`` omitted. Otherwise, ``o`` background spectra x ``m`` variables
+        ``None`` omitted. Otherwise, ``m`` variables x ``o`` background spectra
     normalize : {False (default), True}
         Perform normalization of results
     algorithm : {'als' (default)}
@@ -154,6 +153,10 @@ def emsc(D, p_order=2, background=None, normalize=False, algorithm='als',
 
     # if included: prepare background data
     if background is not None:
+        # convert background to two dimensional array as otherwise hard to
+        # detect/interprete errors may occure
+        if background.ndim == 1:
+            background = background[:, None]
         # orthogonalize background to baseline information
         beta_background = asym_ls(baseline, background,
                                   asym_factor=asym_factor)
@@ -170,11 +173,11 @@ def emsc(D, p_order=2, background=None, normalize=False, algorithm='als',
     coefficients = asym_ls(regressor, D.T, asym_factor=asym_factor)
     D_pretreated = D.T - np.dot(regressor[:, :-1], coefficients[:-1, :])
     if normalize:
-        D_pretreated = D_pretreated * np.diag(1/coefficients[-1, :])
+        D_pretreated = D_pretreated @ np.diag(1/coefficients[-1, :])
     return D_pretreated.T, coefficients.T
 
 
-def plot_colored_series(x, Y, reference=None):
+def plot_colored_series(Y, x=None, reference=None):
     r"""
     Plot matrix colored by position or `reference`
 
@@ -184,11 +187,11 @@ def plot_colored_series(x, Y, reference=None):
 
     Parameters
     ----------
-    x : (n,) ndarray
-        Location on x-axis
     Y : (n, m) ndarray
         Matrix containing data series to plot. The function expects. ``n``
         datapoints in ``m``series.
+    x : {None, (n,) ndarray}
+        Location on x-axis
     reference : {None (default), (m,) ndarray}
         Reference values to color data series by. If None, the series are
         colored by the position in the second dimension of matrix ``Y``.
@@ -203,6 +206,8 @@ def plot_colored_series(x, Y, reference=None):
         n_series = Y.shape[1]
     else:
         n_series = 1
+    if x is None:
+        x = np.arange(Y.shape[0])
     # if no reference is given a dummy reference is needed (sequential
     # coloring)
     if reference is None:

@@ -7,6 +7,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.cm
 import scipy.linalg as linalg
+import scipy.sparse as sparse
+import scipy.sparse.linalg as splinalg
+
 
 def asym_ls(X, y, asym_factor=0.1):
     r"""
@@ -30,7 +33,6 @@ def asym_ls(X, y, asym_factor=0.1):
 
     Notes
     -----
-
     Following equation is solved:
 
     .. math:: \hat{\beta} = \argmin_\beta (w(y-Xb))^2
@@ -174,7 +176,46 @@ def emsc(D, p_order=2, background=None, normalize=False, algorithm='als',
     D_pretreated = D.T - np.dot(regressor[:, :-1], coefficients[:-1, :])
     if normalize:
         D_pretreated = D_pretreated @ np.diag(1/coefficients[-1, :])
+
     return D_pretreated.T, coefficients.T
+
+
+def whittacker(X, penalty):
+    r"""
+    Smooth `X` with a whittacker smoother
+
+    `whittacker` smooths `X` with a Whittacker smoother. The smoother smooths
+    the data with a non-parametric line constraint by its second derivative
+    smoothness. `penalty` defines the penalty on non-smoothness.
+    The Whittacker smoother is very efficient and a useful drop-in replacement
+    for Savitzky-Golay smoothing.
+
+    Parameters
+    ----------
+    X : (n, m) ndarray
+        Matrix containing data series to smooth. The function expects. ``n``
+        datapoints in ``m``series.
+    lambda : float
+        scaling factor of the penality term for non-smoothness
+
+    Returns
+    -------
+    smoothed : (n, m) ndarray
+        Smoothed `X`
+
+    Notes
+    -----
+    `whittacker` uses a sparse matrices for efficiency reasons. `X` may
+    however be a full matrix.
+
+    References
+    ----------
+    Application of Whittacker smoother to spectroscopic data [1].
+
+    .. [1] Paul H. Eilers, A perfect smoother, Anal. Chem., vol 75, 14, pp.
+    3631-3636, 2003.
+    """
+    pass
 
 
 def plot_colored_series(Y, x=None, reference=None):

@@ -165,5 +165,21 @@ class TestPlot_svd(unittest.TestCase):
         self.assertEqual(len(fig.axes[2].lines), n_comp)
 
 
+class TestWhittacker(unittest.TestCase):
+    r"""
+    Test ``whittacker`` smoother.
+    """
+
+    def test_shape(self):
+        shape = (100, 50)
+        penalty = 100
+        X = np.random.normal(size=shape)
+        X_smoothed = cm.whittacker(X, penalty)
+        self.assertEqual(X_smoothed.shape, shape)
+
+    def test_smoothing_extremes(self):
+        pass
+
+
 if __name__ == '__main__':
     unittest.main()

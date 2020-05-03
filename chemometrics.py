@@ -9,6 +9,7 @@ import matplotlib.cm
 import scipy.linalg as linalg
 import scipy.sparse as sparse
 import scipy.sparse.linalg as splinalg
+import warnings
 
 
 def asym_ls(X, y, asym_factor=0.1):
@@ -229,12 +230,14 @@ def whittacker(X, penalty, constraint_order=1):
     """
     n_var, n_series = X.shape
     D = _sp_diff_matrix(n_var, constraint_order)
-
     C = sparse.eye(n_var) + penalty * D.transpose().dot(D)
     X_smoothed = np.zeros([n_var, n_series])
 
     for i in range(n_series):
-        X_smoothed[:, i] = splinalg.cg(C, X[:, i])
+        results = splinalg.cg(C, X[:, i])
+        if not (results[1] == 0):
+            warnings.Warning(f'Not converged in series {i}')
+        X_smoothed[:, i] = results[0]
 
     return X_smoothed
 
@@ -243,10 +246,10 @@ def _sp_diff_matrix(m, diff_order=1):
     r"""
     generates a sparse difference matrix used for ``whittacker``
     """
-    E = sparse.eye(m)
+    E = sparse.eye(m).tocsc()
     for i in range(diff_order):
-        E = E[:, 1:] - E[:, :-1]
-    return E.tocsc()
+        E = E[1:, :] - E[:-1, :]
+    return E
 
 
 def plot_colored_series(Y, x=None, reference=None):

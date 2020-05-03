@@ -207,6 +207,15 @@ def whittacker(X, penalty):
     -----
     `whittacker` uses a sparse matrices for efficiency reasons. `X` may
     however be a full matrix.
+    In contrast to the proposed algorithm by Eilers [1], no Cholesky
+    decomposition is used. The reason is twofold. The Cholesky decomposition
+    is not implemented for sparse matrices in Numpy/Scipy. Eilers uses the
+    Cholesky decomposition to prevent Matlab from "reordering the sparse
+    equation systems for minimal bandwidth". Matlab seems to rely on UMFPACK
+    for sparse matrix devision [2] which implements column reordering for
+    sparsity preservation. As sparse matrix we are working with is square and
+    positive-definite, we can rely on the builtin conjugate-gradient method
+    ``cg`` [3].
 
     References
     ----------
@@ -214,8 +223,12 @@ def whittacker(X, penalty):
 
     .. [1] Paul H. Eilers, A perfect smoother, Anal. Chem., vol 75, 14, pp.
     3631-3636, 2003.
+    .. [2] UMFPAC, https://en.wikipedia.org/wiki/UMFPACK, accessed 03.May.2020.
+    .. [3] Conjugate gradient method, https://en.wikipedia.org/wiki
+    /Conjugate_gradient_method, accessed 03.May.2020.
     """
     pass
+
 
 
 def plot_colored_series(Y, x=None, reference=None):

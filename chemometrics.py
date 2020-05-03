@@ -180,7 +180,7 @@ def emsc(D, p_order=2, background=None, normalize=False, algorithm='als',
     return D_pretreated.T, coefficients.T
 
 
-def whittacker(X, penalty):
+def whittacker(X, penalty, constraint_order=1):
     r"""
     Smooth `X` with a whittacker smoother
 
@@ -195,7 +195,7 @@ def whittacker(X, penalty):
     X : (n, m) ndarray
         Matrix containing data series to smooth. The function expects. ``n``
         datapoints in ``m``series.
-    lambda : float
+    penalty : float
         scaling factor of the penality term for non-smoothness
 
     Returns
@@ -227,8 +227,26 @@ def whittacker(X, penalty):
     .. [3] Conjugate gradient method, https://en.wikipedia.org/wiki
     /Conjugate_gradient_method, accessed 03.May.2020.
     """
-    pass
+    n_var, n_series = X.shape
+    D = _sp_diff_matrix(n_var, constraint_order)
 
+    C = sparse.eye(n_var) + penalty * D.transpose().dot(D)
+    X_smoothed = np.zeros([n_var, n_series])
+
+    for i in range(n_series):
+        X_smoothed[:, i] = splinalg.cg(C, X[:, i])
+
+    return X_smoothed
+
+
+def _sp_diff_matrix(m, diff_order=1):
+    r"""
+    generates a sparse difference matrix used for ``whittacker``
+    """
+    E = sparse.eye(m)
+    for i in range(diff_order):
+        E = E[:, 1:] - E[:, :-1]
+    return E.tocsc()
 
 
 def plot_colored_series(Y, x=None, reference=None):

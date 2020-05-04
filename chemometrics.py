@@ -234,7 +234,7 @@ def whittacker(X, penalty, constraint_order=1):
     X_smoothed = np.zeros([n_var, n_series])
 
     for i in range(n_series):
-        results = splinalg.cg(C, X[:, i])
+        results = splinalg.cg(C, X[:, i], atol=0)
         if not (results[1] == 0):
             warnings.Warning(f'Not converged in series {i}')
         X_smoothed[:, i] = results[0]

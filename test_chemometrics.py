@@ -173,12 +173,33 @@ class TestWhittacker(unittest.TestCase):
     def test_shape(self):
         shape = (100, 50)
         penalty = 100
+        diff_order = [1, 2]
+        X = np.random.normal(size=shape)
+        for i in diff_order:
+            X_smoothed = cm.whittacker(X, penalty, constraint_order=i)
+            self.assertEqual(X_smoothed.shape, shape)
+
+    def test_null_smoothing(self):
+        r"""
+        Test that very week smoothing returns itself
+        """
+        shape = (50, 1)
+        penalty = 0
         X = np.random.normal(size=shape)
         X_smoothed = cm.whittacker(X, penalty)
-        self.assertEqual(X_smoothed.shape, shape)
+        self.assertTrue(np.all(np.isclose(X, X_smoothed)))
 
-    def test_smoothing_extremes(self):
-        pass
+    def test_max_smoothing(self):
+        r"""
+        Test that very strong smoothing leads to polynomial.
+        """
+        shape = (50, 1)
+        penalty = 1e9
+        diff_order = 1
+        X = np.random.normal(size=shape) + np.arange(shape[1])
+        X_smoothed = cm.whittacker(X, penalty, diff_order)
+        is_close = np.isclose(X_smoothed, X.mean())
+        self.assertTrue(np.all(is_close))
 
 
 if __name__ == '__main__':

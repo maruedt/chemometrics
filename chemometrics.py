@@ -181,7 +181,7 @@ def emsc(D, p_order=2, background=None, normalize=False, algorithm='als',
     return D_pretreated.T, coefficients.T
 
 
-def whittacker(X, penalty, constraint_order=1):
+def whittacker(X, penalty, constraint_order=2):
     r"""
     Smooth `X` with a whittacker smoother
 
@@ -198,6 +198,8 @@ def whittacker(X, penalty, constraint_order=1):
         datapoints in ``m``series.
     penalty : float
         scaling factor of the penality term for non-smoothness
+    constraint_order : int
+        defines on which order of derivative the constraint acts on.
 
     Returns
     -------

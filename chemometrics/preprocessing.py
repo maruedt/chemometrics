@@ -1,5 +1,4 @@
 import numpy as np
-import scipy.linalg as linalg
 import scipy.sparse as sparse
 import scipy.sparse.linalg as splinalg
 import warnings

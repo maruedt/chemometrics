@@ -181,7 +181,7 @@ class TestWhittacker(unittest.TestCase):
 
     def test_null_smoothing(self):
         r"""
-        Test that very week smoothing returns itself
+        Test that very weak smoothing returns itself
         """
         shape = (50, 1)
         penalty = 0

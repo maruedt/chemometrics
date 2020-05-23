@@ -226,8 +226,8 @@ def whittacker(X, penalty, constraint_order=2):
     equation systems for minimal bandwidth". Matlab seems to rely on UMFPACK
     for sparse matrix devision [2] which implements column reordering for
     sparsity preservation. As sparse matrix we are working with is square and
-    positive-definite, we can rely on the builtin conjugate-gradient method
-    ``cg`` [3].
+    positive-definite, we can rely on the builtin `factorize` method, which
+    solves with UMFPACK if installed, otherwise with SuperLU.
 
     References
     ----------
@@ -235,20 +235,17 @@ def whittacker(X, penalty, constraint_order=2):
 
     .. [1] Paul H. Eilers, A perfect smoother, Anal. Chem., vol 75, 14, pp.
     3631-3636, 2003.
-    .. [2] UMFPAC, https://en.wikipedia.org/wiki/UMFPACK, accessed 03.May.2020.
-    .. [3] Conjugate gradient method, https://en.wikipedia.org/wiki
-    /Conjugate_gradient_method, accessed 03.May.2020.
+    .. [2] UMFPAC, https://en.wikipedia.org/wiki/UMFPACK, accessed
+    03.May.2020.
     """
     n_var, n_series = X.shape
     D = _sp_diff_matrix(n_var, constraint_order)
     C = sparse.eye(n_var) + penalty * D.transpose().dot(D)
     X_smoothed = np.zeros([n_var, n_series])
+    lin_solve = splinalg.factorized(C)
 
     for i in range(n_series):
-        results = splinalg.cg(C, X[:, i], atol=0)
-        if not (results[1] == 0):
-            warnings.Warning(f'Not converged in series {i}')
-        X_smoothed[:, i] = results[0]
+        X_smoothed[:, i] = lin_solve(X[:, i])
 
     return X_smoothed
 

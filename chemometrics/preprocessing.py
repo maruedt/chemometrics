@@ -190,14 +190,14 @@ def emsc(D, p_order=2, background=None, normalize=False, algorithm='als',
     return D_pretreated.T, coefficients.T
 
 
-def whittacker(X, penalty, constraint_order=2):
+def whittaker(X, penalty, constraint_order=2):
     r"""
-    Smooth `X` with a whittacker smoother
+    Smooth `X` with a whittaker smoother
 
-    `whittacker` smooths `X` with a Whittacker smoother. The smoother smooths
+    `whittaker` smooths `X` with a whittaker smoother. The smoother smooths
     the data with a non-parametric line constraint by its second derivative
     smoothness. `penalty` defines the penalty on non-smoothness.
-    The Whittacker smoother is very efficient and a useful drop-in replacement
+    The whittaker smoother is very efficient and a useful drop-in replacement
     for Savitzky-Golay smoothing.
 
     Parameters
@@ -217,7 +217,7 @@ def whittacker(X, penalty, constraint_order=2):
 
     Notes
     -----
-    `whittacker` uses a sparse matrices for efficiency reasons. `X` may
+    `whittaker` uses a sparse matrices for efficiency reasons. `X` may
     however be a full matrix.
     In contrast to the proposed algorithm by Eilers [1], no Cholesky
     decomposition is used. The reason is twofold. The Cholesky decomposition
@@ -231,7 +231,7 @@ def whittacker(X, penalty, constraint_order=2):
 
     References
     ----------
-    Application of Whittacker smoother to spectroscopic data [1].
+    Application of whittaker smoother to spectroscopic data [1].
 
     .. [1] Paul H. Eilers, A perfect smoother, Anal. Chem., vol 75, 14, pp.
     3631-3636, 2003.
@@ -252,7 +252,7 @@ def whittacker(X, penalty, constraint_order=2):
 
 def _sp_diff_matrix(m, diff_order=1):
     r"""
-    generates a sparse difference matrix used for ``whittacker``
+    generates a sparse difference matrix used for ``whittaker``
     """
     E = sparse.eye(m).tocsc()
     for i in range(diff_order):

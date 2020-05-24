@@ -183,9 +183,9 @@ class TestPlot_svd(unittest.TestCase):
         self.assertEqual(len(fig.axes[2].lines), n_comp)
 
 
-class TestWhittacker(unittest.TestCase):
+class Testwhittaker(unittest.TestCase):
     r"""
-    Test ``whittacker`` smoother.
+    Test ``whittaker`` smoother.
     """
 
     def test_shape(self):
@@ -194,7 +194,7 @@ class TestWhittacker(unittest.TestCase):
         diff_order = [1, 2]
         X = np.random.normal(size=shape)
         for i in diff_order:
-            X_smoothed = cm.whittacker(X, penalty, constraint_order=i)
+            X_smoothed = cm.whittaker(X, penalty, constraint_order=i)
             self.assertEqual(X_smoothed.shape, shape)
 
     def test_null_smoothing(self):
@@ -204,7 +204,7 @@ class TestWhittacker(unittest.TestCase):
         shape = (50, 1)
         penalty = 0
         X = np.random.normal(size=shape)
-        X_smoothed = cm.whittacker(X, penalty)
+        X_smoothed = cm.whittaker(X, penalty)
         self.assertTrue(np.all(np.isclose(X, X_smoothed)))
 
     def test_max_smoothing(self):
@@ -215,7 +215,7 @@ class TestWhittacker(unittest.TestCase):
         penalty = 1e9
         diff_order = 1
         X = np.random.normal(size=shape) + np.arange(shape[1])
-        X_smoothed = cm.whittacker(X, penalty, diff_order)
+        X_smoothed = cm.whittaker(X, penalty, diff_order)
         is_close = np.isclose(X_smoothed, X.mean())
         self.assertTrue(np.all(is_close))
 

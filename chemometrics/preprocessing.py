@@ -241,7 +241,7 @@ def whittaker(X, penalty, constraint_order=2):
     D = _sp_diff_matrix(n_var, constraint_order)
     C = sparse.eye(n_var) + penalty * D.transpose().dot(D)
     X_smoothed = np.zeros([n_var, n_series])
-    lin_solve = splinalg.factorized(C)
+    lin_solve = splinalg.factorized(C.tocsc())
 
     for i in range(n_series):
         X_smoothed[:, i] = lin_solve(X[:, i])

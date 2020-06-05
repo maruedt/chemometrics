@@ -264,11 +264,7 @@ def _get_whittaker_lhs(n_var, penalty, constraint_order, weights=None):
 
 def _sp_diff_matrix(m, diff_order=1):
     r"""
-<<<<<<< HEAD
     Generate a sparse difference matrix used for ``whittaker``
-=======
-    generate a sparse difference matrix used for ``whittaker``
->>>>>>> 5fb0a8f803dafe62b861dc1149c2b1162c9f87fc
     """
     E = sparse.eye(m, format='csc')
     for i in range(diff_order):

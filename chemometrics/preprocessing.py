@@ -238,15 +238,28 @@ def whittaker(X, penalty, constraint_order=2):
     03.May.2020.
     """
     n_var, n_series = X.shape
-    D = _sp_diff_matrix(n_var, constraint_order)
-    C = sparse.eye(n_var) + penalty * D.transpose().dot(D)
-    X_smoothed = np.zeros([n_var, n_series])
+
+    C = _get_whittaker_lhs(n_var, penalty, constraint_order)
     lin_solve = splinalg.factorized(C.tocsc())
+    X_smoothed = np.zeros([n_var, n_series])
 
     for i in range(n_series):
         X_smoothed[:, i] = lin_solve(X[:, i])
 
     return X_smoothed
+
+
+def _get_whittaker_lhs(n_var, penalty, constraint_order, weights=None):
+    r"""
+    Return the left matrix for whittaker smoothing
+    """
+    D = _sp_diff_matrix(n_var, constraint_order)
+    if weights is None:
+        lhs = sparse.eye(n_var, format='csc') + penalty * D.transpose().dot(D)
+    else:
+        lhs = sparse.diags(weights, format='csc') + penalty *\
+            D.transpose().dot(D)
+    return lhs
 
 
 def _sp_diff_matrix(m, diff_order=1):

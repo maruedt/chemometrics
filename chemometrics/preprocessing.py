@@ -252,6 +252,9 @@ def whittaker(X, penalty, constraint_order=2):
 def _get_whittaker_lhs(n_var, penalty, constraint_order, weights=None):
     r"""
     Return the left matrix for whittaker smoothing
+
+    Warning: if weights are used, also right hand side (i.e. unsmoothed data)
+    needs to be multiplied by weights)
     """
     D = _sp_diff_matrix(n_var, constraint_order)
     if weights is None:

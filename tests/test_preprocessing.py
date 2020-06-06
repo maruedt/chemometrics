@@ -16,8 +16,10 @@
 # along with chemometrics.  If not, see <https://www.gnu.org/licenses/>.
 
 from .context import chemometrics as cm  # accounts for relativ path
+from chemometrics import preprocessing as pp
 import numpy as np
 import unittest
+import scipy.sparse as sparse
 
 
 class TestAsym_ls(unittest.TestCase):
@@ -142,3 +144,19 @@ class Testwhittaker(unittest.TestCase):
         X_smoothed = cm.whittaker(X, penalty, diff_order)
         is_close = np.isclose(X_smoothed, X.mean())
         self.assertTrue(np.all(is_close))
+
+    def test_sp_diff_matrix(self):
+        r"""
+        Test the ``whittaker`` helper function ``_sp_diff_matrix``
+        """
+        mat_size = 10
+        difforder_list = [1, 2, 3]
+        # test for different diff orders that sparse matrix is returned and
+        # the results are the same as from numpy diff.
+        for difforder in difforder_list:
+            diff_mat = pp._sp_diff_matrix(mat_size, diff_order=difforder)
+            self.assertTrue(sparse.isspmatrix_csc(diff_mat))
+            full = diff_mat.toarray()
+            comp = np.diff(np.eye(mat_size), n=difforder, axis=0)
+            is_close = np.isclose(full, comp)
+            self.assertTrue(np.all(is_close))

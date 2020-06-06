@@ -265,6 +265,26 @@ def _get_whittaker_lhs(n_var, penalty, constraint_order, weights=None):
     return lhs
 
 
+def _calc_whittaker_h_bar(n_var, penalty, constraint_order,
+                          size_estimator=100):
+    r"""
+    Calculate estimate of the mean diagonal of the whittaker smoother matrix.
+    """
+    # reduce size of estimator if necessary
+    if n_var < size_estimator:
+        size_estimator = n_var
+
+    # the penalty needs to be adjusted for an unbiased estimator
+    size_ratio = size_estimator / n_var
+    adjusted_penalty = size_ratio ** (2 * constraint_order) * penalty
+    # calculate H in the approximation size
+    C = _get_whittaker_lhs(size_estimator, adjusted_penalty,
+                           constraint_order).toarray()
+    rhs = np.eye(size_estimator)
+    H = np.linalg.lstsq(C, rhs)[0]
+    return np.mean(H.diag())
+
+
 def _sp_diff_matrix(m, diff_order=1):
     r"""
     Generate a sparse difference matrix used for ``whittaker``

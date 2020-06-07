@@ -282,7 +282,7 @@ def _calc_whittaker_h_bar(n_var, penalty, constraint_order,
                            constraint_order).toarray()
     rhs = np.eye(size_estimator)
     H = np.linalg.lstsq(C, rhs)[0]
-    return np.mean(H.diag())
+    return np.mean(np.diag(H))
 
 
 def _sp_diff_matrix(m, diff_order=1):

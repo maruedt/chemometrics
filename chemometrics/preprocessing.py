@@ -281,7 +281,7 @@ def _calc_whittaker_h_bar(n_var, penalty, constraint_order,
     C = _get_whittaker_lhs(size_estimator, adjusted_penalty,
                            constraint_order).toarray()
     rhs = np.eye(size_estimator)
-    H = np.linalg.lstsq(C, rhs)[0]
+    H = np.linalg.lstsq(C, rhs, rcond=-1)[0]
     return np.mean(np.diag(H))
 
 

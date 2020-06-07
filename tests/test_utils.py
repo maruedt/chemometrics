@@ -34,13 +34,13 @@ class TestGenerate_spectra(unittest.TestCase):
         output_shape = cm.generate_spectra(n_wl, 2, 50).shape
         self.assertTrue(np.all(expected_shape == output_shape))
 
-        def test_no_bands(self):
-            """
-            Test if ``n_band = 0`` returns zero vector.
-            """
-            n_wl = 10
-            n_bands = 0
-            bandwidth = 100
-            spectra = cm.generate_spectra(n_wl, n_bands, bandwidth)
-            isZero = np.all(np.isclose(np.zeros(n_wl), spectra))
-            self.assertTrue(isZero)
+    def test_no_bands(self):
+        """
+        Test if ``n_band = 0`` returns zero vector.
+        """
+        n_wl = 10
+        n_bands = 0
+        bandwidth = 100
+        spectra = cm.generate_spectra(n_wl, n_bands, bandwidth)
+        isZero = np.all(np.isclose(np.zeros(n_wl), spectra))
+        self.assertTrue(isZero)

@@ -160,3 +160,13 @@ class Testwhittaker(unittest.TestCase):
             comp = np.diff(np.eye(mat_size), n=difforder, axis=0)
             is_close = np.isclose(full, comp)
             self.assertTrue(np.all(is_close))
+
+    def test_calc_whittaker_h_bar(self):
+        r"""
+        """
+        n_var = [30, 300]
+        penalty = 0.5
+        constraint_order = 2
+        for var in n_var:
+            h_bar = pp._calc_whittaker_h_bar(var, penalty, constraint_order)
+            self.assertIsInstance(h_bar, int)

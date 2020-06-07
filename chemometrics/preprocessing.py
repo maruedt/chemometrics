@@ -250,7 +250,20 @@ def whittaker(X, penalty, constraint_order=2):
 
 def whittaker_cve(X, penalty, constraint_order=2):
     r"""
-    Calc cv error for whittaker smoothing on vector (leave-one out)
+    Calculate cross-validation error of whittaker smoother.
+
+    `whittaker_cve` computes the cross-validation error of a whittaker smoother
+    by a leave-one-out scheme. The algorithm uses an approximation scheme and
+    does not perform the explicit leave-one-out cross-validation. Users need
+    should be careful when applying this cross-validation scheme to data with
+    autocorrelated noise. The algorithm then tends to undersmooth the data.
+
+    References
+    ----------
+    Explanation of cross-validation approximation in [1].
+
+    .. [1] Paul H. Eilers, A perfect smoother, Anal. Chem., vol 75, 14, pp.
+    3631-3636, 2003.
     """
     z = whittaker(X, penalty, constraint_order=2)
     residuals = z - X

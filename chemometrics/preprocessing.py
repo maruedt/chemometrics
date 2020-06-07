@@ -245,8 +245,20 @@ def whittaker(X, penalty, constraint_order=2):
 
     for i in range(n_series):
         X_smoothed[:, i] = lin_solve(X[:, i])
-
     return X_smoothed
+
+
+def whittaker_cve(X, penalty, constraint_order=2):
+    r"""
+    Calc cv error for whittaker smoothing on vector (leave-one out)
+    """
+    z = whittaker(X, penalty, constraint_order=2)
+    residuals = z - X
+    h_bar = _calc_whittaker_h_bar()
+    # cross-validation error approximation based on formula proposed by eiler.
+    cv_residuals = residuals / (1 - h_bar)
+    cv_error = np.sum(cv_residuals ** 2) / X.size[0]
+    return cv_error
 
 
 def _get_whittaker_lhs(n_var, penalty, constraint_order, weights=None):

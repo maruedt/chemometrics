@@ -169,4 +169,4 @@ class Testwhittaker(unittest.TestCase):
         constraint_order = 2
         for var in n_var:
             h_bar = pp._calc_whittaker_h_bar(var, penalty, constraint_order)
-            self.assertIsInstance(h_bar, int)
+            self.assertIsInstance(h_bar, float)

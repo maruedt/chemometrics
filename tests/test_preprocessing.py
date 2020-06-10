@@ -163,6 +163,7 @@ class Testwhittaker(unittest.TestCase):
 
     def test_calc_whittaker_h_bar(self):
         r"""
+        Test that ``_calc_whittaker_h_bar`` returns a float.
         """
         n_var = [30, 300]
         penalty = 0.5
@@ -170,3 +171,17 @@ class Testwhittaker(unittest.TestCase):
         for var in n_var:
             h_bar = pp._calc_whittaker_h_bar(var, penalty, constraint_order)
             self.assertIsInstance(h_bar, float)
+
+    def test_whittaker_cve(self):
+        r"""
+        Test whittaker cross validation returns float.
+        """
+        penalty = 1e5
+        n_wl = 200
+        n_band = 20
+        bandwidth = 1
+        X = cm.generate_background(n_wl) + cm.generate_spectra(n_wl, n_band,
+                                                               bandwidth)
+        X = X.T
+        cve = cm.whittaker_cve(X, penalty)
+        self.assertIsInstance(cve, float)

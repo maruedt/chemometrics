@@ -265,12 +265,13 @@ def whittaker_cve(X, penalty, constraint_order=2):
     .. [1] Paul H. Eilers, A perfect smoother, Anal. Chem., vol 75, 14, pp.
     3631-3636, 2003.
     """
+    n_var = X.shape[0]
     z = whittaker(X, penalty, constraint_order=2)
     residuals = z - X
-    h_bar = _calc_whittaker_h_bar()
+    h_bar = _calc_whittaker_h_bar(n_var, penalty, constraint_order)
     # cross-validation error approximation based on formula proposed by eiler.
     cv_residuals = residuals / (1 - h_bar)
-    cv_error = np.sum(cv_residuals ** 2) / X.size[0]
+    cv_error = np.sum(cv_residuals ** 2) / n_var
     return cv_error
 
 

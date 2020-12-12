@@ -18,6 +18,8 @@
 import numpy as np
 import scipy.sparse as sparse
 import scipy.sparse.linalg as splinalg
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.utils.validation import FLOAT_DTYPES
 
 
 def asym_ls(X, y, asym_factor=0.1):
@@ -98,12 +100,11 @@ def asym_ls(X, y, asym_factor=0.1):
     return beta
 
 
-def emsc(D, p_order=2, background=None, normalize=False, algorithm='als',
-         **kwargs):
+class Emsc(TransformerMixin, BaseEstimator):
     r"""
-    Perform extended multiplicative scatter correction (EMSC) on `D`
+    Performs extended multiplicative scatter correction (EMSC).
 
-    `emsc` is a spectral pretreatment which is based on a linear decomposition
+    `Emsc` is a spectral pretreatment which is based on a linear decomposition
     of data into baseline contributions and chemical information. Baseline
     contributions are modelled by polynomial terms up to order `p_order`. The
     chemical information is summarized by the mean spectrum orthogonalized to
@@ -113,7 +114,7 @@ def emsc(D, p_order=2, background=None, normalize=False, algorithm='als',
 
     Parameters
     ----------
-    D : (n, m) ndarray
+    X : (n, m) ndarray
         Data to be pretreated. ``n`` samples x ``m`` variables (typically
         wavelengths)
     p_order : int
@@ -147,46 +148,78 @@ def emsc(D, p_order=2, background=None, normalize=False, algorithm='als',
     detection and Raman spectroscopic detection, J. Chromatogr. A, vol. 1057,
     pp. 21-30, 2004.
     """
-    # prepare asymmetry factor for als
-    if 'asym_factor' in kwargs:
-        asym_factor = kwargs['asym_factor']
-    else:
-        asym_factor = 0.1
 
-    n_series, n_variables = D.shape
-    # generate matrix of baseline polynomials
-    baseline = np.zeros([n_variables, p_order+1])
-    multiplier = np.linspace(-1, 1, num=n_variables)
-    for i in range(0, p_order+1):
-        baseline[:, i] = multiplier ** i
-    # matrix for summarizing all factors
-    regressor = baseline.copy()
+    def __init__(self, p_order=2, background=None, normalize=False,
+                 algorithm='als', asym_factor=0.1):
+        self.p_order = p_order
+        # convert background to two dimensional array if exists
+        if background is not None:
+            if background.ndim == 1:
+                background = background[:, None]
+        self.background = background
+        self.normalize = normalize
+        self.algorithm = algorithm
 
-    # if included: prepare background data
-    if background is not None:
-        # convert background to two dimensional array as otherwise hard to
-        # detect/interprete errors may occure
-        if background.ndim == 1:
-            background = background[:, None]
-        # orthogonalize background to baseline information
-        beta_background = asym_ls(baseline, background,
-                                  asym_factor=asym_factor)
-        background_pretreated = background - np.dot(baseline, beta_background)
-        regressor = np.concatenate([regressor, background_pretreated], axis=1)
+    def fit(self, X, y=None):
+        """
+        Calculate regression matrix for later use.
 
-    # prepare estimate of chemical information
-    D_bar = np.mean(D, axis=0)[:, None]  # mean spectra
-    beta_D_bar = asym_ls(regressor, D_bar, asym_factor=asym_factor)
-    D_bar_pretreated = D_bar - np.dot(regressor, beta_D_bar)
-    regressor = np.concatenate((regressor, D_bar_pretreated), axis=1)
+        Parameters
+        ----------
+        X : (n, m) ndarray
+            Data to be pretreated. ``n`` samples x ``m`` variables (typically
+            wavelengths)
 
-    # perform EMSC on data
-    coefficients = asym_ls(regressor, D.T, asym_factor=asym_factor)
-    D_pretreated = D.T - np.dot(regressor[:, :-1], coefficients[:-1, :])
-    if normalize:
-        D_pretreated = D_pretreated @ np.diag(1/coefficients[-1, :])
+        y
+            Ignored
+        """
+        X = self._validate_data(X, estimator=self, dtype=FLOAT_DTYPES)
 
-    return D_pretreated.T, coefficients.T
+        n_series, n_variables = X.shape
+        # generate matrix of baseline polynomials
+        baseline = np.zeros([n_variables, self.p_order+1])
+        multiplier = np.linspace(-1, 1, num=n_variables)
+        for i in range(0, p_order+1):
+            baseline[:, i] = multiplier ** i
+        # matrix for summarizing all factors
+        regressor = baseline.copy()
+
+        # if included: prepare background data
+        if self.background is not None:
+            # orthogonalize background to baseline information
+            beta_background = asym_ls(baseline, background,
+                                      asym_factor=asym_factor)
+            background_pretreated = background - np.dot(baseline, beta_background)
+            regressor = np.concatenate([regressor, background_pretreated], axis=1)
+
+        # prepare estimate of chemical information
+        X_bar = np.mean(X, axis=0)[:, None]  # mean spectra
+        beta_X_bar = asym_ls(regressor, X_bar, asym_factor=asym_factor)
+        X_bar_pretreated = D_bar - np.dot(regressor, beta_D_bar)
+        self.regressor_ = np.concatenate((regressor, X_bar_pretreated), axis=1)
+
+        return self
+
+
+    def transform(self, X):
+        r"""
+        Perform baseline correction by subtracting fit of regresor on `X`
+
+        Parameters
+        ----------
+        X : array-like, shape [n_samples, n_features]
+            The data used to scale along the features axis.
+        """
+
+
+        # perform EMSC on data
+        coefficients = asym_ls(self.regressor, X.T, asym_factor=asym_factor)
+        X_pretreated = X.T - np.dot(self.regressor[:, :-1], coefficients[:-1, :])
+        if self.normalize:
+            X_pretreated = X_pretreated @ np.diag(1/coefficients[-1, :])
+
+        self.coefficients_ = coefficients
+        return X_pretreated.T
 
 
 def whittaker(X, penalty, constraint_order=2):

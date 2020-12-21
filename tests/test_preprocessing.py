@@ -77,6 +77,7 @@ class TestEmsc(unittest.TestCase):
         r"""
         Check the shape of the return matrix
         """
+        import pdb; pdb.set_trace()
         n_series, n_variables = (10, 50)
         # generate dummy data and background
         scaler = np.linspace(0, 10, num=n_variables)
@@ -86,13 +87,15 @@ class TestEmsc(unittest.TestCase):
         background_list = [None, background]
         # iterate over different inputs
         for bg in background_list:
-            D_pretreated, coefficients = cm.emsc(D, p_order=0, background=bg)
+            emsc = cm.Emsc(p_order=0, background=bg)
+            D_pretreated = emsc.fit_transform(D)
+            coefficients = emsc.coefficients_
             self.assertTrue(D_pretreated.shape == (n_series, n_variables))
             self.assertTrue(coefficients.shape[0] == n_series)
 
     def test_background_subtraction(self):
         r"""
-        Test wether background subtraction works
+        Test whether background subtraction works
         """
         n_series, n_variables = (10, 50)
         # generate dummy data and background
@@ -100,11 +103,8 @@ class TestEmsc(unittest.TestCase):
         D = np.ones([n_series, n_variables]) * scaler[:, None].T
         background = 0.5 * D[0, :]
         background = background[:, None]
-        D_pretreated, coefficients = cm.emsc(
-            D,
-            p_order=0,
-            background=background
-        )
+        emsc = cm.Emsc(p_order=0, background=background)
+        D_pretreated = emsc.fit_transform(D)
         self.assertTrue(np.all(np.isclose(np.zeros([n_series, n_variables]),
                         D_pretreated)))
 

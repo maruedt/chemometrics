@@ -19,7 +19,8 @@ import numpy as np
 import scipy.sparse as sparse
 import scipy.sparse.linalg as splinalg
 from sklearn.base import BaseEstimator, TransformerMixin
-from sklearn.utils.validation import FLOAT_DTYPES
+from sklearn.utils import check_array
+from sklearn.utils.validation import (FLOAT_DTYPES, check_is_fitted)
 
 
 def asym_ls(X, y, asym_factor=0.1):
@@ -108,15 +109,12 @@ class Emsc(TransformerMixin, BaseEstimator):
     of data into baseline contributions and chemical information. Baseline
     contributions are modelled by polynomial terms up to order `p_order`. The
     chemical information is summarized by the mean spectrum orthogonalized to
-    the baseline terms. `emsc` additionally provides a the functionality for
+    the baseline terms. `Emsc` additionally provides a the functionality for
     orthogonalizing spectra with respect to background information and for
     normalizing the returned spectra.
 
     Parameters
     ----------
-    X : (n, m) ndarray
-        Data to be pretreated. ``n`` samples x ``m`` variables (typically
-        wavelengths)
     p_order : int
         Polynoms up to order `p_order` are included for baseline subtraction.
     background : {None (default), (m, o) ndarray}
@@ -128,12 +126,13 @@ class Emsc(TransformerMixin, BaseEstimator):
         choice of algorithms for regression. Currently, only asymmetric least
         squares is supported
 
-    Returns
-    -------
-    D_pretreated : (n, m) ndarray
-        Pretreated data.
-    coefficients : (n, k) ndarray
-        Coefficient matrix summarizing regression coefficients of EMSC.
+    Attributes
+    ----------
+    regressor_ : array of floats
+        Matrix of regressor variables for background subtraction.
+
+    coefficients_ : array of floats
+        Coefficients of last transform.
 
     References
     ----------
@@ -159,6 +158,7 @@ class Emsc(TransformerMixin, BaseEstimator):
         self.background = background
         self.normalize = normalize
         self.algorithm = algorithm
+        self.asym_factor = asym_factor
 
     def fit(self, X, y=None):
         """
@@ -179,7 +179,7 @@ class Emsc(TransformerMixin, BaseEstimator):
         # generate matrix of baseline polynomials
         baseline = np.zeros([n_variables, self.p_order+1])
         multiplier = np.linspace(-1, 1, num=n_variables)
-        for i in range(0, p_order+1):
+        for i in range(0, self.p_order+1):
             baseline[:, i] = multiplier ** i
         # matrix for summarizing all factors
         regressor = baseline.copy()
@@ -187,21 +187,20 @@ class Emsc(TransformerMixin, BaseEstimator):
         # if included: prepare background data
         if self.background is not None:
             # orthogonalize background to baseline information
-            beta_background = asym_ls(baseline, background,
-                                      asym_factor=asym_factor)
-            background_pretreated = background - np.dot(baseline, beta_background)
+            beta_background = asym_ls(baseline, self.background,
+                                      asym_factor=self.asym_factor)
+            background_pretreated = self.background - np.dot(baseline, beta_background)
             regressor = np.concatenate([regressor, background_pretreated], axis=1)
 
         # prepare estimate of chemical information
         X_bar = np.mean(X, axis=0)[:, None]  # mean spectra
-        beta_X_bar = asym_ls(regressor, X_bar, asym_factor=asym_factor)
-        X_bar_pretreated = D_bar - np.dot(regressor, beta_D_bar)
+        beta_X_bar = asym_ls(regressor, X_bar, asym_factor=self.asym_factor)
+        X_bar_pretreated = X_bar - np.dot(regressor, beta_X_bar)
         self.regressor_ = np.concatenate((regressor, X_bar_pretreated), axis=1)
 
         return self
 
-
-    def transform(self, X):
+    def transform(self, X, copy=True):
         r"""
         Perform baseline correction by subtracting fit of regresor on `X`
 
@@ -209,43 +208,47 @@ class Emsc(TransformerMixin, BaseEstimator):
         ----------
         X : array-like, shape [n_samples, n_features]
             The data used to scale along the features axis.
+
         """
 
-
+        X = check_array(X, estimator=self, dtype=FLOAT_DTYPES, copy=copy)
         # perform EMSC on data
-        coefficients = asym_ls(self.regressor, X.T, asym_factor=asym_factor)
-        X_pretreated = X.T - np.dot(self.regressor[:, :-1], coefficients[:-1, :])
+        coefficients = asym_ls(self.regressor_, X.T,
+                               asym_factor=self.asym_factor)
+        X_pretreated = X.T - np.dot(self.regressor_[:, :-1], coefficients[:-1, :])
         if self.normalize:
             X_pretreated = X_pretreated @ np.diag(1/coefficients[-1, :])
 
         self.coefficients_ = coefficients
         return X_pretreated.T
 
-
-def whittaker(X, penalty, constraint_order=2):
+class Whittaker(TransformerMixin, BaseEstimator):
     r"""
     Smooth `X` with a whittaker smoother
 
     `whittaker` smooths `X` with a whittaker smoother. The smoother smooths
-    the data with a non-parametric line constraint by its second derivative
+    the data with a non-parametric line constraint by its derivative
     smoothness. `penalty` defines the penalty on non-smoothness.
     The whittaker smoother is very efficient and a useful drop-in replacement
     for Savitzky-Golay smoothing.
 
     Parameters
     ----------
-    X : (n, m) ndarray
-        Matrix containing data series to smooth. The function expects. ``n``
-        datapoints in ``m``series.
-    penalty : float
-        scaling factor of the penality term for non-smoothness
-    constraint_order : int
-        defines on which order of derivative the constraint acts on.
+    penalty : float or 'auto'
+        Scaling factor of the penalty term for non-smoothness. If 'auto' is
+        given, a penalty is estimated based on an algorithmically optimized
+        leave-one-out cross validation
 
-    Returns
-    -------
-    smoothed : (n, m) ndarray
-        Smoothed `X`
+    constraint_order : int
+        Defines on which order of derivative the constraint acts on.
+
+    Attributes
+    ----------
+    estimate_penalty_ : boolean
+        `True` if penalty is estimated.
+
+    penalty_ : float
+        The applied penalty for smoothing.
 
     Notes
     -----
@@ -270,85 +273,87 @@ def whittaker(X, penalty, constraint_order=2):
     .. [2] UMFPAC, https://en.wikipedia.org/wiki/UMFPACK, accessed
     03.May.2020.
     """
-    n_var, n_series = X.shape
 
-    C = _get_whittaker_lhs(n_var, penalty, constraint_order)
-    lin_solve = splinalg.factorized(C.tocsc())
-    X_smoothed = np.zeros([n_var, n_series])
+    def __init__(penalty, )
 
-    for i in range(n_series):
-        X_smoothed[:, i] = lin_solve(X[:, i])
-    return X_smoothed
+    def whittaker(X, penalty, constraint_order=2):
 
+        n_var, n_series = X.shape
 
-def whittaker_cve(X, penalty, constraint_order=2):
-    r"""
-    Calculate cross-validation error of whittaker smoother.
+        C = _get_whittaker_lhs(n_var, penalty, constraint_order)
+        lin_solve = splinalg.factorized(C.tocsc())
+        X_smoothed = np.zeros([n_var, n_series])
 
-    `whittaker_cve` computes the cross-validation error of a whittaker smoother
-    by a leave-one-out scheme. The algorithm uses an approximation scheme and
-    does not perform the explicit leave-one-out cross-validation. Users need
-    should be careful when applying this cross-validation scheme to data with
-    autocorrelated noise. The algorithm then tends to undersmooth the data.
-
-    References
-    ----------
-    Explanation of cross-validation approximation in [1].
-
-    .. [1] Paul H. Eilers, A perfect smoother, Anal. Chem., vol 75, 14, pp.
-    3631-3636, 2003.
-    """
-    n_var = X.shape[0]
-    z = whittaker(X, penalty, constraint_order=2)
-    residuals = z - X
-    h_bar = _calc_whittaker_h_bar(n_var, penalty, constraint_order)
-    # cross-validation error approximation based on formula proposed by eiler.
-    cv_residuals = residuals / (1 - h_bar)
-    cv_error = np.sum(cv_residuals ** 2) / n_var
-    return cv_error
+        for i in range(n_series):
+            X_smoothed[:, i] = lin_solve(X[:, i])
+        return X_smoothed
 
 
-def _get_whittaker_lhs(n_var, penalty, constraint_order, weights=None):
-    r"""
-    Return the left matrix for whittaker smoothing
+    def whittaker_cve(X, penalty, constraint_order=2):
+        r"""
+        Calculate cross-validation error of whittaker smoother.
 
-    Warning: if weights are used, also right hand side (i.e. unsmoothed data)
-    needs to be multiplied by weights)
-    """
-    D = _sp_diff_matrix(n_var, constraint_order)
-    if weights is None:
-        lhs = sparse.eye(n_var, format='csc') + penalty * D.transpose().dot(D)
-    else:
-        lhs = sparse.diags(weights, format='csc') + penalty *\
-            D.transpose().dot(D)
-    return lhs
+        `whittaker_cve` computes the cross-validation error of a whittaker smoother
+        by a leave-one-out scheme. The algorithm uses an approximation scheme and
+        does not perform the explicit leave-one-out cross-validation. Users need
+        should be careful when applying this cross-validation scheme to data with
+        autocorrelated noise. The algorithm then tends to undersmooth the data.
 
+        References
+        ----------
+        Explanation of cross-validation approximation in [1].
 
-def _calc_whittaker_h_bar(n_var, penalty, constraint_order,
-                          size_estimator=100):
-    r"""
-    Calculate estimate of the mean diagonal of the whittaker smoother matrix.
-    """
-    # reduce size of estimator if necessary
-    if n_var < size_estimator:
-        size_estimator = n_var
+        .. [1] Paul H. Eilers, A perfect smoother, Anal. Chem., vol 75, 14, pp.
+        3631-3636, 2003.
+        """
+        n_var = X.shape[0]
+        z = whittaker(X, penalty, constraint_order=constraint_order)
+        residuals = z - X
+        h_bar = _calc_whittaker_h_bar(n_var, penalty, constraint_order)
+        # cross-validation error approximation based on formula proposed by eiler.
+        cv_residuals = residuals / (1 - h_bar)
+        cv_error = np.sum(cv_residuals ** 2) / n_var
+        return cv_error
 
-    # the penalty needs to be adjusted for an unbiased estimator
-    size_ratio = size_estimator / n_var
-    adjusted_penalty = size_ratio ** (2 * constraint_order) * penalty
-    # calculate H in the approximation size
-    C = _get_whittaker_lhs(size_estimator, adjusted_penalty,
-                           constraint_order).toarray()
-    rhs = np.eye(size_estimator)
-    H = np.linalg.lstsq(C, rhs, rcond=-1)[0]
-    return np.mean(np.diag(H))
+    def _get_whittaker_lhs(n_var, penalty, constraint_order, weights=None):
+        r"""
+        Return the left matrix for whittaker smoothing
 
+        Warning: if weights are used, also right hand side (i.e. unsmoothed data)
+        needs to be multiplied by weights)
+        """
+        D = _sp_diff_matrix(n_var, constraint_order)
+        if weights is None:
+            lhs = sparse.eye(n_var, format='csc') + penalty * D.transpose().dot(D)
+        else:
+            lhs = sparse.diags(weights, format='csc') + penalty *\
+                D.transpose().dot(D)
+        return lhs
 
-def _sp_diff_matrix(m, diff_order=1):
-    r"""
-    Generate a sparse difference matrix used for ``whittaker``
-    """
-    E = sparse.eye(m, format='csc')
-    for i in range(diff_order):
-        E = E[1:, :] - E[:-1, :]
-    return E
+    def _calc_whittaker_h_bar(n_var, penalty, constraint_order,
+                              size_estimator=100):
+        r"""
+        Calculate estimate of the mean diagonal of the whittaker smoother matrix.
+        """
+        # reduce size of estimator if necessary
+        if n_var < size_estimator:
+            size_estimator = n_var
+
+        # the penalty needs to be adjusted for an unbiased estimator
+        size_ratio = size_estimator / n_var
+        adjusted_penalty = size_ratio ** (2 * constraint_order) * penalty
+        # calculate H in the approximation size
+        C = _get_whittaker_lhs(size_estimator, adjusted_penalty,
+                               constraint_order).toarray()
+        rhs = np.eye(size_estimator)
+        H = np.linalg.lstsq(C, rhs, rcond=-1)[0]
+        return np.mean(np.diag(H))
+
+    def _sp_diff_matrix(m, diff_order=1):
+        r"""
+        Generate a sparse difference matrix used for ``whittaker``
+        """
+        E = sparse.eye(m, format='csc')
+        for i in range(diff_order):
+            E = E[1:, :] - E[:-1, :]
+        return E

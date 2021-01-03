@@ -78,29 +78,43 @@ def asym_ls(X, y, asym_factor=0.1):
         y = y[:, None]
     o = y.shape[1]
     beta = np.zeros(shape=[m, o])
+
+    # generate solver function
+    solver1d = lambda y1d: _asym_ls_y1d(
+        X, y1d,
+        asym_factor=asym_factor,
+        max_cycles=max_cycles
+    )
     # iterate over each regression
-    for i in range(o):
-        # initialize variables for iterative regression
-        w = np.zeros([n, 1])
-        w_new = np.ones([n, 1])
-        cycle = 0
-        # iterate linear regression until weights converge
-        while not np.all(w == w_new) and cycle < max_cycles:
-            # update weights
-            w = w_new.copy()
-            # update variables for weighted regression
-            X_scaled = w * X
-            y_scaled = w * y[:, i][:, None]
-            # solve weighted least squares problem
-            beta[:, i] = np.linalg.lstsq(X_scaled, y_scaled, rcond=-1)[0].T
-            # calculate new weights
-            residuals = y[:, i] - np.dot(X, beta[:, i])
-            w_new[residuals > 0] = asym_factor
-            w_new[residuals <= 0] = 1 - asym_factor
-            # increase counter
-            cycle += 1
+    beta = np.apply_along_axis(solver1d, 0, y)
     return beta
 
+def _asym_ls_y1d(X, y, asym_factor=0.1, max_cycles=10):
+    """
+    Asymmetric least-squares on 1d y data.
+    """
+    if y.ndim == 1:
+        y = y[:, None]
+    # initialize variables for iterative regression
+    w_new = np.ones([X.shape[0], 1])
+    w = None
+    cycle = 0
+    # iterate linear regression until weights converge
+    while not np.all(w == w_new) and cycle < max_cycles:
+        # update weights
+        w = w_new.copy()
+        # update variables for weighted regression
+        X_scaled = w * X
+        y_scaled = w * y
+        # solve weighted least squares problem
+        beta = np.linalg.lstsq(X_scaled, y_scaled, rcond=-1)[0]
+        # calculate new weights
+        residuals = y - np.dot(X, beta)
+        w_new[residuals > 0] = asym_factor
+        w_new[residuals <= 0] = 1 - asym_factor
+        # increase counter
+        cycle += 1
+    return beta[:, 0]
 
 class Emsc(TransformerMixin, BaseEstimator):
     r"""
@@ -235,7 +249,7 @@ class Whittaker(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    penalty : float or 'auto'
+    penalty : float or 'auto' (default)
         Scaling factor of the penalty term for non-smoothness. If 'auto' is
         given, a penalty is estimated based on an algorithmically optimized
         leave-one-out cross validation
@@ -278,13 +292,13 @@ class Whittaker(TransformerMixin, BaseEstimator):
     03.May.2020.
     """
 
-    def __init__(penalty, constraint_order=2):
+    def __init__(self, penalty='auto', constraint_order=2):
         if penalty == 'auto':
             self.estimate_penalty = True
             self.penalty_ = None
         elif type(penalty) in (int, float):
             self.estimate_penalty = False
-            self.penalty_ = penalty_
+            self.penalty_ = penalty
         else:
             raise TypeError('penalty type not correct.')
 
@@ -304,10 +318,10 @@ class Whittaker(TransformerMixin, BaseEstimator):
             Ignored
         """
         X = self._validate_data(X, estimator=self, dtype=FLOAT_DTYPES)
-        n_var, n_series = X.shape
+        n_series, n_var = X.shape
 
 
-        C = _get_whittaker_lhs(n_var, penalty, constraint_order)
+        C = _get_whittaker_lhs(n_var, self.penalty_, self.constraint_order)
         self.solve1d_ = splinalg.factorized(C.tocsc())
         return self
 

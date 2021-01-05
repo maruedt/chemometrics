@@ -137,11 +137,12 @@ class Testwhittaker(unittest.TestCase):
         r"""
         Test that very strong smoothing leads to polynomial.
         """
-        shape = (50, 1)
+        shape = (1, 50)
         penalty = 1e9
         diff_order = 1
-        X = np.random.normal(size=shape) + np.arange(shape[1])
-        X_smoothed = cm.whittaker(X, penalty, diff_order)
+        X = np.random.normal(size=shape) + np.arange(shape[1])[:,None].T
+        whittaker = cm.Whittaker(penalty=penalty, order=diff_order)
+        X_smoothed = whittaker.fit_transform(X)
         is_close = np.isclose(X_smoothed, X.mean())
         self.assertTrue(np.all(is_close))
 

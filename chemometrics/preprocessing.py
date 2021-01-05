@@ -334,9 +334,12 @@ class Whittaker(TransformerMixin, BaseEstimator):
         X : (n, m) ndarray
             Data to be pretreated. ``n`` samples x ``m`` variables (typically
             wavelengths)
+
+        copy : bool (`True` default)
+            Whether to genrate a copy of the input file or calculate in place.
         """
         X = check_array(X, estimator=self, dtype=FLOAT_DTYPES, copy=copy)
-        X = np.apply_along_axis(self.solve1d_, 0, X)
+        X = np.apply_along_axis(self.solve1d_, 1, X)
         return X
 
 def _get_whittaker_cve(X, penalty, constraint_order=2):

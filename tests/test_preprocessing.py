@@ -40,7 +40,7 @@ class TestAsym_ls(unittest.TestCase):
         output_shape = cm.asym_ls(X, y).shape
         self.assertEqual(expected_shape, output_shape)
 
-    def test_w_ju7symmetric_ls(self):
+    def test_w_symmetric_ls(self):
         """
         Test if symmetric weights results in least squares solution
         """
@@ -77,7 +77,6 @@ class TestEmsc(unittest.TestCase):
         r"""
         Check the shape of the return matrix
         """
-        import pdb; pdb.set_trace()
         n_series, n_variables = (10, 50)
         # generate dummy data and background
         scaler = np.linspace(0, 10, num=n_variables)
@@ -120,7 +119,8 @@ class Testwhittaker(unittest.TestCase):
         diff_order = [1, 2]
         X = np.random.normal(size=shape)
         for i in diff_order:
-            X_smoothed = cm.whittaker(X, penalty, constraint_order=i)
+            whittaker = cm.Whittaker(penalty=penalty, constraint_order=i)
+            X_smoothed = whittaker.fit_transform(X)
             self.assertEqual(X_smoothed.shape, shape)
 
     def test_null_smoothing(self):
@@ -130,7 +130,8 @@ class Testwhittaker(unittest.TestCase):
         shape = (50, 1)
         penalty = 0
         X = np.random.normal(size=shape)
-        X_smoothed = cm.whittaker(X, penalty)
+        whittaker = cm.Whittaker(penalty=penalty)
+        X_smoothed = whittaker.fit_transform(X, penalty)
         self.assertTrue(np.all(np.isclose(X, X_smoothed)))
 
     def test_max_smoothing(self):
@@ -141,7 +142,7 @@ class Testwhittaker(unittest.TestCase):
         penalty = 1e9
         diff_order = 1
         X = np.random.normal(size=shape) + np.arange(shape[1])[:,None].T
-        whittaker = cm.Whittaker(penalty=penalty, order=diff_order)
+        whittaker = cm.Whittaker(penalty=penalty, constraint_order=diff_order)
         X_smoothed = whittaker.fit_transform(X)
         is_close = np.isclose(X_smoothed, X.mean())
         self.assertTrue(np.all(is_close))

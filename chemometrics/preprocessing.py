@@ -234,7 +234,7 @@ class Emsc(TransformerMixin, BaseEstimator):
         if self.normalize:
             X = X @ np.diag(1/coefficients[-1, :])
 
-        self.coefficients_ = coefficients
+        self.coefficients_ = coefficients.T
         return X.T
 
 class Whittaker(TransformerMixin, BaseEstimator):

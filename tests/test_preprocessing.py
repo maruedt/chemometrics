@@ -185,5 +185,7 @@ class Testwhittaker(unittest.TestCase):
         X = cm.generate_background(n_wl) + cm.generate_spectra(n_wl, n_band,
                                                                bandwidth)
         X = X.T
-        cve = cm.whittaker_cve(X, penalty)
+        whittaker = cm.Whittaker(penalty=penalty)
+        whittaker.fit(X)
+        cve = whittaker.score(X)
         self.assertIsInstance(cve, float)

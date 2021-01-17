@@ -270,7 +270,7 @@ class Whittaker(TransformerMixin, BaseEstimator):
 
     Notes
     -----
-    `whittaker` uses a sparse matrices for efficiency reasons. `X` may
+    `Whittaker` uses a sparse matrices for efficiency reasons. `X` may
     however be a full matrix.
     In contrast to the proposed algorithm by Eilers [1], no Cholesky
     decomposition is used. The reason is twofold. The Cholesky decomposition
@@ -314,7 +314,7 @@ class Whittaker(TransformerMixin, BaseEstimator):
             Data to be pretreated. ``n`` samples x ``m`` variables (typically
             wavelengths)
 
-        y
+        y :
             Ignored
         """
         X = self._validate_data(X, estimator=self, dtype=FLOAT_DTYPES)
@@ -342,31 +342,42 @@ class Whittaker(TransformerMixin, BaseEstimator):
         X = np.apply_along_axis(self.solve1d_, 1, X)
         return X
 
-def _get_whittaker_cve(X, penalty, constraint_order=2):
-    r"""
-    Calculate cross-validation error of whittaker smoother.
+    def score(self, X, y=None):
+        r"""
+        Calculate cross-validation error of whittaker smoother.
 
-    `whittaker_cve` computes the cross-validation error of a whittaker smoother
-    by a leave-one-out scheme. The algorithm uses an approximation scheme and
-    does not perform the explicit leave-one-out cross-validation. Users need
-    should be careful when applying this cross-validation scheme to data with
-    autocorrelated noise. The algorithm then tends to undersmooth the data.
+        Computes the cross-validation error of a whittaker smoother by a
+        leave-one-out cross-validation scheme. The algorithm uses an
+        approximation scheme and does not perform the explicit leave-one-out
+        cross-validation. Users need should be careful when applying this
+        cross-validation scheme to data with autocorrelated noise. The algorithm
+        then tends to undersmooth the data.
 
-    References
-    ----------
-    Explanation of cross-validation approximation in [1].
+        Parameters
+        ----------
+        X : (n, m) ndarray
+            Data. ``n`` samples x ``m`` variables (typically
+            wavelengths)
 
-    .. [1] Paul H. Eilers, A perfect smoother, Anal. Chem., vol 75, 14, pp.
-    3631-3636, 2003.
-    """
-    n_var = X.shape[0]
-    z = whittaker(X, penalty, constraint_order=constraint_order)
-    residuals = z - X
-    h_bar = _calc_whittaker_h_bar(n_var, penalty, constraint_order)
-    # cross-validation error approximation based on formula proposed by eiler.
-    cv_residuals = residuals / (1 - h_bar)
-    cv_error = np.sum(cv_residuals ** 2) / n_var
-    return cv_error
+        y :
+            Ignored
+
+        References
+        ----------
+        Explanation of cross-validation approximation in [1].
+
+        .. [1] Paul H. Eilers, A perfect smoother, Anal. Chem., vol 75, 14, pp.
+        3631-3636, 2003.
+        """
+        n_var = X.shape[0]
+        z = self.transform(X)
+        residuals = z - X
+        h_bar = _calc_whittaker_h_bar(n_var, self.penalty_,
+                                      self.constraint_order)
+        # cross-validation error approximation based on formula proposed by Eiler.
+        cv_residuals = residuals / (1 - h_bar)
+        error = np.sum(cv_residuals ** 2) / n_var
+        return error
 
 def _get_whittaker_lhs(n_var, penalty, constraint_order, weights=None):
     r"""

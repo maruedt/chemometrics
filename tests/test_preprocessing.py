@@ -189,3 +189,21 @@ class Testwhittaker(unittest.TestCase):
         whittaker.fit(X)
         cve = whittaker.score(X)
         self.assertIsInstance(cve, float)
+
+    def test_autofit(self):
+        r"""
+        Test auto fit function of whittaker.
+        """
+        n_wl = 200
+        n_band = 20
+        bandwidth = 1
+        n_samples = 50
+        S = cm.generate_background(n_wl) + cm.generate_spectra(n_wl, n_band,
+                                                               bandwidth)
+        C = np.random.uniform(size=n_samples)
+        X = C[:,None] * S
+        X = X + np.random.normal(size=X.shape, scale=0.1)
+        whittaker = cm.Whittaker()
+        X_smoothed = whittaker.fit_transform(X)
+        self.assertIsInstance(whittaker.penalty_, float)
+        self.assertEqual(X_smoothed.shape, X.shape)

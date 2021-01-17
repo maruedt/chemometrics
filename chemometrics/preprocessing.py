@@ -21,6 +21,7 @@ import scipy.sparse.linalg as splinalg
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils import check_array
 from sklearn.utils.validation import (FLOAT_DTYPES, check_is_fitted)
+from scipy.optimize import minimize_scalar
 
 
 def asym_ls(X, y, asym_factor=0.1):
@@ -237,6 +238,7 @@ class Emsc(TransformerMixin, BaseEstimator):
         self.coefficients_ = coefficients.T
         return X.T
 
+
 class Whittaker(TransformerMixin, BaseEstimator):
     r"""
     Smooth `X` with a whittaker smoother
@@ -294,10 +296,10 @@ class Whittaker(TransformerMixin, BaseEstimator):
 
     def __init__(self, penalty='auto', constraint_order=2):
         if penalty == 'auto':
-            self.estimate_penalty = True
+            self.isPenaltyEstimated = True
             self.penalty_ = None
         elif type(penalty) in (int, float):
-            self.estimate_penalty = False
+            self.isPenaltyEstimated = False
             self.penalty_ = penalty
         else:
             raise TypeError('penalty type not correct.')
@@ -318,12 +320,17 @@ class Whittaker(TransformerMixin, BaseEstimator):
             Ignored
         """
         X = self._validate_data(X, estimator=self, dtype=FLOAT_DTYPES)
+        if self.isPenaltyEstimated:
+            self._estimate_penalty(X)
+
+        self._fit(X)
+        return self
+
+    def _fit(self, X):
+        "Fit without argument checks or parameter estimation."
         n_series, n_var = X.shape
-
-
         C = _get_whittaker_lhs(n_var, self.penalty_, self.constraint_order)
         self.solve1d_ = splinalg.factorized(C.tocsc())
-        return self
 
     def transform(self, X, copy=True):
         """
@@ -378,6 +385,28 @@ class Whittaker(TransformerMixin, BaseEstimator):
         cv_residuals = residuals / (1 - h_bar)
         error = np.sum(cv_residuals ** 2) / n_var
         return error
+
+    def _obj_fun(self, X, penalty):
+        "Objective funtion for penalty estimation"
+        self.penalty_ = 10**penalty
+        self._fit(X)
+        return self.score(X)
+
+    def _estimate_penalty(self, X):
+        """
+        Estimate optimal penalty based on score.
+
+        The penalty of the whittaker filter is adjusted until the leave-one-out
+        error is minimized. The function uses Brent's algorithm and varies
+        `penalty_` on a logarithmic scale.
+        """
+
+        obj_fun = lambda log_penalty: self._obj_fun(X, log_penalty)
+        bracket = [0, 4]
+        res = minimize_scalar(obj_fun, bracket=bracket)
+
+        self.penalty_ = 10**res.x
+
 
 def _get_whittaker_lhs(n_var, penalty, constraint_order, weights=None):
     r"""

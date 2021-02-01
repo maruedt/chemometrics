@@ -407,6 +407,117 @@ class Whittaker(TransformerMixin, BaseEstimator):
 
         self.penalty_ = 10**res.x
 
+class AsymWhittaker(TransformerMixin, BaseEstimator):
+    r"""
+    Background correction `X` with an asymmetric Whittaker filter
+
+    `AsymWhittaker` smooths `X` with an asymmetric Whittaker filter. The filter
+    estimates the background by a non-parametric line constraint by its derivative
+    smoothness. `penalty` defines the penalty on non-smoothness.
+
+    Parameters
+    ----------
+    penalty : float or 'auto' (default)
+        Scaling factor of the penalty term for non-smoothness. If 'auto' is
+        given, a penalty is estimated based on an algorithmically optimized
+        leave-one-out cross validation
+
+    constraint_order : int
+        Defines on which order of derivative the constraint acts on.
+
+    asym_factor : float
+        Relative weight of negative residuals. Positive residuals obtain
+        a weight of `1-asym_factor`. The default value is `0.9`.
+
+    Attributes
+    ----------
+
+    background_ : (n, m) ndarray
+        Estimated background from last call to `transform`.
+
+    Notes
+    -----
+    `AsymWhittaker` uses a sparse matrices for efficiency reasons. `X` may
+    however be a full matrix.
+    In contrast to the proposed algorithm by Eilers [1], no Cholesky
+    decomposition is used. The reason is twofold. The Cholesky decomposition
+    is not implemented for sparse matrices in Numpy/Scipy. Eilers uses the
+    Cholesky decomposition to prevent Matlab from "reordering the sparse
+    equation systems for minimal bandwidth". Matlab seems to rely on UMFPACK
+    for sparse matrix devision [2] which implements column reordering for
+    sparsity preservation. As sparse matrix we are working with is square and
+    positive-definite, we can rely on the builtin `factorize` method, which
+    solves with UMFPACK if installed, otherwise with SuperLU.
+
+    References
+    ----------
+    Application of whittaker smoother to spectroscopic data [1].
+
+    .. [1] Paul H. Eilers, A perfect smoother, Anal. Chem., vol 75, 14, pp.
+    3631-3636, 2003.
+    .. [2] UMFPAC, https://en.wikipedia.org/wiki/UMFPACK, accessed
+    03.May.2020.
+    """
+
+    def __init__(self, penalty, constraint_order=2, asym_factor=0.9):
+        self.penalty = penalty
+        self.constraint_order = constraint_order
+        self.asym_factor = asym_factor
+
+    def fit(self, X, y=None):
+        """
+        Calculate regression matrix for later use.
+
+        Parameters
+        ----------
+        X : (n, m) ndarray
+            Data to be pretreated. ``n`` samples x ``m`` variables (typically
+            wavelengths)
+
+        y :
+            Ignored
+        """
+        X = self._validate_data(X, estimator=self, dtype=FLOAT_DTYPES)
+
+        return self
+
+    def transform(self, X, copy=True):
+        """
+        Do asymmetric Whittaker background subtraction.
+
+        Parameters
+        ----------
+        X : (n, m) ndarray
+            Data to be pretreated. ``n`` samples x ``m`` variables (typically
+            wavelengths)
+
+        copy : bool (`True` default)
+            Whether to genrate a copy of the input file or calculate in place.
+        """
+        X = check_array(X, estimator=self, dtype=FLOAT_DTYPES, copy=copy)
+        self.background_ = np.apply_along_axis(self._solve1d, 1, X)
+        return X - self.background_
+
+    def _solve1d(self, x, max_iterations=10):
+        # prepare loop for asymmetric least squares
+        weights = np.ones(self.n_features_in_)
+        weights_old = np.zeros(self.n_features_in_)
+        counter = 0
+        # loop until optimum or max iterations
+        while (np.any(weights != weights_old) & (counter < max_iterations)):
+            scaled_x = x * weights
+            C = _get_whittaker_lhs(self.n_features_in_, self.penalty,
+                                   self.constraint_order, weights=weights)
+            solve1d = splinalg.factorized(C.tocsc())
+            x_bg = solve1d(scaled_x)
+            # prepare for next loop: weights and counter
+            residuals = x - x_bg
+            weights_old = weights.copy()
+            weights[residuals < 0] = self.asym_factor
+            weights[residuals >= 0] = 1 - self.asym_factor
+            counter += 1
+        return x_bg
+
 
 def _get_whittaker_lhs(n_var, penalty, constraint_order, weights=None):
     r"""

@@ -127,11 +127,11 @@ class Testwhittaker(unittest.TestCase):
         r"""
         Test that very weak smoothing returns itself
         """
-        shape = (50, 1)
+        shape = (1, 50)
         penalty = 0
         X = np.random.normal(size=shape)
         whittaker = cm.Whittaker(penalty=penalty)
-        X_smoothed = whittaker.fit_transform(X, penalty)
+        X_smoothed = whittaker.fit_transform(X)
         self.assertTrue(np.all(np.isclose(X, X_smoothed)))
 
     def test_max_smoothing(self):
@@ -207,3 +207,45 @@ class Testwhittaker(unittest.TestCase):
         X_smoothed = whittaker.fit_transform(X)
         self.assertIsInstance(whittaker.penalty_, float)
         self.assertEqual(X_smoothed.shape, X.shape)
+
+
+class TestAsymWhittaker(unittest.TestCase):
+    r"""
+    Test ``AsymWhittaker`` background correction.
+    """
+    def test_shape(self):
+        shape = (100, 50)
+        penalty = 100
+        diff_order = [1, 2]
+        X = np.random.normal(size=shape)
+        for i in diff_order:
+            aw = cm.AsymWhittaker(penalty=penalty, constraint_order=i)
+            X_smoothed = aw.fit_transform(X)
+            self.assertEqual(X_smoothed.shape, shape)
+
+    def test_null_smoothing(self):
+        r"""
+        Test that very weak background subtraction returns 0.
+        """
+        shape = (1, 50)
+        penalty = 0
+        X = np.random.normal(size=shape)
+        aw = cm.AsymWhittaker(penalty=penalty)
+        X_smoothed = aw.fit_transform(X)
+        self.assertTrue(np.all(np.isclose(0, X_smoothed)))
+
+    def test_very_asymmetric_bg(self):
+        r"""
+        Test that a high asym_factor leads to no negative values.
+        """
+        shape = (1, 50)
+        penalty = 100
+        diff_order = 2
+        asym_factor = 0.99999999999
+        X = np.random.normal(size=shape)
+        aw = cm.AsymWhittaker(penalty=penalty, constraint_order = diff_order,
+                              asym_factor=asym_factor)
+        X_smoothed = aw.fit_transform(X)
+        close_to_zero = np.isclose(0, X_smoothed)
+        greater_than_zero = X_smoothed > 0
+        self.assertTrue(np.all(close_to_zero | greater_than_zero))

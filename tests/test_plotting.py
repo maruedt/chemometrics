@@ -1,4 +1,4 @@
-# Copyright 2020 Matthias Rüdt
+# Copyright 2021 Matthias Rüdt
 #
 # This file is part of chemometrics.
 #

@@ -70,7 +70,7 @@ class TestAsym_ls(unittest.TestCase):
 
 class TestEmsc(unittest.TestCase):
     r"""
-    Test the `emsc` function
+    Test the `Emsc` preprocessing.
     """
 
     def test_shape(self):

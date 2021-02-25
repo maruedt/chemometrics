@@ -32,3 +32,4 @@ chemical information.
 from .preprocessing import *
 from .plotting import *
 from .utils import *
+from .regression import *

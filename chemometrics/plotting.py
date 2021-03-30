@@ -117,5 +117,4 @@ def plot_svd(D, n_comp=5, n_eigenvalues=20):
     plt.gca().set_yscale('log')
     plt.subplot(133)
     plt.plot(vh.T[:, :n_comp])
-
-    return fig
+    

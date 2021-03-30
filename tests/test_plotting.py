@@ -60,9 +60,8 @@ class TestPlot_svd(unittest.TestCase):
         D = np.random.multivariate_normal(mean, cov, size=n_series)
 
         # execute function with artificial data
-        fig = cm.plot_svd(D, n_comp=n_comp, n_eigenvalues=n_eigenvalues)
+        lines = cm.plot_svd(D, n_comp=n_comp, n_eigenvalues=n_eigenvalues)
 
-        self.assertTrue(type(fig) is matplotlib.figure.Figure)
         self.assertEqual(len(fig.axes), 3)
         self.assertEqual(len(fig.axes[0].lines), n_comp)
         self.assertEqual(len(fig.axes[1].lines), n_eigenvalues)

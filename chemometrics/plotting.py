@@ -105,7 +105,7 @@ def plot_svd(D, n_comp=5, n_eigenvalues=20):
     """
     u, s, vh = linalg.svd(D)
 
-    fig = plt.figure(figsize=(15, 5))
+    _ = plt.figure(figsize=(15, 5))
     plt.subplot(131)
     plt.plot(u[:, :n_comp])
     plt.subplot(132)
@@ -117,4 +117,3 @@ def plot_svd(D, n_comp=5, n_eigenvalues=20):
     plt.gca().set_yscale('log')
     plt.subplot(133)
     plt.plot(vh.T[:, :n_comp])
-    

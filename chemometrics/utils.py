@@ -50,6 +50,21 @@ def generate_background(n_wl, rel_lengthscale=0.5, size=1):
     return background
 
 
+def generate_data(n_wl=100, n_samples=100, n_conc=2, noise=0.1):
+    """
+    Generate artificial spectroscopic XY data without background
+    """
+    Y = np.random.uniform(size=[n_samples, n_conc])
+    spectra = np.zeros(shape=[n_wl, n_conc])
+
+    for i in range(n_conc):
+        spectra[:, i] = generate_spectra(n_wl, n_wl//20, 1)
+
+    X = Y @ spectra.T + np.random.normal(scale=noise,
+                                         size=[n_samples, n_wl])
+    return X, Y
+
+
 def _gaussian_fun(x, mu, sigma):
     r"""
     Generates Gaussian profile

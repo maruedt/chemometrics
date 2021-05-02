@@ -22,6 +22,20 @@ import numpy as np
 def generate_spectra(n_wl, n_band, bandwidth):
     r"""
     Generate a dummy spectra with n_band
+
+    Parameters
+    ----------
+    n_wl : int
+        number of wavelengths/signals to generate
+    rel_lengthscale : float
+        lengths scale of the gaussian process kernel
+    n_band : int
+        number of background spectra to generate
+
+    Returns
+    -------
+    background : (n_wl, n_band)
+        artificial background spectra
     """
     wl = np.arange(n_wl)
     spectra = np.zeros(n_wl)
@@ -39,15 +53,30 @@ def generate_background(n_wl, rel_lengthscale=0.5, size=1):
     Generate dummy background.
 
     Generate dummy background by drawing samples from a gaussian process.
+
+    Parameters
+    ----------
+    n_wl : int
+        number of wavelengths/signals to generate
+    rel_lengthscale : float
+        lengths scale of the gaussian process kernel
+    size : int
+        number of background spectra to generate
+
+    Returns
+    -------
+    background : (n_wl, size)
+        artificial background spectra
     """
     mean = np.zeros(n_wl)
+    # use a gaussian kernel based weighting for the covariance matrix
     x = np.arange(n_wl)[:, None]
     dist = x.T - x
     cov = np.exp(-(dist / (n_wl * rel_lengthscale))**2)
 
-    # draw a few samples from gaussian process as data
+    # draw 'size' samples from gaussian process as data
     background = np.random.multivariate_normal(mean, cov, size=size)
-    return background
+    return background.T
 
 
 def generate_data(n_wl=100, n_samples=100, n_conc=2, noise=0.1):

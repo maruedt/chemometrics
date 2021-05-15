@@ -141,7 +141,7 @@ class Testwhittaker(unittest.TestCase):
         shape = (1, 50)
         penalty = 1e9
         diff_order = 1
-        X = np.random.normal(size=shape) + np.arange(shape[1])[:,None].T
+        X = np.random.normal(size=shape) + np.arange(shape[1])[:, None].T
         whittaker = cm.Whittaker(penalty=penalty, constraint_order=diff_order)
         X_smoothed = whittaker.fit_transform(X)
         is_close = np.isclose(X_smoothed, X.mean())
@@ -198,10 +198,10 @@ class Testwhittaker(unittest.TestCase):
         n_band = 20
         bandwidth = 1
         n_samples = 50
-        S = cm.generate_background(n_wl) + cm.generate_spectra(n_wl, n_band,
-                                                               bandwidth)
+        S = cm.generate_background(n_wl).T + cm.generate_spectra(n_wl, n_band,
+                                                                 bandwidth)
         C = np.random.uniform(size=n_samples)
-        X = C[:,None] * S
+        X = C[:, None] * S
         X = X + np.random.normal(size=X.shape, scale=0.1)
         whittaker = cm.Whittaker()
         X_smoothed = whittaker.fit_transform(X)
@@ -213,7 +213,11 @@ class TestAsymWhittaker(unittest.TestCase):
     r"""
     Test ``AsymWhittaker`` background correction.
     """
+
     def test_shape(self):
+        """
+        Test shape of return argument
+        """
         shape = (100, 50)
         penalty = 100
         diff_order = [1, 2]
@@ -243,7 +247,7 @@ class TestAsymWhittaker(unittest.TestCase):
         diff_order = 2
         asym_factor = 0.99999999999
         X = np.random.normal(size=shape)
-        aw = cm.AsymWhittaker(penalty=penalty, constraint_order = diff_order,
+        aw = cm.AsymWhittaker(penalty=penalty, constraint_order=diff_order,
                               asym_factor=asym_factor)
         X_smoothed = aw.fit_transform(X)
         close_to_zero = np.isclose(0, X_smoothed)

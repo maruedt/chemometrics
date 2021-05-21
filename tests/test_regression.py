@@ -18,28 +18,34 @@
 from .context import chemometrics as cm  # accounts for relativ path
 import numpy as np
 import unittest
+from sklearn.pipeline import make_pipeline, Pipeline
+from sklearn.cross_decomposition import PLSRegression
+from sklearn.model_selection import KFold
 
 
 class TestPLSRegression(unittest.TestCase):
     """
     Test adjustments done to PLSRegression child class
     """
+
     def setUp(self):
         self.n_wl = 100
         self.n_samples = 100
         self.n_conc = 2
 
-        Y = np.random.uniform(size=[self.n_samples, self.n_conc])
+        self.Y = np.random.uniform(size=[self.n_samples, self.n_conc])
         noise = 0.1
         spectra = np.zeros(shape=[self.n_wl, self.n_conc])
 
         for i in range(self.n_conc):
             spectra[:, i] = cm.generate_spectra(self.n_wl, self.n_wl//20, 1)
 
-        X = Y @ spectra.T + np.random.normal(scale=noise,
-                                             size=[self.n_samples, self.n_wl])
+        self.X = self.Y @ spectra.T + np.random.normal(
+            scale=noise,
+            size=[self.n_samples, self.n_wl]
+        )
         self.pls = cm.PLSRegression()
-        self.pls = self.pls.fit(X, Y)
+        self.pls = self.pls.fit(self.X, self.Y)
 
     def test_vip_shape(self):
         """
@@ -52,3 +58,108 @@ class TestPLSRegression(unittest.TestCase):
         Test that sum of squared VIPs == number of X variables (definition!)
         """
         self.assertTrue(np.isclose(np.sum(self.pls.vip_**2), self.n_wl))
+
+    def test_hat_shape(self):
+        """
+        Test the shape of the vip variable
+        """
+        hat = self.pls.hat(self.X)
+        self.assertTrue(hat.shape == (self.n_samples, self.n_samples))
+
+    def test_hat_works(self):
+        """
+        Test that hat works according to its definition i.e. H * Y = Ŷ
+        """
+        hat = self.pls.hat(self.X)
+        # mean centered prediction
+        Y_hat = self.pls.predict(self.X) - np.mean(self.Y, axis=0)
+        self.assertTrue(np.allclose(hat @ self.Y, Y_hat))
+
+    def test_hat_symmetric(self):
+        """
+        Test that hat matrix is symmetric
+        """
+        hat = self.pls.hat(self.X)
+        self.assertTrue(np.allclose(hat, hat.T))
+
+    def test_hat_indempotent(self):
+        """
+        Test that hat matrix is indempotent (hat = hat squared)
+        """
+        hat = self.pls.hat(self.X)
+        self.assertTrue(np.allclose(hat, hat @ hat))
+
+    def test_leverage_shape(self):
+        """
+        Test that leverage provides correct matrix shape
+        """
+        leverage = self.pls.leverage(self.X)
+        self.assertTrue(leverage.shape == (self.n_samples, ))
+
+    def test_leverage_definition(self):
+        """
+        Test that leverage is diag of hat matrix.
+        """
+        leverage = self.pls.leverage(self.X)
+        hat = self.pls.hat(self.X)
+        self.assertTrue(np.allclose(leverage, np.diag(hat)))
+
+
+class TestFit_pls(unittest.TestCase):
+    """
+    Test fit_pls function.
+    """
+
+    def test_raise_TypeError_pipeline(self):
+        """
+        Test if function raises a TypeError if wrong pipeline is provided
+        """
+        X, Y = cm.generate_data()
+        with self.assertRaises(TypeError):
+            cm.fit_pls(X, Y, pipeline="supply string as wrong object")
+
+        with self.assertRaises(TypeError):
+            pipeline = make_pipeline(cm.PLSRegression())
+            cm.fit_pls(X, Y, pipeline=pipeline)
+
+    def test_raise_TypeError_crossvalidation(self):
+        """
+        Test if function raises a TypeError of wrong CV object is provided
+        """
+        X, Y = cm.generate_data()
+
+        with self.assertRaises(TypeError):
+            cm.fit_pls(X, Y, cv_object='supply string as wrong object')
+
+    def test_return_type(self):
+        """
+        Test if functions returns an object of type Pipeline
+        """
+        max_lv = 11
+        X, Y = cm.generate_data()
+        # basic example
+        self._assert_return_args(cm.fit_pls(X, Y, max_lv=max_lv))
+
+        # with pipeline provided
+        pipe = make_pipeline(cm.PLSRegression())
+        self._assert_return_args(cm.fit_pls(X, Y, pipeline=pipe))
+
+        # with cross validation
+        cv = KFold()
+        self._assert_return_args(cm.fit_pls(X, Y, cv_object=cv))
+
+    def _assert_return_args(self, returned_args):
+        """
+        Assert that the returned arguments of fit_pls are correct
+        """
+        # first return argument must be a pipeline
+        pipeline = returned_args[0]
+        self.assertIsInstance(pipeline, Pipeline)
+        self.assertIsInstance(pipeline[-1], PLSRegression)
+
+        # second return argument must capture info on calibration/cv in dict
+        calibration_info = returned_args[1]
+        self.assertIsInstance(calibration_info, dict)
+        keys = ['q2', 'r2', 'prediction', 'figure_cv', 'figure_model']
+        for key in keys:
+            self.assertIn(key, calibration_info)

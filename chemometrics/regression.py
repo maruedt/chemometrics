@@ -16,10 +16,13 @@
 # along with chemometrics.  If not, see <https://www.gnu.org/licenses/>.
 
 from sklearn.cross_decomposition import PLSRegression as _PLSRegression
+from sklearn.pipeline import make_pipeline, Pipeline
 import numpy as np
+
 
 class PLSRegression(_PLSRegression):
     """
+    PLS regression with added chemometric functionality
     """
 
     def __init__(self, n_components=2, *, scale=True,
@@ -34,7 +37,7 @@ class PLSRegression(_PLSRegression):
 
     def _calculate_vip(self):
         """
-        Calculates variable importance in projection (VIP).
+        Calculate variable importance in projection (VIP).
 
         Method adapted from Mehmood et al. Chemometrics and Intelligent
         Laboratory Systems 118 (2012) 62–69.
@@ -44,3 +47,44 @@ class PLSRegression(_PLSRegression):
         counter = np.sum(ss * self.x_weights_**2, axis=1)
         denominator = np.sum(ss)
         return np.sqrt(self.n_features_in_ * counter / denominator)
+
+    def hat(self, X):
+        """
+        Calculate the hat (projection) matrix.
+
+        Calculate the hat matrix in the X/Y score space. The hat matrix $H$
+        projects the observed $Y$ onto the predicted $\hat Y$. For obtaining
+        the standard hat matrix, the provided X matrix should correspond to the
+        matrix used during the calibration (call to `fit`).
+        """
+        S = self.transform(X)
+        return S @ np.linalg.inv(S.T @ S) @ S.T
+
+    def leverage(self, X):
+        """
+        Calculate the statistical leverage.
+
+        Calculate the leverage (self-influence of Y) in the X/Y score space.
+        For obtaining the standard leverage, the provided X matrix should
+        correspond to the matrix used during calibration (call to `fit`).
+        """
+        return np.diag(self.hat(X))
+
+
+def fit_pls(X, Y, pipeline=None, cv_object=None, max_lv=10):
+    """
+    Calibrate PLS model and generate analytical plots
+    """
+    if not pipeline:
+        pipeline = make_pipeline(PLSRegression())
+    elif ~(pipeline is Pipeline):
+        raise TypeError(
+            "pipeline argument provided is of type "
+            + "{0} and not of type Pipeline.".format(type(pipeline))
+        )
+    elif pipeline[-1] is not _PLSRegression:
+        # check if pipeline ends with PLSRegression
+        raise TypeError(
+            "Type of last object provided in pipline is "
+            + "{0} but should be a PLSRegression".format(type(pipeline[-1]))
+        )

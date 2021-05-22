@@ -18,6 +18,7 @@
 from sklearn.cross_decomposition import PLSRegression as _PLSRegression
 from sklearn.pipeline import make_pipeline, Pipeline
 import numpy as np
+import matplotlib.pyplot as plt
 
 
 class PLSRegression(_PLSRegression):
@@ -37,7 +38,7 @@ class PLSRegression(_PLSRegression):
 
     def _calculate_vip(self):
         """
-        Calculate variable importance in projection (VIP).
+        Calculate variable importance in projection (VIP)
 
         Method adapted from Mehmood et al. Chemometrics and Intelligent
         Laboratory Systems 118 (2012) 62–69.
@@ -50,7 +51,7 @@ class PLSRegression(_PLSRegression):
 
     def hat(self, X):
         """
-        Calculate the hat (projection) matrix.
+        Calculate the hat (projection) matrix
 
         Calculate the hat matrix in the X/Y score space. The hat matrix $H$
         projects the observed $Y$ onto the predicted $\hat Y$. For obtaining
@@ -62,7 +63,7 @@ class PLSRegression(_PLSRegression):
 
     def leverage(self, X):
         """
-        Calculate the statistical leverage.
+        Calculate the statistical leverage
 
         Calculate the leverage (self-influence of Y) in the X/Y score space.
         For obtaining the standard leverage, the provided X matrix should
@@ -70,6 +71,40 @@ class PLSRegression(_PLSRegression):
         """
         return np.diag(self.hat(X))
 
+    def plot(self, X, Y):
+        """
+        Displays a figure with 4 common analytical plots for PLS models
+        """
+        fig = plt.figure(figsize=(15, 15))
+        Y_hat = self.predict(X)
+        residuals = Y - Y_hat
+        leverage = self.leverage(X)
+
+        # 1) observed vs predicted
+        plt.subplot(221)
+        plt.scatter(Y, Y_hat)
+        plt.xlabel('Observed')
+        plt.ylabel('Predicted')
+
+        # 2) predicted vs residuals
+        plt.subplot(222)
+        plt.scatter(Y_hat, residuals)
+        plt.xlabel('Predicted')
+        plt.ylabel('Residuals')
+
+        # 3) leverage vs residuals
+        plt.subplot(223)
+        plt.scatter(leverage, residuals)
+        plt.xlabel('Leverage')
+        plt.ylabel('Residuals')
+
+        # 4) VIPs
+        plt.subplot(224)
+        plt.plot(self.vip_)
+        plt.xlabel('Predictor')
+        plt.ylabel('VIP')
+
+        return fig.axes
 
 def fit_pls(X, Y, pipeline=None, cv_object=None, max_lv=10):
     """

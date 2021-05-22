@@ -21,6 +21,7 @@ import unittest
 from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.cross_decomposition import PLSRegression
 from sklearn.model_selection import KFold
+import matplotlib
 
 
 class TestPLSRegression(unittest.TestCase):
@@ -31,7 +32,7 @@ class TestPLSRegression(unittest.TestCase):
     def setUp(self):
         self.n_wl = 100
         self.n_samples = 100
-        self.n_conc = 2
+        self.n_conc = 1
 
         self.Y = np.random.uniform(size=[self.n_samples, self.n_conc])
         noise = 0.1
@@ -98,11 +99,19 @@ class TestPLSRegression(unittest.TestCase):
 
     def test_leverage_definition(self):
         """
-        Test that leverage is diag of hat matrix.
+        Test that leverage is diag of the hat matrix
         """
         leverage = self.pls.leverage(self.X)
         hat = self.pls.hat(self.X)
         self.assertTrue(np.allclose(leverage, np.diag(hat)))
+
+    def test_plot(self):
+        """
+        Test that plot generates 4 subplot in figure
+        """
+        axes = self.pls.plot(self.X, self.Y)
+        for ax in axes:
+            self.assertIsInstance(ax, matplotlib.axes.Axes)
 
 
 class TestFit_pls(unittest.TestCase):

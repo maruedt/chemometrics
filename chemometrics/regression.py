@@ -113,7 +113,42 @@ class PLSRegression(_PLSRegression):
 
 def fit_pls(X, Y, pipeline=None, cv_object=None, max_lv=10):
     """
-    Calibrate PLS model and generate analytical plots
+    Auto-calibrate PLS model and generate analytical plots
+
+    A PLS model is calibrated based on the maximization of the coefficient of
+    determination during cross-validation ($Q^2$). The function provides
+    multiple plots for assessing the model quality. The first figure addresses
+    the model performance during cross validation and the estimation of optimal
+    number of latent variables by showing $R^2$/$Q^2$ values ($R^2 as bars,
+    $Q^2$ as boxplots based on the individual rotations). The second figure
+    shows four subplots with analytical information for the optimal model. The
+    plotted figures are: a) observed versus predicted 2) predicted versus
+    residuals 3) leverage versus residuals 4) Variable importance in projection
+    (VIP) scores.
+
+    Parameters
+    ----------
+    X : (n, m) ndarray
+        Matrix of predictors. n samples x m predictors
+    Y : (n, o) ndarray
+        Matrix of responses. n samples x o responses
+    pipeline : {None, sklearn.pipeline.Pipeline}
+        A pipeline object providing a workflow of preprocessing and a
+        PLSRegression model. The last entry must be a
+        chemometrics.PLSRegression instance.
+    cv_object : {None, cv_object}
+        An object providing guidance for cross-validation. Typically, it will
+        be an instance of an sklearn.model_selection.BaseCrossValidator object.
+    max_lv : int
+        Number of latent variables up to which the cross-validation score will
+        be screened.
+
+    Returns
+    -------
+    pipeline : Pipeline
+        The calibrated model pipeline
+    summary : dict
+        Summary of the model calibration.
     """
     if not pipeline:
         pipeline = make_pipeline(PLSRegression())
@@ -123,7 +158,7 @@ def fit_pls(X, Y, pipeline=None, cv_object=None, max_lv=10):
             + "{0} and not of type Pipeline.".format(type(pipeline))
         )
     elif not isinstance(pipeline[-1],
-                        sklearn.cross_decomposition.PLSRegression):
+                        PLSRegression):
         # check if pipeline ends with PLSRegression
         raise TypeError(
             "Type of last object provided in pipline is "

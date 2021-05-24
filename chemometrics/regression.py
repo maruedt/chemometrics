@@ -15,8 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with chemometrics.  If not, see <https://www.gnu.org/licenses/>.
 
+import sklearn
 from sklearn.cross_decomposition import PLSRegression as _PLSRegression
-from sklearn.pipeline import make_pipeline, Pipeline
+from sklearn.pipeline import make_pipeline
+from sklearn.model_selection import cross_val_score, KFold
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -80,6 +82,7 @@ class PLSRegression(_PLSRegression):
         residuals = Y - Y_hat
         leverage = self.leverage(X)
 
+        # make lmr plots
         # 1) observed vs predicted
         plt.subplot(221)
         plt.scatter(Y, Y_hat)
@@ -94,7 +97,8 @@ class PLSRegression(_PLSRegression):
 
         # 3) leverage vs residuals
         plt.subplot(223)
-        plt.scatter(leverage, residuals)
+        for i in range(residuals.shape[1]):
+            plt.scatter(leverage, residuals[:, i], alpha=0.5)
         plt.xlabel('Leverage')
         plt.ylabel('Residuals')
 
@@ -106,20 +110,67 @@ class PLSRegression(_PLSRegression):
 
         return fig.axes
 
+
 def fit_pls(X, Y, pipeline=None, cv_object=None, max_lv=10):
     """
     Calibrate PLS model and generate analytical plots
     """
     if not pipeline:
         pipeline = make_pipeline(PLSRegression())
-    elif ~(pipeline is Pipeline):
+    elif not (isinstance(pipeline, sklearn.pipeline.Pipeline)):
         raise TypeError(
             "pipeline argument provided is of type "
             + "{0} and not of type Pipeline.".format(type(pipeline))
         )
-    elif pipeline[-1] is not _PLSRegression:
+    elif not isinstance(pipeline[-1],
+                        sklearn.cross_decomposition.PLSRegression):
         # check if pipeline ends with PLSRegression
         raise TypeError(
             "Type of last object provided in pipline is "
             + "{0} but should be a PLSRegression".format(type(pipeline[-1]))
         )
+
+    if not cv_object:
+        cv_object = KFold(n_splits=5)
+
+    # perform CV of model up to max_lv
+    r2 = []
+    q2 = []
+    for n_lv in range(1, max_lv+1):
+        pipeline[-1].n_components = n_lv
+        q2.append(cross_val_score(pipeline, X, Y, cv=cv_object))
+        r2.append(pipeline.fit(X, Y).score(X, Y))
+
+    q2 = np.stack(q2).T
+    r2 = np.array(r2)
+
+    # plot CV results
+    fig_cv = plt.figure(figsize=(6, 6))
+    plt.bar(np.arange(1, max_lv+1), r2, alpha=0.5)
+    plt.boxplot(q2, positions=np.arange(1, max_lv+1))
+    plt.xlabel('Latent variables')
+    plt.ylabel('R2 / Q2')
+
+    # recover best q2 and adjust model accordingly
+    pipeline[-1].n_components = np.argmax(np.mean(q2, axis=0)) + 1
+    pipeline = pipeline.fit(X, Y)
+
+    # plot PLS performance after preprocessing
+    if len(pipeline) > 1:
+        X_preprocessed = pipeline[:-1].predict(X)
+    else:
+        X_preprocessed = X
+    pipeline[-1].plot(X_preprocessed, Y)
+    fig_model = plt.gcf()
+
+    # arrange return arguments
+    analysis = {
+        'r2': r2,
+        'q2': q2,
+        'q2_mean': np.mean(q2, axis=0),
+        'optimal_lv': pipeline[-1].n_components,
+        'figure_cv': fig_cv,
+        'figure_model': fig_model
+    }
+
+    return pipeline, analysis

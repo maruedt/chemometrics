@@ -32,7 +32,7 @@ class TestPLSRegression(unittest.TestCase):
     def setUp(self):
         self.n_wl = 100
         self.n_samples = 100
-        self.n_conc = 1
+        self.n_conc = 2
 
         self.Y = np.random.uniform(size=[self.n_samples, self.n_conc])
         noise = 0.1
@@ -127,18 +127,16 @@ class TestFit_pls(unittest.TestCase):
         with self.assertRaises(TypeError):
             cm.fit_pls(X, Y, pipeline="supply string as wrong object")
 
-        with self.assertRaises(TypeError):
-            pipeline = make_pipeline(cm.PLSRegression())
-            cm.fit_pls(X, Y, pipeline=pipeline)
-
-    def test_raise_TypeError_crossvalidation(self):
+    def test_accept_cv_object(self):
         """
         Test if function raises a TypeError of wrong CV object is provided
         """
         X, Y = cm.generate_data()
 
-        with self.assertRaises(TypeError):
-            cm.fit_pls(X, Y, cv_object='supply string as wrong object')
+        n_splits = 7
+        model, analysis = cm.fit_pls(X, Y, cv_object=KFold(n_splits=n_splits))
+
+        self.assertTrue(analysis['q2'].shape[0] == n_splits)
 
     def test_return_type(self):
         """
@@ -169,6 +167,6 @@ class TestFit_pls(unittest.TestCase):
         # second return argument must capture info on calibration/cv in dict
         calibration_info = returned_args[1]
         self.assertIsInstance(calibration_info, dict)
-        keys = ['q2', 'r2', 'prediction', 'figure_cv', 'figure_model']
+        keys = ['q2', 'r2', 'figure_cv', 'figure_model']
         for key in keys:
             self.assertIn(key, calibration_info)

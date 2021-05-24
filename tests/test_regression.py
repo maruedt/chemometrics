@@ -125,7 +125,7 @@ class TestFit_pls(unittest.TestCase):
         """
         X, Y = cm.generate_data()
         with self.assertRaises(TypeError):
-            cm.fit_pls(X, Y, pipeline="supply string as wrong object")
+            cm.fit_pls(X, Y, pipeline="string as an example wrong object")
 
     def test_accept_cv_object(self):
         """

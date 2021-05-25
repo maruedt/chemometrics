@@ -259,6 +259,9 @@ class Whittaker(TransformerMixin, BaseEstimator):
     constraint_order : int
         Defines on which order of derivative the constraint acts on.
 
+    deriv : int
+        Derivative of the data. Default: 0 - no derivative.
+
     Attributes
     ----------
     estimate_penalty : boolean
@@ -284,6 +287,12 @@ class Whittaker(TransformerMixin, BaseEstimator):
     positive-definite, we can rely on the builtin `factorize` method, which
     solves with UMFPACK if installed, otherwise with SuperLU.
 
+    Derivatives are implemented by multiplying the smoothed matrix with a
+    (local) difference matrix. This is not explicitly described in [1].
+    However, the approach is consistent with the underlying idea of the
+    Whittaker smoother as the (local) differences are used in the derivation of
+    the filter.
+
     References
     ----------
     Application of whittaker smoother to spectroscopic data [1].
@@ -294,7 +303,7 @@ class Whittaker(TransformerMixin, BaseEstimator):
     03.May.2020.
     """
 
-    def __init__(self, penalty='auto', constraint_order=2):
+    def __init__(self, penalty='auto', constraint_order=2, deriv=0):
         if penalty == 'auto':
             self.isPenaltyEstimated = True
             self.penalty_ = None
@@ -305,6 +314,7 @@ class Whittaker(TransformerMixin, BaseEstimator):
             raise TypeError('penalty type not correct.')
 
         self.constraint_order = constraint_order
+        self.deriv = deriv
 
     def fit(self, X, y=None):
         """
@@ -347,6 +357,10 @@ class Whittaker(TransformerMixin, BaseEstimator):
         """
         X = check_array(X, estimator=self, dtype=FLOAT_DTYPES, copy=copy)
         X = np.apply_along_axis(self.solve1d_, 1, X)
+
+        # differentiate
+        if self.deriv > 0:
+            X = _sp_diff_matrix(X.shape[0], diff_order=self.deriv) @ X
         return X
 
     def score(self, X, y=None):

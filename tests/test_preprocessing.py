@@ -136,16 +136,26 @@ class Testwhittaker(unittest.TestCase):
 
     def test_max_smoothing(self):
         r"""
-        Test that very strong smoothing leads to polynomial.
+        Test that very strong smoothing leads to expected results.
         """
+        # first order penality, no derivative -> constant
         shape = (1, 50)
         penalty = 1e9
         diff_order = 1
         X = np.random.normal(size=shape) + np.arange(shape[1])[:, None].T
         whittaker = cm.Whittaker(penalty=penalty, constraint_order=diff_order)
         X_smoothed = whittaker.fit_transform(X)
-        is_close = np.isclose(X_smoothed, X.mean())
-        self.assertTrue(np.all(is_close))
+        self.assertTrue(np.allclose(X_smoothed, X.mean()))
+
+        # first order penality, first derivative -> zeros
+        whittaker.deriv = 1
+        X_smoothed = whittaker.transform(X)
+        self.assertTrue(np.allclose(X_smoothed, 0))
+
+        # second order penality, first order derivative -> constant
+        whittaker.constraint_order = 2
+        X_smoothed = whittaker.fit_transform(X)
+        self.assertTrue(np.allclose(X_smoothed, X.mean()))
 
     def test_sp_diff_matrix(self):
         r"""

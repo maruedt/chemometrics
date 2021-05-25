@@ -150,12 +150,12 @@ class Testwhittaker(unittest.TestCase):
         # first order penality, first derivative -> zeros
         whittaker.deriv = 1
         X_smoothed = whittaker.transform(X)
-        self.assertTrue(np.allclose(X_smoothed, 0))
+        self.assertTrue(np.allclose(X_smoothed, 0, atol=1.e-5))
 
         # second order penality, first order derivative -> constant
         whittaker.constraint_order = 2
         X_smoothed = whittaker.fit_transform(X)
-        self.assertTrue(np.allclose(X_smoothed, X.mean()))
+        self.assertTrue(np.allclose(X_smoothed, X_smoothed.mean()))
 
     def test_sp_diff_matrix(self):
         r"""

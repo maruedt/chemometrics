@@ -355,12 +355,21 @@ class Whittaker(TransformerMixin, BaseEstimator):
         copy : bool (`True` default)
             Whether to genrate a copy of the input file or calculate in place.
         """
+        # call to differentation free transform
+        X = self._transform(X, copy=copy)
+        # differentiate
+        if self.deriv > 0:
+            X = X @ _sp_diff_matrix(X.shape[1], diff_order=self.deriv).T
+
+        return X
+
+    def _transform(self, X, copy=True):
+        """
+        Perform the filtering without differentiation.
+        """
         X = check_array(X, estimator=self, dtype=FLOAT_DTYPES, copy=copy)
         X = np.apply_along_axis(self.solve1d_, 1, X)
 
-        # differentiate
-        if self.deriv > 0:
-            X = _sp_diff_matrix(X.shape[0], diff_order=self.deriv) @ X
         return X
 
     def score(self, X, y=None):
@@ -391,7 +400,7 @@ class Whittaker(TransformerMixin, BaseEstimator):
         3631-3636, 2003.
         """
         n_var = X.shape[0]
-        z = self.transform(X)
+        z = self._transform(X)
         residuals = z - X
         h_bar = _calc_whittaker_h_bar(n_var, self.penalty_,
                                       self.constraint_order)

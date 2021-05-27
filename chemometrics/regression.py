@@ -108,6 +108,8 @@ class PLSRegression(_PLSRegression):
         # 4) VIPs
         plt.subplot(224)
         plt.plot(self.vip_)
+        plt.axhline(1, color=np.zeros([3]), alpha=0.2)
+        plt.axhline(1.5, color=np.zeros([3]), alpha=0.4)
         plt.xlabel('Predictor')
         plt.ylabel('VIP')
 

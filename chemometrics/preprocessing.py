@@ -438,8 +438,8 @@ class AsymWhittaker(TransformerMixin, BaseEstimator):
     Background correction `X` with an asymmetric Whittaker filter
 
     `AsymWhittaker` smooths `X` with an asymmetric Whittaker filter. The filter
-    estimates the background by a non-parametric line constraint by its derivative
-    smoothness. `penalty` defines the penalty on non-smoothness.
+    estimates the background by a non-parametric line constraint by its
+    derivative smoothness. `penalty` defines the penalty on non-smoothness.
 
     Parameters
     ----------
@@ -560,6 +560,7 @@ def _get_whittaker_lhs(n_var, penalty, constraint_order, weights=None):
             D.transpose().dot(D)
     return lhs
 
+
 def _calc_whittaker_h_bar(n_var, penalty, constraint_order,
                           size_estimator=100):
     r"""
@@ -578,6 +579,7 @@ def _calc_whittaker_h_bar(n_var, penalty, constraint_order,
     rhs = np.eye(size_estimator)
     H = np.linalg.lstsq(C, rhs, rcond=-1)[0]
     return np.mean(np.diag(H))
+
 
 def _sp_diff_matrix(m, diff_order=1):
     r"""

@@ -82,20 +82,23 @@ class PLSRegression(_PLSRegression):
         residuals = Y - Y_hat
         leverage = self.leverage(X)
 
-        # make lmr plots
+        # make plots
         # 1) observed vs predicted
         plt.subplot(221)
         plt.scatter(Y, Y_hat)
+        plt.axline((np.min(Y), np.min(Y)), (np.max(Y), np.max(Y)),
+                   color='k', alpha=0.2)
         plt.xlabel('Observed')
         plt.ylabel('Predicted')
 
         # 2) predicted vs residuals
         plt.subplot(222)
         plt.scatter(Y_hat, residuals)
+        plt.axhline(0, color='k', alpha=0.2)
         plt.xlabel('Predicted')
         plt.ylabel('Residuals')
 
-        # 3) leverage vs residuals
+        # 3) leverage mapped to residuals (lmr) plot
         plt.subplot(223)
         for i in range(residuals.shape[1]):
             plt.scatter(leverage, residuals[:, i], alpha=0.5)
@@ -187,7 +190,7 @@ def fit_pls(X, Y, pipeline=None, cv_object=None, max_lv=10):
     plt.ylabel('R2 / Q2')
 
     # recover best q2 and adjust model accordingly
-    pipeline[-1].n_components = np.argmax(np.mean(q2, axis=0)) + 1
+    pipeline[-1].n_components = np.argmax(np.median(q2, axis=0)) + 1
     pipeline = pipeline.fit(X, Y)
 
     # plot PLS performance after preprocessing
@@ -203,6 +206,7 @@ def fit_pls(X, Y, pipeline=None, cv_object=None, max_lv=10):
         'r2': r2,
         'q2': q2,
         'q2_mean': np.mean(q2, axis=0),
+        'q2_median': np.median(q2, axis=0),
         'optimal_lv': pipeline[-1].n_components,
         'figure_cv': fig_cv,
         'figure_model': fig_model

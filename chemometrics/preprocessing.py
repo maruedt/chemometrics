@@ -260,7 +260,8 @@ class Whittaker(TransformerMixin, BaseEstimator):
         Defines on which order of derivative the constraint acts on.
 
     deriv : int
-        Derivative of the data. Default: 0 - no derivative.
+        Derivative of the data. Default: 0 - no derivative. Note: deriv should
+        always be <= constraint_order.
 
     Attributes
     ----------
@@ -291,7 +292,9 @@ class Whittaker(TransformerMixin, BaseEstimator):
     (local) difference matrix. This is not explicitly described in [1].
     However, the approach is consistent with the underlying idea of the
     Whittaker smoother as the (local) differences are used in the derivation of
-    the filter.
+    the filter. Note: the derivative should always be smaller equal to the
+    constraint order. This is, since the Whittaker filter won't explizitly
+    penaltize higher derivative fluctuations than the constraint order.
 
     References
     ----------

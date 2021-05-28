@@ -52,7 +52,7 @@ The source code is available from: https://github.com/maruedt/chemometrics.
 
 
 ## Code quality, testing and future development
-chemometrics is written with a strong focus on code quality in mind. The first implementation of many similar functionalities was done in Matlab but chemometrics has since been rewritten from scratch to omit licensing issues and provide an improved and coherent code structure. The code includes quite an extensive set of unit tests to ensure that it actually does what it is supposed to do. Next to ensuring that the code runs, the tests aim to mathematically ensure the correctness of the different procedures.
+chemometrics is written with a strong focus on code quality in mind. The first implementation of many similar functionalities was done in Matlab but chemometrics has since been rewritten from scratch to omit licensing issues and to provide an improved and coherent code structure. The code includes quite an extensive set of unit tests to ensure that it actually does what it is supposed to do. Next to ensuring that the code runs, the tests aim to mathematically ensure the correctness of the different procedures.
 
 As mentioned above, chemometrics is work in progress. I will be working on integrating additional analytical methods and provide more of the common tools/plots used in chemometrics. This may include:
 - Summary statistics/plots for PCA

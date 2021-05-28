@@ -32,7 +32,7 @@ cm.fit_pls(X_deriv, Y)
 ![CV scores](https://github.com/maruedt/chemometrics/blob/master/examples/pls_cv.png "Cross-validation scores")
 ![PLS analytics](https://github.com/maruedt/chemometrics/blob/master/examples/pls_analysis.png "PLS analytical plots")
 
-More examples with explanation and code are shown in the examples folder. For an initial overview of a typical regression workflow, a look at [this example](https://github.com/maruedt/chemometrics/blob/master/examples/basic_pls_example.ipynb) might be most interesting.
+More examples with explanations and additional code are shown in the examples folder. For an initial overview of a typical regression workflow, a look at [this example](https://github.com/maruedt/chemometrics/blob/master/examples/basic_pls_example.ipynb) might be most interesting.
 
 ## Requirements and installation
 - Python >= 3.8
@@ -50,17 +50,17 @@ python -m pip install chemometrics
 ```
 The source code is available from: https://github.com/maruedt/chemometrics.
 
-## Nomenclature
-chemometrics generally complies with the glossary of scikit-learn: https://scikit-learn.org/stable/glossary.html
 
 ## Code quality, testing and future development
-chemometrics is written with a strong focus on code quality in mind. The first implementation of many similar functionalities was originally done in Matlab but chemometrics has since been rewritten from scratch to omit licensing issues and provide an improved and compliant code structure. The code includes quite an extensive set of unit tests to ensure that it actually does what it is supposed to do.
+chemometrics is written with a strong focus on code quality in mind. The first implementation of many similar functionalities was done in Matlab but chemometrics has since been rewritten from scratch to omit licensing issues and provide an improved and coherent code structure. The code includes quite an extensive set of unit tests to ensure that it actually does what it is supposed to do. Next to ensuring that the code runs, the tests aim to mathematically ensure the correctness of the different procedures.
 
 As mentioned above, chemometrics is work in progress. I will be working on integrating additional analytical methods and provide more of the common tools/plots used in chemometrics. This may include:
 - Summary statistics/plots for PCA
 - Further develop the already available tools for PLS models
 - Potentially MCR
 
+## Nomenclature
+chemometrics generally complies with the glossary of scikit-learn: https://scikit-learn.org/stable/glossary.html
 
 ## Copyright
 Copyright 2021 Matthias Rüdt

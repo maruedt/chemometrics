@@ -123,11 +123,30 @@ class Testwhittaker(unittest.TestCase):
             X_smoothed = whittaker.fit_transform(X)
             self.assertEqual(X_smoothed.shape, shape)
 
+    def test_shape_deriv(self):
+        r"""
+        Test that size of axis 1 of transformed decreases with derivative
+        """
+        shape = (100, 50)
+        penalty = 100
+        deriv_order = range(1, 5)
+        constraint_order = 5
+        X = np.random.normal(size=shape)
+        for i in deriv_order:
+            whittaker = cm.Whittaker(
+                penalty=penalty,
+                constraint_order=constraint_order,
+                deriv=i
+            )
+            X_smoothed = whittaker.fit_transform(X)
+            expected_shape = (shape[0], shape[1]-i)
+            self.assertEqual(X_smoothed.shape, expected_shape)
+
     def test_null_smoothing(self):
         r"""
         Test that very weak smoothing returns itself
         """
-        shape = (1, 50)
+        shape = (2, 50)
         penalty = 0
         X = np.random.normal(size=shape)
         whittaker = cm.Whittaker(penalty=penalty)
@@ -139,13 +158,13 @@ class Testwhittaker(unittest.TestCase):
         Test that very strong smoothing leads to expected results.
         """
         # first order penality, no derivative -> constant
-        shape = (1, 50)
+        shape = (2, 50)
         penalty = 1e9
         diff_order = 1
         X = np.random.normal(size=shape) + np.arange(shape[1])[:, None].T
         whittaker = cm.Whittaker(penalty=penalty, constraint_order=diff_order)
         X_smoothed = whittaker.fit_transform(X)
-        self.assertTrue(np.allclose(X_smoothed, X.mean()))
+        self.assertTrue(np.allclose(X_smoothed, X.mean(axis=1)[:, None]))
 
         # first order penality, first derivative -> zeros
         whittaker.deriv = 1
@@ -155,7 +174,8 @@ class Testwhittaker(unittest.TestCase):
         # second order penality, first order derivative -> constant
         whittaker.constraint_order = 2
         X_smoothed = whittaker.fit_transform(X)
-        self.assertTrue(np.allclose(X_smoothed, X_smoothed.mean()))
+        self.assertTrue(np.allclose(X_smoothed,
+                                    X_smoothed.mean(axis=1)[:, None]))
 
     def test_sp_diff_matrix(self):
         r"""

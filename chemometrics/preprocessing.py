@@ -20,7 +20,7 @@ import scipy.sparse as sparse
 import scipy.sparse.linalg as splinalg
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils import check_array
-from sklearn.utils.validation import (FLOAT_DTYPES, check_is_fitted)
+from sklearn.utils.validation import (FLOAT_DTYPES)
 from scipy.optimize import minimize_scalar
 
 
@@ -56,8 +56,8 @@ def asym_ls(X, y, asym_factor=0.1):
 
     The problem is solved by iteratively adjusting :math:`w` and using a normal
     least-squares regression [1]. The alogrithm stops as soon as the weights
-    are not adjusted from the previous cycle or the maximum number of cycles are
-    exceeded.
+    are not adjusted from the previous cycle or the maximum number of cycles
+    are exceeded.
 
     References
     ----------
@@ -81,14 +81,14 @@ def asym_ls(X, y, asym_factor=0.1):
     beta = np.zeros(shape=[m, o])
 
     # generate solver function
-    solver1d = lambda y1d: _asym_ls_y1d(
-        X, y1d,
-        asym_factor=asym_factor,
-        max_cycles=max_cycles
-    )
+    def solver1d(y1d):
+        fun = _asym_ls_y1d(X, y1d, asym_factor=asym_factor,
+                           max_cycles=max_cycles)
+        return fun
     # iterate over each regression
     beta = np.apply_along_axis(solver1d, 0, y)
     return beta
+
 
 def _asym_ls_y1d(X, y, asym_factor=0.1, max_cycles=10):
     """
@@ -116,6 +116,7 @@ def _asym_ls_y1d(X, y, asym_factor=0.1, max_cycles=10):
         # increase counter
         cycle += 1
     return beta[:, 0]
+
 
 class Emsc(TransformerMixin, BaseEstimator):
     r"""
@@ -205,8 +206,10 @@ class Emsc(TransformerMixin, BaseEstimator):
             # orthogonalize background to baseline information
             beta_background = asym_ls(baseline, self.background,
                                       asym_factor=self.asym_factor)
-            background_pretreated = self.background - np.dot(baseline, beta_background)
-            regressor = np.concatenate([regressor, background_pretreated], axis=1)
+            background_pretreated = self.background - np.dot(baseline,
+                                                             beta_background)
+            regressor = np.concatenate([regressor, background_pretreated],
+                                       axis=1)
 
         # prepare estimate of chemical information
         X_bar = np.mean(X, axis=0)[:, None]  # mean spectra
@@ -383,8 +386,8 @@ class Whittaker(TransformerMixin, BaseEstimator):
         leave-one-out cross-validation scheme. The algorithm uses an
         approximation scheme and does not perform the explicit leave-one-out
         cross-validation. Users need should be careful when applying this
-        cross-validation scheme to data with autocorrelated noise. The algorithm
-        then tends to undersmooth the data.
+        cross-validation scheme to data with autocorrelated noise.
+        The algorithm then tends to undersmooth the data.
 
         Parameters
         ----------
@@ -407,7 +410,8 @@ class Whittaker(TransformerMixin, BaseEstimator):
         residuals = z - X
         h_bar = _calc_whittaker_h_bar(n_var, self.penalty_,
                                       self.constraint_order)
-        # cross-validation error approximation based on formula proposed by Eiler.
+        # cross-validation error approximation based on formula proposed by
+        # Eiler.
         cv_residuals = residuals / (1 - h_bar)
         error = np.sum(cv_residuals ** 2) / n_var
         return error
@@ -427,11 +431,13 @@ class Whittaker(TransformerMixin, BaseEstimator):
         `penalty_` on a logarithmic scale.
         """
 
-        obj_fun = lambda log_penalty: self._obj_fun(X, log_penalty)
+        def obj_fun(log_penalty):
+            return self._obj_fun(X, log_penalty)
         bracket = [0, 4]
         res = minimize_scalar(obj_fun, bracket=bracket)
 
         self.penalty_ = 10**res.x
+
 
 class AsymWhittaker(TransformerMixin, BaseEstimator):
     r"""

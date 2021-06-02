@@ -18,6 +18,7 @@
 import numpy as np
 import scipy.sparse as sparse
 import scipy.sparse.linalg as splinalg
+import matplotlib.pyplot as plt
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.utils import check_array
 from sklearn.utils.validation import (FLOAT_DTYPES)
@@ -415,6 +416,36 @@ class Whittaker(TransformerMixin, BaseEstimator):
         cv_residuals = residuals / (1 - h_bar)
         error = np.sum(cv_residuals ** 2) / n_var
         return error
+
+    def plot(self, X, logpenalty=[-4, 4]):
+        """
+        Plot CV performance over given range
+
+        Provides an analytical plot of the Whittaker filter score depending on
+        the penalty. Each score is the estimated based on a leave-one-out
+        approach (see also `score`).
+        """
+        n_points = 100
+
+        penalties = 10 ** np.linspace(logpenalty[0], logpenalty[1], n_points)
+        scores = np.zeros(penalties.shape)
+        # store original penalty to restore state
+        original_penalty = self.penalty_
+
+        for i in range(n_points):
+            self.penalty_ = penalties[i]
+            self._fit(X)
+            scores[i] = self.score(X)
+
+        plt.plot(penalties, scores)
+        plt.xlabel('Penalty')
+        plt.ylabel('Score')
+        ax = plt.gca()
+        ax.semilogx()
+
+        # reset original penalty_
+        self.penalty_ = original_penalty
+        return ax
 
     def _obj_fun(self, X, penalty):
         "Objective funtion for penalty estimation"

@@ -20,6 +20,8 @@ from chemometrics import preprocessing as pp
 import numpy as np
 import unittest
 import scipy.sparse as sparse
+import matplotlib
+import matplotlib.pyplot as plt
 
 
 class TestAsym_ls(unittest.TestCase):
@@ -238,6 +240,31 @@ class Testwhittaker(unittest.TestCase):
         self.assertIsInstance(whittaker.penalty_, float)
         self.assertEqual(X_smoothed.shape, X.shape)
 
+    def test_plot(self):
+        r"""
+        Test that plot function runs
+        - returns axes
+        - a similar minimum is shown as obtained by auto-optimziation
+        - the penalty remains the same before and after running the function
+
+        """
+        X, _ = cm.generate_data()
+        whittaker = cm.Whittaker()
+
+        autoscore = whittaker.fit(X).score(X)
+        autopenalty = whittaker.penalty_
+
+        plt.figure()
+        ax = whittaker.plot(X)
+        self.assertIsInstance(ax, matplotlib.axes.Axes)
+
+        y_plotted = ax.lines[0].get_ydata()
+        min_plotted = np.min(y_plotted)
+        self.assertTrue(np.abs(autoscore-min_plotted) < .5)
+        self.assertFalse(np.allclose(y_plotted, min_plotted))
+
+        self.assertEqual(whittaker.penalty_, autopenalty)
+
 
 class TestAsymWhittaker(unittest.TestCase):
     r"""
@@ -275,7 +302,7 @@ class TestAsymWhittaker(unittest.TestCase):
         shape = (1, 50)
         penalty = 100
         diff_order = 2
-        asym_factor = 0.99999999999
+        asym_factor = 1 - 1e-12
         X = np.random.normal(size=shape)
         aw = cm.AsymWhittaker(penalty=penalty, constraint_order=diff_order,
                               asym_factor=asym_factor)

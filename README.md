@@ -32,7 +32,7 @@ cm.fit_pls(X_deriv, Y)
 ![CV scores](https://github.com/maruedt/chemometrics/blob/master/examples/pls_cv.png "Cross-validation scores")
 ![PLS analytics](https://github.com/maruedt/chemometrics/blob/master/examples/pls_analysis.png "PLS analytical plots")
 
-More examples with explanations and additional code are shown in the examples folder. For an initial overview of a typical regression workflow, a look at [this example](https://github.com/maruedt/chemometrics/blob/master/examples/basic_pls_example.ipynb) might be most interesting.
+More examples with explanations and additional code are shown in the examples folder. For an initial overview of a typical regression workflow, a look at [this example](https://github.com/maruedt/chemometrics/blob/master/examples/basic_pls_example.ipynb) might be most interesting (the example Jupyter Notebooks are not always rendered correctly by Github. They may be displayed by copying the url to https://nbviewer.jupyter.org/).
 
 ## Requirements and installation
 - Python >= 3.8
@@ -43,7 +43,7 @@ More examples with explanations and additional code are shown in the examples fo
 
 Earlier versions of the required libraries may work but have not been tested.
 
-chemometrics is distributed over PyPA. The simplest way to install chemometrics is by running
+chemometrics is distributed over PyPI. The simplest way to install chemometrics is by running
 
 ```
 python -m pip install chemometrics

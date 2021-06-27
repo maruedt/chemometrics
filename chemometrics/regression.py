@@ -39,12 +39,23 @@ class PLSRegression(_PLSRegression):
         return self
 
     def _calculate_vip(self):
-        """
-        Calculate variable importance in projection (VIP)
+        """ Calculate variable importance in projection (VIP)
 
-        Method adapted from Mehmood et al. Chemometrics and Intelligent
-        Laboratory Systems 118 (2012) 62–69.
+        The VIP scores provide a concise summary of how important the different
+        predictors are for the model. It summarizes and normalizes the
+        information of the loading vector(s). All predictors with VIP-scores
+        greater than 1 have a greater influence on the model than if all
+        predictors were equally informative. Variable/predictor selection can
+        easily be performed by dropping all variables with a score smaller than
+        a certain threshold. Typically, 1.0 or 1.5 is used as cut-off. Method
+        adapted from [1].
+
+        References
+        ----------
+        .. [1] Mehmood et al. Chemometrics and
+        Intelligent Laboratory Systems 118 (2012) 62–69.
         """
+
         ss = np.sum(self.y_loadings_ ** 2, axis=0) *\
             np.sum(self.x_scores_ ** 2, axis=0)
         counter = np.sum(ss * self.x_weights_**2, axis=1)
@@ -58,7 +69,24 @@ class PLSRegression(_PLSRegression):
         Calculate the hat matrix in the X/Y score space. The hat matrix $H$
         projects the observed $Y$ onto the predicted $\hat Y$. For obtaining
         the standard hat matrix, the provided X matrix should correspond to the
-        matrix used during the calibration (call to `fit`).
+        matrix used during the calibration (call to `fit`) [1].
+
+        Parameters
+        ----------
+        X : (n, m) ndarray
+            Matrix of predictors. n samples x m predictors
+
+        Returns
+        -------
+        hat : (n, n) ndarray
+            Hat matrix, symmetric matrix, n x n samples
+
+        References
+        ----------
+        Calculation according to [1]
+        .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
+        Wikström, and S. Wold. Multi- and Megavariate Data Analysis, Part I
+        Basic Principles and Applications. Second Edition.
         """
         S = self.transform(X)
         return S @ np.linalg.inv(S.T @ S) @ S.T
@@ -70,12 +98,47 @@ class PLSRegression(_PLSRegression):
         Calculate the leverage (self-influence of Y) in the X/Y score space.
         For obtaining the standard leverage, the provided X matrix should
         correspond to the matrix used during calibration (call to `fit`).
+
+        Parameters
+        ----------
+        X : (n, m) ndarray
+            Matrix of predictors. n samples x m predictors
+
+        Returns
+        -------
+        leverage : (n, ) ndarray
+            leverage for n samples
         """
         return np.diag(self.hat(X))
 
     def plot(self, X, Y):
         """
         Displays a figure with 4 common analytical plots for PLS models
+
+        Generates a figure with four subplots providing analytical insights
+        into the PLS model. Typically, the calibration data is used for
+        the method call. following four subplots are generated:
+        1) observed -> predicted. Provides insights into the linearity of the
+        data and shows how well the model performes over the model range.
+        2) predicted -> residuals. Similar to 1). Useful for evaluating the
+        error structure (e.g. homoscedasticity).
+        3) leverage -> residuals. Provides insights into any data
+        points/outliers which strongly affect the model. Optimally, the points
+        should be scattered in the center left.
+        4) predictors -> VIP. Provides insights into the predictor importance
+        for the model.
+
+        Parameters
+        ----------
+        X : (n, m) ndarray
+            Matrix of predictors. n samples x m predictors
+        Y : (n, o) ndarray
+            Matrix of responses. n samples x o responses
+
+        Returns
+        -------
+        axes : list(axis, ...)
+            List of axis for subplots
         """
         fig = plt.figure(figsize=(15, 15))
         Y_hat = self.predict(X)

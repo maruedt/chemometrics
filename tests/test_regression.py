@@ -113,6 +113,15 @@ class TestPLSRegression(unittest.TestCase):
         for ax in axes:
             self.assertIsInstance(ax, matplotlib.axes.Axes)
 
+    def test_dmodx_shape(self):
+        """
+        Test that dmodx provides a vector of the correct shape
+        """
+        dmodx = self.pls.dmodx(self.X)
+        import pdb; pdb.set_trace()
+
+        self.assertTrue(dmodx.shape == (self.n_samples, ))
+
 
 class TestFit_pls(unittest.TestCase):
     """

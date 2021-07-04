@@ -30,7 +30,7 @@ class TestPLSRegression(unittest.TestCase):
     """
 
     def setUp(self):
-        self.n_wl = 100
+        self.n_wl = 50
         self.n_samples = 100
         self.n_conc = 2
 
@@ -118,9 +118,28 @@ class TestPLSRegression(unittest.TestCase):
         Test that dmodx provides a vector of the correct shape
         """
         dmodx = self.pls.dmodx(self.X)
-        import pdb; pdb.set_trace()
 
         self.assertTrue(dmodx.shape == (self.n_samples, ))
+
+    def test_dmodx_length(self):
+        """
+        Test that dmodx = 0 if data from hyperplan is taken
+        """
+        X_hat = self.pls.inverse_transform(self.pls.transform(self.X))
+        dmodx = self.pls.dmodx(X_hat, normalize=False)
+        self.assertTrue(np.allclose(dmodx, 0))
+
+        # test that the variation on the model plane and the variation
+        # orthogonal to the model plane yield the total variation.
+
+        dmodx = self.pls.dmodx(self.X, normalize=False)
+        absolut_dmodx = dmodx**2 * (self.X.shape[1] - self.pls.n_components)
+        X_hat_bar = self.pls.x_scores_ @ self.pls.x_loadings_.T
+        ss_X_hat = np.sum(X_hat_bar**2, axis=1)
+        X_bar = self.X - self.pls.x_mean_.T
+        ss_X = np.sum(X_bar**2, axis=1)
+        import pdb; pdb.set_trace()
+        self.assertTrue(np.allclose(ss_X_hat + absolut_dmodx, ss_X))
 
 
 class TestFit_pls(unittest.TestCase):

@@ -36,6 +36,14 @@ class PLSRegression(_PLSRegression):
     def fit(self, X, Y):
         super().fit(X, Y)
         self.vip_ = self._calculate_vip()
+
+        # calculate variation orthogonal to model plane
+        X_hat = self.inverse_transform(self.transform(X))
+        sse_cal = np.sum((X - X_hat)**2)
+        scaled = 1 if self.scale else 0
+        norm_factor = (self.x_scores_.shape[0] - self.n_components
+                       - scaled) * (X.shape[1] - self.n_components)
+        self.x_residual_std_ = np.sqrt(sse_cal / norm_factor)
         return self
 
     def _calculate_vip(self):
@@ -111,7 +119,7 @@ class PLSRegression(_PLSRegression):
         """
         return np.diag(self.hat(X))
 
-    def dmodx(self, X, normalize=True):
+    def dmodx(self, X, normalize=True, absolute=False):
         """
         Calculate distance to model hyperplane in X (DModX)
 
@@ -127,7 +135,11 @@ class PLSRegression(_PLSRegression):
             matrix of predictors. n samples x m predictors
 
         normalize : {True (default); False}
-            normalization of DModX
+            normalization of DModX by error in X during calibration
+
+        absolute : {True; False (default)}
+            return the absolute distance to the model plane (not normalized by
+            degrees of freedom)
 
         Returns
         -------
@@ -135,16 +147,14 @@ class PLSRegression(_PLSRegression):
             distance of n samples to model hyperplane
         """
 
-        sse = np.sum((X - self.transform(X) @ self.x_loadings_.T)**2, axis=1)
-        dmodx = np.sqrt(sse / (X.shape[1] - self.n_components))
+        sse = np.sum((X - self.inverse_transform(self.transform(X)))**2,
+                     axis=1)
+        dmodx = np.sqrt(sse)
 
-        if normalize:
-            sse_cal = np.sum((X - self.x_scores_ @ self.x_loadings_.T)**2)
-            scaled = 1 if self.scale else 0
-            norm_factor = (self.x_scores_.shape[0] - self.n_components
-                           - scaled) * (X.shape[1] - self.n_components)
-            std0 = np.sqrt(sse_cal / norm_factor)
-            dmodx /= std0
+        if not absolute:
+            dmodx /= np.sqrt(X.shape[1] - self.n_components)
+            if normalize:
+                dmodx /= self.x_residual_std_
 
         return dmodx
 

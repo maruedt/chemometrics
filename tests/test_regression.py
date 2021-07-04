@@ -138,8 +138,8 @@ class TestPLSRegression(unittest.TestCase):
         ss_X_hat = np.sum(X_hat_bar**2, axis=1)
         X_bar = self.X - self.pls.x_mean_.T
         ss_X = np.sum(X_bar**2, axis=1)
-        import pdb; pdb.set_trace()
-        self.assertTrue(np.allclose(ss_X_hat + absolut_dmodx, ss_X))
+        self.assertTrue(np.allclose(ss_X_hat + absolut_dmodx, ss_X,
+                                    atol=1e-2))
 
 
 class TestFit_pls(unittest.TestCase):

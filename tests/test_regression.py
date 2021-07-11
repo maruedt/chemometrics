@@ -118,7 +118,12 @@ class TestPLSRegression(unittest.TestCase):
         Test that dmodx provides a vector of the correct shape
         """
         dmodx = self.pls.dmodx(self.X)
+        self.assertTrue(dmodx.shape == (self.n_samples, ))
 
+        dmodx = self.pls.dmodx(self.X, normalize=False)
+        self.assertTrue(dmodx.shape == (self.n_samples, ))
+
+        dmodx = self.pls.dmodx(self.X, absolute=True)
         self.assertTrue(dmodx.shape == (self.n_samples, ))
 
     def test_dmodx_length(self):
@@ -129,9 +134,11 @@ class TestPLSRegression(unittest.TestCase):
         dmodx = self.pls.dmodx(X_hat, normalize=False)
         self.assertTrue(np.allclose(dmodx, 0))
 
-        # test that the variation on the model plane and the variation
-        # orthogonal to the model plane yield the total variation.
-
+    def test_score_plus_dmodx_length(self):
+        """
+        Test that the variation on the model plane and the variation
+        orthogonal to the model plane yield the total variation.
+        """
         dmodx = self.pls.dmodx(self.X, normalize=False)
         absolut_dmodx = dmodx**2 * (self.X.shape[1] - self.pls.n_components)
         X_hat_bar = self.pls.x_scores_ @ self.pls.x_loadings_.T

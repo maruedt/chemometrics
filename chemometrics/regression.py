@@ -155,8 +155,19 @@ class PLSRegression(_PLSRegression):
             dmodx /= np.sqrt(X.shape[1] - self.n_components)
             if normalize:
                 dmodx /= self.x_residual_std_
-
         return dmodx
+
+    def dhypx(self, X):
+        """
+        Normalized distance on hyperplane.
+
+        Provides a distance on the hyperplane, normalized by the distance
+        observed during calibration. It can be a useful measure to see whether
+        new data is comparable to the calibration data.
+        """
+        var_cal = np.std(self.x_scores_, axis=0)
+        x_scores2_norm = self.transform(X)**2 / var_cal
+        return np.sum(x_scores2_norm, axis=1)
 
     def plot(self, X, Y):
         """

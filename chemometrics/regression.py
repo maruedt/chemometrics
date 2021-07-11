@@ -236,6 +236,40 @@ class PLSRegression(_PLSRegression):
 
         return fig.axes
 
+    def distance_plot(self, X, sample_id=None):
+        """
+        Plot distances colinear and orthogonal to model predictor hyperplane
+
+        Generates a figure with two subplots. The subplots provide information
+        on how `X` behaves compared to the calibration data. Subplots:
+        1) Distance in model hyperplane of predictors. Provides insight into
+        the magnitude of variation within the hyperplane compared to the
+        calibration data. Large values indicate samples which are outside of
+        the calibration space but may be described by linearly scaled latent
+        variables.
+        2) Distance orthogonal to model hyperplane. Provides insight into the
+        magnitude of variation orthogonal to the model hyperplane compared to
+        the calibration data. Large values indicate samples which show a
+        significant trend not observed in the calibration data.
+        """
+        plt.figure(figsize=(15, 15))
+
+        if not sample_id:
+            sample_id = np.arange(X.shape[0])
+
+        # make plots
+        # 1) dhypx
+        plt.subplot(211)
+        plt.plot(id, self.dhypx(X))
+        plt.ylabel('X distance on hyperplane')
+
+        plt.subplot(212)
+        plt.plot(id, self.dmodx(X))
+        plt.xlabel('Sample ID')
+        plt.ylabel('X distance to hyperplane')
+
+        return plt.gca()
+
 
 def fit_pls(X, Y, pipeline=None, cv_object=None, max_lv=10):
     """

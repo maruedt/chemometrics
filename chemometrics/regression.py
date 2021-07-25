@@ -20,6 +20,7 @@ from sklearn.cross_decomposition import PLSRegression as _PLSRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import cross_val_score, KFold
 import numpy as np
+from scipy import stats
 import matplotlib.pyplot as plt
 
 
@@ -145,6 +146,14 @@ class PLSRegression(_PLSRegression):
         -------
         dmodx : (n, ) ndarray
             distance of n samples to model hyperplane
+
+
+        References
+        ----------
+        Calculations according to [1]
+        .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
+        Wikström, and S. Wold. Multi- and Megavariate Data Analysis, Part I
+        Basic Principles and Applications. Second Edition.
         """
 
         sse = np.sum((X - self.inverse_transform(self.transform(X)))**2,
@@ -157,6 +166,16 @@ class PLSRegression(_PLSRegression):
                 dmodx /= self.x_residual_std_
         return dmodx
 
+    def crit_dmodx(self, confidence=0.95):
+        """
+        Critical distance to hyperplane according to model hyperplane.
+        """
+        degf_cali = self.n_features_in_ - self.n_components - 1
+        degf_test = self.n_features_in_ - self.n_components
+        f_crit = stats.f.ppf(confidence, degf_test,
+                             degf_cali)
+        return np.sqrt(f_crit)
+
     def dhypx(self, X):
         """
         Normalized distance on hyperplane.
@@ -164,10 +183,28 @@ class PLSRegression(_PLSRegression):
         Provides a distance on the hyperplane, normalized by the distance
         observed during calibration. It can be a useful measure to see whether
         new data is comparable to the calibration data.
+
+        References
+        ----------
+        Calculations according to [1]
+        .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
+        Wikström, and S. Wold. Multi- and Megavariate Data Analysis, Part I
+        Basic Principles and Applications. Second Edition.
         """
-        var_cal = np.std(self.x_scores_, axis=0)
+        var_cal = np.var(self.x_scores_, axis=0)
         x_scores2_norm = self.transform(X)**2 / var_cal
         return np.sum(x_scores2_norm, axis=1)
+
+    def crit_dhypx(self, confidence=0.95):
+        """
+        Calculate critical dhypx according to Hotelling's T2
+        """
+        comp = self.n_components
+        samples = self.x_scores_.shape[0]
+        f_crit = stats.f.ppf(confidence, self.n_components,
+                             self.x_scores_.shape[0]-self.n_components)
+        factor = comp * (samples**2 - 1) / (samples * (samples - comp))
+        return f_crit * factor
 
     def plot(self, X, Y):
         """
@@ -236,7 +273,7 @@ class PLSRegression(_PLSRegression):
 
         return fig.axes
 
-    def distance_plot(self, X, sample_id=None):
+    def distance_plot(self, X, sample_id=None, confidence=0.95):
         """
         Plot distances colinear and orthogonal to model predictor hyperplane
 
@@ -251,24 +288,33 @@ class PLSRegression(_PLSRegression):
         magnitude of variation orthogonal to the model hyperplane compared to
         the calibration data. Large values indicate samples which show a
         significant trend not observed in the calibration data.
+
+
+        References
+        ----------
+        Calculations according to [1]
+        .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
+        Wikström, and S. Wold. Multi- and Megavariate Data Analysis, Part I
+        Basic Principles and Applications. Second Edition.
         """
         plt.figure(figsize=(15, 15))
 
         if not sample_id:
             sample_id = np.arange(X.shape[0])
-
         # make plots
         # 1) dhypx
         plt.subplot(211)
-        plt.plot(id, self.dhypx(X))
+        plt.plot(sample_id, self.dhypx(X))
         plt.ylabel('X distance on hyperplane')
+        plt.axhline(y=self.crit_dhypx(confidence=confidence))
 
         plt.subplot(212)
-        plt.plot(id, self.dmodx(X))
+        plt.plot(sample_id, self.dmodx(X))
+        plt.axhline(y=self.crit_dmodx(confidence=confidence))
         plt.xlabel('Sample ID')
-        plt.ylabel('X distance to hyperplane')
+        plt.ylabel('Distance to X-hyperplane')
 
-        return plt.gca()
+        return plt.gcf().axes
 
 
 def fit_pls(X, Y, pipeline=None, cv_object=None, max_lv=10):

@@ -148,6 +148,16 @@ class TestPLSRegression(unittest.TestCase):
         self.assertTrue(np.allclose(ss_X_hat + absolut_dmodx, ss_X,
                                     atol=1e-2))
 
+    def test_distance_plot_return_arg(self):
+        """
+        Test that distance_plot returns an axis cv_object
+        """
+        ax = self.pls.distance_plot(self.X)
+        self.assertIsInstance(ax, list)
+        import pdb; pdb.set_trace()
+        for inst in ax:
+            self.assertIsInstance(inst, matplotlib.axes.Subplot)
+
 
 class TestFit_pls(unittest.TestCase):
     """

@@ -37,13 +37,7 @@ class PLSRegression(_PLSRegression):
     def fit(self, X, Y):
         super().fit(X, Y)
         self.vip_ = self._calculate_vip()
-
-        # calculate variation orthogonal to model plane
-        X_hat = self.inverse_transform(self.transform(X))
-        sse_cal = np.sum((X - X_hat)**2)
-        norm_factor = (self.x_scores_.shape[0] - self.n_components
-                       - 1) * (X.shape[1] - self.n_components)
-        self.x_residual_std_ = np.sqrt(sse_cal / norm_factor)
+        self.x_residual_std_ = self._calculate_x_residual_std_(X)
         return self
 
     def _calculate_vip(self):
@@ -63,12 +57,28 @@ class PLSRegression(_PLSRegression):
         .. [1] Mehmood et al. Chemometrics and
         Intelligent Laboratory Systems 118 (2012) 62–69.
         """
-
         ss = np.sum(self.y_loadings_ ** 2, axis=0) *\
             np.sum(self.x_scores_ ** 2, axis=0)
         counter = np.sum(ss * self.x_weights_**2, axis=1)
         denominator = np.sum(ss)
         return np.sqrt(self.n_features_in_ * counter / denominator)
+
+    def _calculate_x_residual_std_(self, X):
+        """
+        Calculate the standard deviation of the X residuals
+
+        References
+        ----------
+        Calculation according to [1]
+        .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
+        Wikström, and S. Wold. Multi- and Megavariate Data Analysis, Part I
+        Basic Principles and Applications. Second Edition.
+        """
+        X_hat = self.inverse_transform(self.transform(X))
+        sse_cal = np.sum((X - X_hat)**2)
+        norm_factor = (self.x_scores_.shape[0] - self.n_components
+                       - 1) * (X.shape[1] - self.n_components)
+        return np.sqrt(sse_cal / norm_factor)
 
     def hat(self, X):
         """

@@ -41,9 +41,8 @@ class PLSRegression(_PLSRegression):
         # calculate variation orthogonal to model plane
         X_hat = self.inverse_transform(self.transform(X))
         sse_cal = np.sum((X - X_hat)**2)
-        scaled = 1 if self.scale else 0
         norm_factor = (self.x_scores_.shape[0] - self.n_components
-                       - scaled) * (X.shape[1] - self.n_components)
+                       - 1) * (X.shape[1] - self.n_components)
         self.x_residual_std_ = np.sqrt(sse_cal / norm_factor)
         return self
 

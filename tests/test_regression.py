@@ -154,7 +154,6 @@ class TestPLSRegression(unittest.TestCase):
         """
         ax = self.pls.distance_plot(self.X)
         self.assertIsInstance(ax, list)
-        import pdb; pdb.set_trace()
         for inst in ax:
             self.assertIsInstance(inst, matplotlib.axes.Subplot)
 

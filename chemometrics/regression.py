@@ -181,7 +181,7 @@ class PLSRegression(_PLSRegression):
 
     def crit_dmodx(self, confidence=0.95):
         """
-        Critical distance to hyperplane according to model hyperplane
+        Critical distance to hyperplane according to Hotelling's T2
 
         References
         ----------

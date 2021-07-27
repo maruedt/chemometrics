@@ -22,6 +22,7 @@ from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.cross_decomposition import PLSRegression
 from sklearn.model_selection import KFold
 import matplotlib
+from scipy.stats import binom
 
 
 class TestPLSRegression(unittest.TestCase):
@@ -32,9 +33,10 @@ class TestPLSRegression(unittest.TestCase):
     def setUp(self):
         self.n_wl = 50
         self.n_samples = 100
+        self.n_tests = 1000
         self.n_conc = 2
 
-        self.Y = np.random.uniform(size=[self.n_samples, self.n_conc])
+        self.Y = np.random.normal(size=[self.n_samples, self.n_conc])
         noise = 0.1
         spectra = np.zeros(shape=[self.n_wl, self.n_conc])
 
@@ -47,6 +49,12 @@ class TestPLSRegression(unittest.TestCase):
         )
         self.pls = cm.PLSRegression()
         self.pls = self.pls.fit(self.X, self.Y)
+
+        self.Y_test = np.random.normal(size=[self.n_tests, self.n_conc])
+        self.X_test = self.Y_test @ spectra.T + np.random.normal(
+            scale=noise,
+            size=[self.n_tests, self.n_wl]
+        )
 
     def test_vip_shape(self):
         """
@@ -157,6 +165,24 @@ class TestPLSRegression(unittest.TestCase):
         for inst in ax:
             self.assertIsInstance(inst, matplotlib.axes.Subplot)
 
+    def test_crit_dmodx(self):
+        """
+        Test that number of outliers corresponds
+
+        Performs a binomial statistical test based on a confidence level of 95%
+        """
+        binom_failure = 0.05
+        f_confidence = 0.50
+        crit_dmodx = self.pls.crit_dmodx(confidence=f_confidence)
+        dmodx = self.pls.dmodx(self.X_test)
+        count = np.sum(dmodx > crit_dmodx)
+
+        pdist = binom(self.n_tests, 1 - f_confidence)
+        limit_low = pdist.ppf(binom_failure/2)
+        limit_high = pdist.ppf(1 - binom_failure)
+
+        self.assertTrue(count >= limit_low)
+        self.assertTrue(count <= limit_high)
 
 class TestFit_pls(unittest.TestCase):
     """

@@ -67,9 +67,13 @@ class PLSRegression(_PLSRegression):
         """
         Calculate the standard deviation of the X residuals
 
+        The x residual standard deviation is calculated according to [1] not
+        including the correction factor v (since it is not exactly defined in
+        [1]).
+
         References
         ----------
-        Calculation according to [1]
+        Calculation according to [1].
         .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
         Wikström, and S. Wold. Multi- and Megavariate Data Analysis, Part I
         Basic Principles and Applications. Second Edition.
@@ -177,7 +181,14 @@ class PLSRegression(_PLSRegression):
 
     def crit_dmodx(self, confidence=0.95):
         """
-        Critical distance to hyperplane according to model hyperplane.
+        Critical distance to hyperplane according to model hyperplane
+
+        References
+        ----------
+        Calculations according to [1]
+        .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
+        Wikström, and S. Wold. Multi- and Megavariate Data Analysis, Part I
+        Basic Principles and Applications. Second Edition.
         """
         degf_cali = self.n_features_in_ - self.n_components - 1
         degf_test = self.n_features_in_ - self.n_components
@@ -187,7 +198,7 @@ class PLSRegression(_PLSRegression):
 
     def dhypx(self, X):
         """
-        Normalized distance on hyperplane.
+        Normalized distance on hyperplane
 
         Provides a distance on the hyperplane, normalized by the distance
         observed during calibration. It can be a useful measure to see whether
@@ -207,6 +218,13 @@ class PLSRegression(_PLSRegression):
     def crit_dhypx(self, confidence=0.95):
         """
         Calculate critical dhypx according to Hotelling's T2
+
+        References
+        ----------
+        Calculations according to [1]
+        .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
+        Wikström, and S. Wold. Multi- and Megavariate Data Analysis, Part I
+        Basic Principles and Applications. Second Edition.
         """
         comp = self.n_components
         samples = self.x_scores_.shape[0]

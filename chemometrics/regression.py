@@ -181,7 +181,13 @@ class PLSRegression(_PLSRegression):
 
     def crit_dmodx(self, confidence=0.95):
         """
-        Critical distance to hyperplane according to Hotelling's T2
+        Critical distance to hyperplane based on an F2 test
+
+        The critical distance to the model hyperplane is estimated based on
+        an F2 distribution. Values above crit_dmodx may be considered outliers.
+        dmodx is only approximately F2 distributed [1]. It is thus worth noting
+        that the estimated critcal distance is biased. It however gives a
+        reasonable indication of points worth investigating.
 
         References
         ----------
@@ -202,7 +208,10 @@ class PLSRegression(_PLSRegression):
 
         Provides a distance on the hyperplane, normalized by the distance
         observed during calibration. It can be a useful measure to see whether
-        new data is comparable to the calibration data.
+        new data is comparable to the calibration data. The normalized dhypx
+        is slightly biased towards larger values since the estimated
+        x_residual_std_ is slightly underestimated during model calibration
+        [1].
 
         References
         ----------

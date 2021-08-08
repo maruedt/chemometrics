@@ -133,6 +133,31 @@ class PLSRegression(_PLSRegression):
         """
         return np.diag(self.hat(X))
 
+    def residuals(self, X, y, scaling='studentize'):
+        """
+        Calculate (normalized) residuals
+
+        Calculate the (normalized) residuals. The scaling scheme may be
+        defined between 'none', 'standardize' and 'studentize'. The normalized
+        residuals should only be calculated with the current training set.
+        """
+        y_pred = self.predict(X)
+        residuals = y_pred - y
+        # internal standard deviation
+        std = np.sqrt(np.sum(residuals**2, axis=0)
+                      / (X.shape[0] - self.n_components))
+
+        if scaling == 'none':
+            scaling_factor = 1
+        elif scaling == 'standardize':
+            scaling_factor = std
+        elif scaling == 'studentize':
+            scaling_factor = std * np.sqrt(1 - self.leverage(X))
+        else:
+            raise(TypeError(f'unsupported scaling: {scaling}'))
+
+        return residuals / scaling_factor
+
     def dmodx(self, X, normalize=True, absolute=False):
         """
         Calculate distance to model hyperplane in X (DModX)
@@ -296,6 +321,7 @@ class PLSRegression(_PLSRegression):
         plt.subplot(223)
         for i in range(residuals.shape[1]):
             plt.scatter(leverage, residuals[:, i], alpha=0.5)
+
         plt.xlabel('Leverage')
         plt.ylabel('Residuals')
 

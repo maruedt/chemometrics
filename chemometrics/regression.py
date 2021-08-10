@@ -145,14 +145,14 @@ class PLSRegression(_PLSRegression):
         residuals = y_pred - y
         # internal standard deviation
         std = np.sqrt(np.sum(residuals**2, axis=0)
-                      / (X.shape[0] - self.n_components))
+                      / (X.shape[0] - self.n_components))[:, None].T
 
         if scaling == 'none':
             scaling_factor = 1
         elif scaling == 'standardize':
             scaling_factor = std
         elif scaling == 'studentize':
-            scaling_factor = std * np.sqrt(1 - self.leverage(X))
+            scaling_factor = std * np.sqrt(1 - self.leverage(X)[:, None])
         else:
             raise(TypeError(f'unsupported scaling: {scaling}'))
 
@@ -297,14 +297,14 @@ class PLSRegression(_PLSRegression):
             List of axis for subplots
         """
         fig = plt.figure(figsize=(15, 15))
-        Y_hat = self.predict(X)
-        residuals = Y - Y_hat
+        Y_pred = self.predict(X)
+        residuals = self.residuals(X, Y)
         leverage = self.leverage(X)
 
         # make plots
         # 1) observed vs predicted
         plt.subplot(221)
-        plt.scatter(Y, Y_hat)
+        plt.scatter(Y, Y_pred)
         plt.axline((np.min(Y), np.min(Y)), (np.max(Y), np.max(Y)),
                    color='k', alpha=0.2)
         plt.xlabel('Observed')
@@ -312,10 +312,10 @@ class PLSRegression(_PLSRegression):
 
         # 2) predicted vs residuals
         plt.subplot(222)
-        plt.scatter(Y_hat, residuals)
+        plt.scatter(Y_pred, residuals)
         plt.axhline(0, color='k', alpha=0.2)
         plt.xlabel('Predicted')
-        plt.ylabel('Residuals')
+        plt.ylabel('Studentized residuals')
 
         # 3) leverage mapped to residuals (lmr) plot
         plt.subplot(223)
@@ -323,7 +323,7 @@ class PLSRegression(_PLSRegression):
             plt.scatter(leverage, residuals[:, i], alpha=0.5)
 
         plt.xlabel('Leverage')
-        plt.ylabel('Residuals')
+        plt.ylabel('Studentized residuals')
 
         # 4) VIPs
         plt.subplot(224)

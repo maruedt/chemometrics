@@ -468,7 +468,7 @@ def fit_pls(X, Y, pipeline=None, cv_object=None, max_lv=10):
     plt.bar(np.arange(1, max_lv+1), r2, alpha=0.5)
     plt.boxplot(q2, positions=np.arange(1, max_lv+1))
     plt.xlabel('Latent variables')
-    plt.ylabel('R2 / Q2')
+    plt.ylabel('R2, Q2')
 
     # recover best q2 and adjust model accordingly
     pipeline[-1].n_components = np.argmax(np.median(q2, axis=0)) + 1

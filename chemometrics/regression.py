@@ -133,16 +133,45 @@ class PLSRegression(_PLSRegression):
         """
         return np.diag(self.hat(X))
 
-    def residuals(self, X, y, scaling='studentize'):
+    def residuals(self, X, Y, scaling='studentize'):
         """
         Calculate (normalized) residuals
 
         Calculate the (normalized) residuals. The scaling scheme may be
         defined between 'none', 'standardize' and 'studentize'. The normalized
         residuals should only be calculated with the current training set.
+
+        Parameters
+        ----------
+        X : (n, m) ndarray
+            Matrix of predictors. n samples x m predictors
+        Y : (n, o) ndarray
+            Matrix of responses. n samples x o responses
+        scaling : {'none', 'standardize', 'studentize' (default)}
+            Define scaling of returned residuals
+
+        Returns
+        -------
+        residuals : (n, o)
+            Matrix of unscaled, standardized or studentized residuals
+
+        Notes
+        -----
+        The response-wise standard deviation $\sigma_j$ is calculated according
+        to
+        $$
+        \sigma_j = \sqrt{\frac{\sum_i=1^n r_{i,j}^2}{n - p}}.
+        $$
+
+        Residuals are studentized according to
+        $$
+        \hat{r}_i = \frac{r_i}{\sigma\sqrt{(1-h_{ii})}},
+        $$
+        with $\hat{r}_i$ being the studentized residuals, $r_i$ the original
+        residuals and $h_{ii}$ the leverage.
         """
-        y_pred = self.predict(X)
-        residuals = y_pred - y
+        Y_pred = self.predict(X)
+        residuals = Y_pred - Y
         # internal standard deviation
         std = np.sqrt(np.sum(residuals**2, axis=0)
                       / (X.shape[0] - self.n_components))[:, None].T
@@ -276,11 +305,13 @@ class PLSRegression(_PLSRegression):
         the method call. following four subplots are generated:
         1) observed -> predicted. Provides insights into the linearity of the
         data and shows how well the model performes over the model range.
-        2) predicted -> residuals. Similar to 1). Useful for evaluating the
-        error structure (e.g. homoscedasticity).
-        3) leverage -> residuals. Provides insights into any data
+        2) predicted -> studentized residuals. Similar to 1). Useful for
+        evaluating the error structure (e.g. homoscedasticity) and detecting
+        outliers (studentized residuals > 3)
+        3) leverage -> studentized residuals. Provides insights into any data
         points/outliers which strongly affect the model. Optimally, the points
-        should be scattered in the center left.
+        should be scattered in the center left. The model includes a limit on
+        the Cook's distance of 0.5 as dashed dark red lines.
         4) predictors -> VIP. Provides insights into the predictor importance
         for the model.
 
@@ -295,6 +326,17 @@ class PLSRegression(_PLSRegression):
         -------
         axes : list(axis, ...)
             List of axis for subplots
+
+        Note
+        ----
+        The Cook's distance limit is calculated according to
+
+        $$\hat{r}_i &= \frac{r_i}{sqrt{MSE (1-h_ii)}}
+        &= \pm \frac{sqrt{D_{crit} p (1-h_ii)}{h_ii}}$$
+
+        with $\hat{r}_i$ being the studentized residuals, $r_i$ the original
+        residuals, MSE the mean squared error, $h_{ii}$ the leverage,
+        $D_{crit}$ the critical distance, $p$ the number of latent variables.
         """
         fig = plt.figure(figsize=(15, 15))
         Y_pred = self.predict(X)

@@ -324,6 +324,22 @@ class PLSRegression(_PLSRegression):
 
         plt.xlabel('Leverage')
         plt.ylabel('Studentized residuals')
+        ax = plt.gca()
+        xlim = ax.get_xlim()
+        ylim = ax.get_ylim()
+
+        # add cook's distance limit
+        def cook(distance):
+            # prepare data from close to zero to bigger than max leverage
+            x = np.linspace(1e-8, np.max(leverage)*1.2)
+            lim = np.sqrt(distance*self.n_components * (1-x)/x)
+            plt.plot(x, lim, color=[0.4, 0, 0], linestyle='dotted')
+            plt.plot(x, -lim, color=[0.4, 0, 0], linestyle='dotted')
+
+        cook(0.5)
+        # reset axis limits
+        plt.xlim(xlim)
+        plt.ylim(ylim)
 
         # 4) VIPs
         plt.subplot(224)

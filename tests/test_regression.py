@@ -193,6 +193,12 @@ class TestPLSRegression(unittest.TestCase):
 
         self._test_binom(1-f_confidence, self.n_tests, count)
 
+    def test_cooks_distance_return_shape(self):
+        "Test that cooks_distance return args has correct shape"
+
+        cook = self.pls.cooks_distance(self.X, self.Y)
+        self.assertTrue(cook.shape == (self.n_samples, self.n_conc))
+
     def test_crit_dhypx(self):
         """
         Test that number of outliers corresponds for crit_dhypx

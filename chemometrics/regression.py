@@ -325,7 +325,7 @@ class PLSRegression(_PLSRegression):
                / (X.shape[0] - self.n_components))[:, None].T
         coefficient1 = h / (1-h)**2
         coefficient2 = residuals**2 / (self.n_components * mse)
-        return coefficient1 * coefficient2
+        return coefficient1[:, None] * coefficient2
 
     def plot(self, X, Y):
         """
@@ -341,8 +341,9 @@ class PLSRegression(_PLSRegression):
         outliers (studentized residuals > 3)
         3) leverage -> studentized residuals. Provides insights into any data
         points/outliers which strongly affect the model. Optimally, the points
-        should be scattered in the center left. The model includes a limit on
-        the Cook's distance of 0.5 as dashed dark red lines.
+        should be scattered in the center left. The plot includes a limit on
+        the Cook's distance of 0.5 and 1 as dashed and solid bordeaux
+        lines, respectively.
         4) predictors -> VIP. Provides insights into the predictor importance
         for the model.
 
@@ -402,14 +403,15 @@ class PLSRegression(_PLSRegression):
         ylim = ax.get_ylim()
 
         # add cook's distance limit
-        def cook(distance):
+        def cook(distance, linestyle):
             # prepare data from close to zero to bigger than max leverage
             x = np.linspace(1e-8, np.max(leverage)*1.2)
             lim = np.sqrt(distance*self.n_components * (1-x)/x)
-            plt.plot(x, lim, color=[0.4, 0, 0], linestyle='dotted')
-            plt.plot(x, -lim, color=[0.4, 0, 0], linestyle='dotted')
+            plt.plot(x, lim, color=[0.4, 0, 0], linestyle=linestyle)
+            plt.plot(x, -lim, color=[0.4, 0, 0], linestyle=linestyle)
 
-        cook(0.5)
+        cook(0.5, 'dotted')
+        cook(1, 'solid')
         # reset axis limits
         plt.xlim(xlim)
         plt.ylim(ylim)

@@ -296,6 +296,37 @@ class PLSRegression(_PLSRegression):
         factor = comp * (samples**2 - 1) / (samples * (samples - comp))
         return f_crit * factor
 
+    def cooks_distance(self, X, Y):
+        """
+        Calculate Cook's distance from the calibration data
+
+        Parameters
+        ----------
+        X : (n, m) ndarray
+            Matrix of predictors. n samples x m predictors
+        Y : (n, o) ndarray
+            Matrix of responses. n samples x o responses
+
+        Returns
+        -------
+        distances : (n, o) ndarray
+            List of axis for subplots
+
+        Notes
+        -----
+        Cooks distance is calculated according to
+        $$
+        D_i = \frac{r_i^2}{p\hat\sigma} \frac{h_{ii}}{(1-h_{ii})^2}
+        $$
+        """
+        h = self.leverage(X)
+        residuals = self.residuals(X, Y, scaling='none')
+        mse = (np.sum(residuals**2, axis=0)
+               / (X.shape[0] - self.n_components))[:, None].T
+        coefficient1 = h / (1-h)**2
+        coefficient2 = residuals**2 / (self.n_components * mse)
+        return coefficient1 * coefficient2
+
     def plot(self, X, Y):
         """
         Displays a figure with 4 common analytical plots for PLS models
@@ -327,11 +358,11 @@ class PLSRegression(_PLSRegression):
         axes : list(axis, ...)
             List of axis for subplots
 
-        Note
-        ----
+        Notes
+        -----
         The Cook's distance limit is calculated according to
 
-        $$\hat{r}_i &= \frac{r_i}{sqrt{MSE (1-h_ii)}}
+        $$\hat{r}_i &= \frac{r_i}{sqrt{MSE (1-h_ii)}}\\
         &= \pm \frac{sqrt{D_{crit} p (1-h_ii)}{h_ii}}$$
 
         with $\hat{r}_i$ being the studentized residuals, $r_i$ the original

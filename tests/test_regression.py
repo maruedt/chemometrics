@@ -121,6 +121,18 @@ class TestPLSRegression(unittest.TestCase):
         for ax in axes:
             self.assertIsInstance(ax, matplotlib.axes.Axes)
 
+        lines = axes[2].get_lines()
+        p = self.pls.n_components
+
+        for line in lines:
+            h = line.get_xdata()
+            weighting = h / (1 - h)
+            stud_res = line.get_ydata()
+            D_rev = stud_res**2 / p * weighting
+            close_to05 = np.allclose(D_rev, 0.5)
+            close_to1 = np.allclose(D_rev, 1)
+            self.assertTrue(close_to05 or close_to1)
+
     def test_dmodx_shape(self):
         """
         Test that dmodx provides a vector of the correct shape

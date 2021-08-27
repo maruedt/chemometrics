@@ -199,6 +199,22 @@ class TestPLSRegression(unittest.TestCase):
         cook = self.pls.cooks_distance(self.X, self.Y)
         self.assertTrue(cook.shape == (self.n_samples, self.n_conc))
 
+    def test_cooks_distance_values(self):
+        """
+        Test reverse function of cooks distance yields residuals
+        """
+        cook = self.pls.cooks_distance(self.X, self.Y)
+        residuals = self.pls.residuals(self.X, self.Y, scaling='none')
+
+        h = self.pls.leverage(self.X)
+        weighting = (1-h)**2/h
+        mse = (np.sum(residuals**2, axis=0)
+               / (self.X.shape[0] - self.pls.n_components))[:, None].T
+        inverted_res = np.sqrt(cook * self.pls.n_components * mse
+                               * weighting[:, None])
+
+        self.assertTrue(np.allclose(np.abs(residuals), inverted_res))
+
     def test_crit_dhypx(self):
         """
         Test that number of outliers corresponds for crit_dhypx
@@ -214,7 +230,6 @@ class TestPLSRegression(unittest.TestCase):
         .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
         Wikström, and S. Wold. Multi- and Megavariate Data Analysis, Part I
         Basic Principles and Applications. Second Edition.
-
         """
         f_confidence = 0.95
         crit_dhypx = self.pls.crit_dhypx(confidence=f_confidence)

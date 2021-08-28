@@ -307,6 +307,6 @@ class TestAsymWhittaker(unittest.TestCase):
         aw = cm.AsymWhittaker(penalty=penalty, constraint_order=diff_order,
                               asym_factor=asym_factor)
         X_smoothed = aw.fit_transform(X)
-        close_to_zero = np.isclose(0, X_smoothed)
+        close_to_zero = np.isclose(0, X_smoothed, atol=1e-5)
         greater_than_zero = X_smoothed > 0
         self.assertTrue(np.all(close_to_zero | greater_than_zero))

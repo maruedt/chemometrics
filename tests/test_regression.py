@@ -113,6 +113,37 @@ class TestPLSRegression(unittest.TestCase):
         hat = self.pls.hat(self.X)
         self.assertTrue(np.allclose(leverage, np.diag(hat)))
 
+    def test_residuals_shape(self):
+        """
+        Test residual function
+        """
+        residuals = self.pls.residuals(self.X, self.Y)
+        self.assertTrue(residuals.shape == (self.n_samples, self.n_conc))
+
+    def test_residuals_raise_TypeError(self):
+
+        with self.assertRaises(TypeError):
+            self.pls.residuals(self.X, self.Y, scaling='bla')
+
+    def test_residuals_scaling(self):
+        """
+        Test different scaling options of residuals
+        """
+        residuals_unscld = self.pls.residuals(self.X, self.Y, scaling='none')
+        residuals_std = self.pls.residuals(self.X, self.Y,
+                                           scaling='standardize')
+        residuals_stud = self.pls.residuals(self.X, self.Y,
+                                            scaling='studentize')
+        std_estimated = residuals_unscld / residuals_std
+
+        std = np.sqrt(np.sum(residuals_unscld**2, axis=0)
+                      / (self.X.shape[0] - self.pls.n_components))[:, None].T
+
+        stud_scaling = residuals_std / residuals_stud
+        true_scaling = np.sqrt(1 - self.pls.leverage(self.X))
+        self.assertTrue(np.allclose(std_estimated, std))
+        self.assertTrue(np.allclose(stud_scaling, true_scaling[:, None]))
+
     def test_plot(self):
         """
         Test that plot generates 4 subplot in figure

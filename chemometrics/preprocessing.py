@@ -480,13 +480,11 @@ class AsymWhittaker(TransformerMixin, BaseEstimator):
 
     Parameters
     ----------
-    penalty : float or 'auto' (default)
-        Scaling factor of the penalty term for non-smoothness. If 'auto' is
-        given, a penalty is estimated based on an algorithmically optimized
-        leave-one-out cross validation
+    penalty : float
+        Scaling factor of the penalty term for non-smoothness.
 
     constraint_order : int
-        Defines on which order of derivative the constraint acts on.
+        Defines on which order of derivative the smoothness constraint acts on.
 
     asym_factor : float
         Relative weight of negative residuals. Positive residuals obtain
@@ -508,8 +506,8 @@ class AsymWhittaker(TransformerMixin, BaseEstimator):
     Cholesky decomposition to prevent Matlab from "reordering the sparse
     equation systems for minimal bandwidth". Matlab seems to rely on UMFPACK
     for sparse matrix devision [2] which implements column reordering for
-    sparsity preservation. As sparse matrix we are working with is square and
-    positive-definite, we can rely on the builtin `factorize` method, which
+    sparsity preservation. As the sparse matrix we are working with is square
+    and positive-definite, we can rely on the builtin `factorize` method, which
     solves with UMFPACK if installed, otherwise with SuperLU.
 
     References

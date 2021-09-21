@@ -488,7 +488,7 @@ class AsymWhittaker(TransformerMixin, BaseEstimator):
 
     asym_factor : float
         Relative weight of negative residuals. Positive residuals obtain
-        a weight of `1-asym_factor`. The default value is `0.9`.
+        a weight of `1-asym_factor`. The default value is `0.99`.
 
     Attributes
     ----------
@@ -520,7 +520,7 @@ class AsymWhittaker(TransformerMixin, BaseEstimator):
     03.May.2020.
     """
 
-    def __init__(self, penalty, constraint_order=2, asym_factor=0.9):
+    def __init__(self, penalty, constraint_order=2, asym_factor=0.99):
         self.penalty = penalty
         self.constraint_order = constraint_order
         self.asym_factor = asym_factor

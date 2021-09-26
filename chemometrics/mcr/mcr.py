@@ -554,10 +554,12 @@ class McrAR():
 
     def fit_transform(self, D, **kwargs):
         """
-        This performs the same purpose as the fit method, but returns the C_ matrix.
-        Really, it's just to enable sklearn-expectant APIs compatible with pyMCR.
+        This performs the same purpose as the fit method, but returns the
+        C_ matrix. Really, it's just to enable sklearn-expectant APIs
+        compatible with pyMCR.
 
-        It is recommended to use the fit method and retrieve your results from C_ and ST_
+        It is recommended to use the fit method and retrieve your results from
+        C_ and ST_
 
         See documentation for the fit method
 

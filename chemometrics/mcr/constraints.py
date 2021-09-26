@@ -6,7 +6,6 @@ or overwrite input depending on copy attribute.
 """
 
 
-
 from abc import (ABC as _ABC, abstractmethod as _abstractmethod)
 
 import numpy as _np
@@ -45,6 +44,7 @@ class ConstraintNonneg(Constraint):
     copy : bool
         Make copy of input data, A; otherwise, overwrite (if mutable)
     """
+
     def __init__(self, copy=False):
         """ A must be non-negative"""
         super().__init__(copy)
@@ -57,6 +57,7 @@ class ConstraintNonneg(Constraint):
             A *= (A > 0)
             return A
 
+
 class ConstraintCumsumNonneg(Constraint):
     """
     Cumulative-Summation non-negativity constraint. All negative
@@ -67,6 +68,7 @@ class ConstraintCumsumNonneg(Constraint):
     copy : bool
         Make copy of input data, A; otherwise, overwrite (if mutable)
     """
+
     def __init__(self, axis=-1, copy=False):
         """ A must be non-negative"""
         super().__init__(copy)
@@ -97,6 +99,7 @@ class ConstraintZeroEndPoints(Constraint):
     span : int
         Number of pixels along the ends to average.
     """
+
     def __init__(self, axis=-1, span=1, copy=False):
         """ A must be non-negative"""
         super().__init__(copy)
@@ -115,40 +118,41 @@ class ConstraintZeroEndPoints(Constraint):
                 slope = (A[-1, :] - A[0, :]) / (pix_vec[-1] - pix_vec[0])
                 intercept = A[0, :]
             else:
-                slope = ((A[-self.span:, :].mean(axis=0) -
-                        A[:self.span, :].mean(axis=0)) /
-                        (pix_vec[-self.span:].mean() -
-                        pix_vec[:self.span].mean()))
-                intercept = (A[:self.span, :] -
-                            _np.dot(pix_vec[:self.span, None],
-                                    slope[None, :])).mean(axis=0)
+                slope = ((A[-self.span:, :].mean(axis=0)
+                         - A[:self.span, :].mean(axis=0))
+                         / (pix_vec[-self.span:].mean()
+                         - pix_vec[:self.span].mean()))
+                intercept = (A[:self.span, :]
+                             - _np.dot(pix_vec[:self.span, None],
+                                       slope[None, :])).mean(axis=0)
             if self.copy:
                 return A - _np.dot(pix_vec[:, None],
-                                slope[None, :]) - intercept[None, :]
+                                   slope[None, :]) - intercept[None, :]
             else:
                 A -= (_np.dot(pix_vec[:, None],
-                            slope[None, :]) + intercept[None, :])
+                              slope[None, :]) + intercept[None, :])
                 return A
         else:
             if self.span == 1:
                 slope = (A[:, -1] - A[:, 0]) / (pix_vec[-1] - pix_vec[0])
                 intercept = A[:, 0]
             else:
-                slope = ((A[:, -self.span:].mean(axis=1) -
-                        A[:, :self.span].mean(axis=1)) /
-                        (pix_vec[-self.span:].mean() -
-                        pix_vec[:self.span].mean()))
-                intercept = (A[:, :self.span] -
-                            _np.dot(slope[:, None],
-                                    pix_vec[None, :self.span])).mean(axis=1)
+                slope = ((A[:, -self.span:].mean(axis=1)
+                         - A[:, :self.span].mean(axis=1))
+                         / (pix_vec[-self.span:].mean()
+                         - pix_vec[:self.span].mean()))
+                intercept = (A[:, :self.span]
+                             - _np.dot(slope[:, None],
+                                       pix_vec[None, :self.span])).mean(axis=1)
 
             if self.copy:
                 return A - _np.dot(slope[:, None],
-                                pix_vec[None, :]) - intercept[:, None]
+                                   pix_vec[None, :]) - intercept[:, None]
             else:
                 A -= (_np.dot(slope[:, None],
-                            pix_vec[None, :]) + intercept[:, None])
+                              pix_vec[None, :]) + intercept[:, None])
                 return A
+
 
 class ConstraintZeroCumSumEndPoints(Constraint):
     """
@@ -167,6 +171,7 @@ class ConstraintZeroCumSumEndPoints(Constraint):
     span : int
         Number of pixels along the ends to average.
     """
+
     def __init__(self, nodes=None, axis=-1, copy=False):
         """ A must be non-negative"""
         super().__init__(copy)
@@ -194,13 +199,15 @@ class ConstraintZeroCumSumEndPoints(Constraint):
                     for num in range(len(self.nodes) - 1):
                         n0 = self.nodes[num]
                         n1 = self.nodes[num+1]
-                        temp[n0:n1, :] -= temp[n0:n1, :].mean(self.axis)[None, :]
+                        temp[n0:n1, :] -= temp[n0:n1, :]\
+                            .mean(self.axis)[None, :]
                     return temp
                 else:
                     for num in range(len(self.nodes) - 1):
                         n0 = self.nodes[num]
                         n1 = self.nodes[num+1]
-                        A[n0:n1, :] -= A[n0:n1, :].mean(self.axis)[None, :]
+                        A[n0:n1, :] -= A[n0:n1, :]\
+                            .mean(self.axis)[None, :]
                     return A
             else:
                 if self.copy:
@@ -208,7 +215,8 @@ class ConstraintZeroCumSumEndPoints(Constraint):
                     for num in range(len(self.nodes) - 1):
                         n0 = self.nodes[num]
                         n1 = self.nodes[num+1]
-                        temp[:, n0:n1] -= temp[:, n0:n1].mean(self.axis)[:, None]
+                        temp[:, n0:n1] -= temp[:, n0:n1]\
+                            .mean(self.axis)[:, None]
                     return temp
                 else:
                     for num in range(len(self.nodes) - 1):
@@ -260,6 +268,7 @@ class ConstraintNorm(Constraint):
 
 
     """
+
     def __init__(self, axis=-1, fix=None, copy=False):
         """Normalize along axis"""
         super().__init__(copy)
@@ -296,7 +305,9 @@ class ConstraintNorm(Constraint):
                     scaler = _np.ones(A.shape)
                     div = A[not_fix_locs, :].sum(axis=0)[None, :]
                     div[div == 0] = 1
-                    scaler[not_fix_locs, :] = ((1 - A[fix_locs, :].sum(axis=0)[None, :]) / div)
+                    scaler[not_fix_locs, :] = (
+                        (1 - A[fix_locs, :].sum(axis=0)[None, :]) / div
+                    )
 
                     return A * scaler
             else:  # Axis = 1 / -1
@@ -309,7 +320,9 @@ class ConstraintNorm(Constraint):
                     scaler = _np.ones(A.shape)
                     div = A[:, not_fix_locs].sum(axis=-1)[:, None]
                     div[div == 0] = 1
-                    scaler[:, not_fix_locs] = ((1 - A[:, fix_locs].sum(axis=-1)[:, None]) / div)
+                    scaler[:, not_fix_locs] = (
+                        (1 - A[:, fix_locs].sum(axis=-1)[:, None]) / div
+                    )
 
                     return A * scaler
         else:  # Overwrite original data
@@ -328,7 +341,9 @@ class ConstraintNorm(Constraint):
                     scaler = _np.ones(A.shape)
                     div = A[not_fix_locs, :].sum(axis=0)[None, :]
                     div[div == 0] = 1
-                    scaler[not_fix_locs, :] = ((1 - A[fix_locs, :].sum(axis=0)[None, :]) / div)
+                    scaler[not_fix_locs, :] = (
+                        (1 - A[fix_locs, :].sum(axis=0)[None, :]) / div
+                    )
                     A *= scaler
                     return A
             else:  # Axis = 1 / -1
@@ -342,17 +357,20 @@ class ConstraintNorm(Constraint):
                     scaler = _np.ones(A.shape)
                     div = A[:, not_fix_locs].sum(axis=-1)[:, None]
                     div[div == 0] = 1
-                    scaler[:, not_fix_locs] = ((1 - A[:, fix_locs].sum(axis=-1)[:, None]) / div)
+                    scaler[:, not_fix_locs] = (
+                        (1 - A[:, fix_locs].sum(axis=-1)[:, None]) / div
+                    )
                     A *= scaler
                     return A
 
 
 class ConstraintReplaceZeros(Constraint):
     """
-    Samples that sum-to-zero across axis are replaced with a vector of 0's except
-    for a 1 at feature if a single value. In a concentration context, e.g., samples with
-    no concentration are replaced with 100% concentration of a set feature. If multiple
-    features given, equal amounts of each feature (summing to 1) are used.
+    Samples that sum-to-zero across axis are replaced with a vector of 0's
+    except for a 1 at feature if a single value. In a concentration context,
+    e.g., samples with no concentration are replaced with 100% concentration of
+    a set feature. If multiple features given, equal amounts of each feature
+    (summing to 1) are used.
 
     Parameters
     ----------
@@ -384,7 +402,8 @@ class ConstraintReplaceZeros(Constraint):
             else:
                 raise TypeError('ndarrays must be of dtype int')
         else:
-            raise TypeError('Parameter feature must be of type None, int, list, tuple, ndarray')
+            raise TypeError('Parameter feature must be of type None, int,'
+                            + 'list, tuple, ndarray')
 
         if not ((axis == 0) | (axis == 1) | (axis == -1)):
             raise ValueError('Axis must be 0,1, or -1')
@@ -435,6 +454,7 @@ class _CutExclude(Constraint):
     copy : bool
         Make copy of input data, A; otherwise, overwrite (if mutable)
     """
+
     def __init__(self, value=0, axis_sumnz=None, exclude=None,
                  exclude_axis=-1, copy=False):
         """ """
@@ -452,9 +472,11 @@ class _CutExclude(Constraint):
             self._excl_mat = _np.zeros(X.shape, dtype=_np.bool)
         else:
             if self.exclude_axis == 0:
-                self._excl_mat = _np.in1d(Y.ravel(), self.exclude).reshape(Y.shape)
+                self._excl_mat = _np.in1d(Y.ravel(), self.exclude)\
+                    .reshape(Y.shape)
             else:
-                self._excl_mat = _np.in1d(X.ravel(), self.exclude).reshape(X.shape)
+                self._excl_mat = _np.in1d(X.ravel(), self.exclude)\
+                    .reshape(X.shape)
 
 
 class ConstraintCutBelow(_CutExclude):
@@ -476,7 +498,9 @@ class ConstraintCutBelow(_CutExclude):
     copy : bool
         Make copy of input data, A; otherwise, overwrite (if mutable)
     """
-    def __init__(self, value=0, axis_sumnz=None, exclude=None, exclude_axis=-1, copy=False):
+
+    def __init__(self, value=0, axis_sumnz=None, exclude=None, exclude_axis=-1,
+                 copy=False):
         """ Initialize """
         super().__init__(value=value, axis_sumnz=axis_sumnz, exclude=exclude,
                          exclude_axis=exclude_axis, copy=copy)
@@ -494,12 +518,15 @@ class ConstraintCutBelow(_CutExclude):
                 return A
         else:
             if self.copy:
-                return A*(_np.alltrue(A < self.value, axis=self.axis, keepdims=True) +
-                        (A >= self.value) + self._excl_mat)
+                return A*(_np.alltrue(A < self.value, axis=self.axis,
+                                      keepdims=True)
+                          + (A >= self.value) + self._excl_mat)
             else:
-                A *= (_np.alltrue(A < self.value, axis=self.axis, keepdims=True) +
-                    (A >= self.value) + self._excl_mat)
+                A *= (_np.alltrue(A < self.value, axis=self.axis,
+                                  keepdims=True)
+                      + (A >= self.value) + self._excl_mat)
                 return A
+
 
 class ConstraintCompressBelow(Constraint):
     """
@@ -550,7 +577,9 @@ class ConstraintCutAbove(_CutExclude):
     copy : bool
         Make copy of input data, A; otherwise, overwrite (if mutable)
     """
-    def __init__(self, value=0, axis_sumnz=None, exclude=None, exclude_axis=-1, copy=False):
+
+    def __init__(self, value=0, axis_sumnz=None, exclude=None, exclude_axis=-1,
+                 copy=False):
         """ """
         super().__init__(value=value, axis_sumnz=axis_sumnz, exclude=exclude,
                          exclude_axis=exclude_axis, copy=copy)
@@ -568,11 +597,13 @@ class ConstraintCutAbove(_CutExclude):
                 return A
         else:
             if self.copy:
-                return A*(_np.alltrue(A > self.value, axis=self.axis, keepdims=True) +
-                        (A <= self.value) + self._excl_mat)
+                return A*(_np.alltrue(A > self.value, axis=self.axis,
+                                      keepdims=True)
+                          + (A <= self.value) + self._excl_mat)
             else:
-                A *= (_np.alltrue(A > self.value, axis=self.axis, keepdims=True) +
-                    (A <= self.value) + self._excl_mat)
+                A *= (_np.alltrue(A > self.value, axis=self.axis,
+                                  keepdims=True)
+                      + (A <= self.value) + self._excl_mat)
                 return A
 
 
@@ -605,6 +636,7 @@ class ConstraintCompressAbove(Constraint):
             A += temp
             return A
 
+
 class ConstraintPlanarize(Constraint):
     """
     Set a particular target to a plane
@@ -621,8 +653,8 @@ class ConstraintPlanarize(Constraint):
     use_vals_below : float
         Only calculate based on values below (not including)
     lims_to_plane : bool
-        The returned plane will be limited to the range of the optionally supplied
-        use_vals_below, use_vals above.
+        The returned plane will be limited to the range of the optionally
+        supplied use_vals_below, use_vals above.
     scaler : float
         A large value that is much bigger than any values in the input array.
         Needed to ensure SVD properly creates plane. If None, auto-calculates.
@@ -635,22 +667,25 @@ class ConstraintPlanarize(Constraint):
     Notes
     -----
 
-    -   This uses an SVD to calculate the vector normal to the plane that fits the input data. It
-        assumes that the 3rd singular vector is the normal; thus, the x and y vectors for the data need
-        be larger than the variance of the input data. Scaler enables this by scaling the auto-generated
-        x and y vectors to be much larger than the max-min of the input data
+    -   This uses an SVD to calculate the vector normal to the plane that fits
+        the input data. It assumes that the 3rd singular vector is the normal;
+        thus, the x and y vectors for the data need be larger than the variance
+        of the input data. Scaler enables this by scaling the auto-generated x
+        and y vectors to be much larger than the max-min of the input data
 
     """
 
     def __init__(self, target, shape, use_vals_above=None, use_vals_below=None,
-                 lims_to_plane=True, scaler=None, recalc_scaler=False, copy=False):
+                 lims_to_plane=True, scaler=None, recalc_scaler=False,
+                 copy=False):
         super().__init__(copy)
         if isinstance(target, int):
             self.target = [target]
         elif isinstance(target, (list, tuple, _np.ndarray)):
             self.target = target
         else:
-            raise TypeError('target must be an int, list, 2D ndarray, or tuple')
+            raise TypeError('target must be an int, list, 2D ndarray, '
+                            + 'or tuple')
 
         self.shape = shape
         self.copy = copy
@@ -711,9 +746,9 @@ class ConstraintPlanarize(Constraint):
             U, s, Vh = _np.linalg.svd(Stack, full_matrices=False)
             norm_to_plane = 1*U[:, -1]
 
-            plane = (((-norm_to_plane[0] * (self._X - X2.mean())) -
-                    (norm_to_plane[1] * (self._Y - Y2.mean()))) /
-                    norm_to_plane[2]) + Z2.mean()
+            plane = (((-norm_to_plane[0] * (self._X - X2.mean()))
+                     - (norm_to_plane[1] * (self._Y - Y2.mean())))
+                     / norm_to_plane[2]) + Z2.mean()
 
             if self.lims_to_plane:
                 if self.use_above is not None:
@@ -728,14 +763,3 @@ class ConstraintPlanarize(Constraint):
             return A2
         else:
             return A
-
-
-if __name__ == '__main__':  # pragma: no cover
-    A = _np.array([[1, 2, 3, 4], [4, 5, 6, 7], [7, 8, 9, 10]]).astype(_np.float)
-    A_transform = _np.array([[1, 2, 3, 4], [4, 0, 0, 0], [0, 0, 0, 0]]).astype(_np.float)
-
-    constr = ConstraintCutAbove(copy=True, value=4)
-    out = constr.transform(A)
-
-    from numpy.testing import assert_allclose as _assert_allclose
-    _assert_allclose(out, A_transform)

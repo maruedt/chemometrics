@@ -1,9 +1,6 @@
 """ MCR Main Class for Computation"""
 
-
-
 import sys as _sys
-import copy as _copy
 
 import numpy as _np
 import logging as _logging
@@ -17,7 +14,7 @@ _logger = _logging.getLogger(__name__)
 _logger.setLevel(_logging.INFO)
 
 
-class McrAR:
+class McrAR():
     """
     Multivariate Curve Resolution - Alternating Regression
 
@@ -142,7 +139,8 @@ class McrAR:
     """
 
     def __init__(self, c_regr=OLS(), st_regr=OLS(), fit_kwargs={},
-                 c_fit_kwargs={}, st_fit_kwargs={}, c_constraints=[ConstraintNonneg()],
+                 c_fit_kwargs={}, st_fit_kwargs={},
+                 c_constraints=[ConstraintNonneg()],
                  st_constraints=[ConstraintNonneg()],
                  max_iter=50, err_fcn=mse,
                  tol_increase=0.0, tol_n_increase=10, tol_err_change=None,
@@ -294,17 +292,15 @@ class McrAR:
         Notes
         -----
 
-        -   Parameters to fit will SUPERCEDE anything in fit_kwargs, if provided during McrAR
-            instantiation.
-            -   Note that providing C (or ST) to fit_kwargs and providing ST (or C) to fit or
-                fit_transform will raise an error.
-            -   When in doubt, clear fit_kwargs via self.fit_kwargs = {}
-            -   Does not affect verbose or c_first parameters
-
-        -   pyMCR (>= 0.3.1) uses the native Python logging module
-            rather than print statements; thus, to see the messages, one will
-            need to log-to-file or stream to stdout. More info is available in
-            the docs.
+        -   Parameters to fit will SUPERCEDE anything in fit_kwargs, if
+            provided during McrAR instantiation.
+        -   Note that providing C (or ST) to fit_kwargs and providing ST (or C)
+            to fit or fit_transform will raise an error.
+        -   When in doubt, clear fit_kwargs via self.fit_kwargs = {}
+        -   Does not affect verbose or c_first parameters
+        -   Uses the native Python logging module rather than print statements;
+            thus, to see the messages, one will need to log-to-file or stream
+            to stdout. More info is available in the docs.
 
         """
 
@@ -341,8 +337,8 @@ class McrAR:
         # Ensure only C or ST provided
         if (C is None) & (ST is None):
             raise TypeError('C or ST estimate must be provided')
-        elif (C is not None) & (ST is not None) & ((c_fix is None) |
-                                                   (st_fix is None)):
+        elif (C is not None) & (ST is not None)\
+                & ((c_fix is None) | (st_fix is None)):
             err_str1 = 'Only C or ST estimate must be provided, '
             raise TypeError(
                 err_str1 + 'unless c_fix and st_fix are both provided')
@@ -523,8 +519,7 @@ class McrAR:
                 if self.tol_n_increase is not None:
                     if self.n_increase > self.tol_n_increase:
                         out_str = 'Maximum error increases reached '
-                        _logger.info(out_str +
-                                     '({}) (ST iter). '
+                        _logger.info(out_str + '({}) (ST iter). '
                                      'Exiting.'.format(self.tol_n_increase))
                         self.exit_tol_n_increase = True
                         break
@@ -583,6 +578,7 @@ class McrAR:
         """ This is just provided for sklearn-like functionality """
 
         return self.ST_
+
 
 if __name__ == '__main__':  # pragma: no cover
     # PyMCR uses the Logging facility to capture messaging

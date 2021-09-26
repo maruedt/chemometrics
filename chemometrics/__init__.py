@@ -33,3 +33,4 @@ from .preprocessing import *
 from .plotting import *
 from .utils import *
 from .regression import *
+from . import mcr

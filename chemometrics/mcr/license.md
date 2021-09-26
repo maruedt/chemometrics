@@ -1,5 +1,7 @@
 The software in this folder is published under two different licenses. The
-original code is licensed as follows:
+original code was written by Charles H Camp Jr:
+`charles.camp@nist.gov <mailto:charles.camp@nist.gov>`. and is licensed as
+follows:
 
 "
 This software was developed by employees of the National Institute of Standards
@@ -9,7 +11,7 @@ and Technology (NIST), an agency of the Federal Government. Pursuant to  [title
 employees are not subject to copyright protection in the United States and are
 considered to be in the public domain. Permission to freely use, copy, modify,
 and distribute this software and its documentation without fee is hereby
-granted,  provided that this notice and disclaimer of warranty appears in all
+granted, provided that this notice and disclaimer of warranty appears in all
 copies.
 
 THE SOFTWARE IS PROVIDED 'AS IS' WITHOUT ANY WARRANTY OF ANY KIND, EITHER
@@ -26,8 +28,5 @@ OR PROPERTY OR OTHERWISE, AND WHETHER OR NOT LOSS WAS SUSTAINED FROM, OR AROSE
 OUT OF THE RESULTS OF, OR USE OF, THE SOFTWARE OR SERVICES PROVIDED HEREUNDER.
 "
 
-Changes to the original code made as part of chemometrics are published under the
-GPL v3.0 license.
-
-The software in this folder was originally developed by Charles H Camp Jr:
-`charles.camp@nist.gov <mailto:charles.camp@nist.gov>`.
+Changes to the original code made as part of chemometrics are published under
+the GPL v3.0 license.

@@ -9,12 +9,14 @@ from pymcr.regressors import OLS, NNLS
 from pymcr.constraints import ConstraintNonneg
 from pymcr.metrics import mse
 
+from sklearn.base import BaseEstimator, TransformerMixin
+
 # create logger for mcr.py and set default level
 _logger = _logging.getLogger(__name__)
 _logger.setLevel(_logging.INFO)
 
 
-class McrAR():
+class McrAR(TransformerMixin, BaseEstimator):
     """
     Multivariate Curve Resolution - Alternating Regression
 

@@ -554,28 +554,36 @@ class McrAR(TransformerMixin, BaseEstimator):
                     self.exit_tol_err_change = True
                     break
 
-    def fit_transform(self, D, **kwargs):
+    def transform(self, D, **kwargs):
         """
-        This performs the same purpose as the fit method, but returns the
-        C_ matrix. Really, it's just to enable sklearn-expectant APIs
-        compatible with pyMCR.
+        Transform a data matrix into concentration/score-values
 
-        It is recommended to use the fit method and retrieve your results from
-        C_ and ST_
+        The method uses half an interation of a normal MCR-alternating
+        regression to decompose a data matrix into concentrations/scores given
+        the fitted spectral components. The method may be used to retrieve
+        concentrations for novel measurements.
 
-        See documentation for the fit method
+        Parameters
+        ----------
+        D : ndarray
+            D matrix
 
         Returns
         --------
 
-        C_ : ndarray
-            C-matrix is returned
+        C : ndarray
+            matrix of concentrations is returned
 
         """
 
-        self.fit(D, **kwargs)
+        self.c_regressor.fit(self.ST_.T, D.T, **self.c_fit_kwargs)
+        C = self.c_regressor.coef_
 
-        return self.C_
+        # Apply c-constraints
+        for constr in self.c_constraints:
+            C = constr.transform(C)
+
+        return C
 
     @property
     def components_(self):

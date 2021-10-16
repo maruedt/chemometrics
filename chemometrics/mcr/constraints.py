@@ -326,7 +326,7 @@ class ConstraintNorm(Constraint):
 
                     return A * scaler
         else:  # Overwrite original data
-            if A.dtype != _np.float:
+            if A.dtype != float:
                 raise TypeError('A.dtype must be float for',
                                 'in-place math (copy=False)')
 
@@ -706,8 +706,8 @@ class ConstraintPlanarize(Constraint):
     def _setup_xy(self, scaler):
 
         self.scaler = scaler
-        self._x = scaler*_np.arange(self.shape[1], dtype=_np.float)
-        self._y = scaler*_np.arange(self.shape[0], dtype=_np.float)
+        self._x = scaler*_np.arange(self.shape[1], dtype=float)
+        self._y = scaler*_np.arange(self.shape[0], dtype=float)
 
         self._X, self._Y = _np.meshgrid(self._x, self._y)
         self._X = self._X.ravel()

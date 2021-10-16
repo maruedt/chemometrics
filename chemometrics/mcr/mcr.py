@@ -5,9 +5,9 @@ import sys as _sys
 import numpy as _np
 import logging as _logging
 
-from pymcr.regressors import OLS, NNLS
-from pymcr.constraints import ConstraintNonneg
-from pymcr.metrics import mse
+from .regressors import OLS, NNLS
+from .constraints import ConstraintNonneg
+from .metrics import mse
 
 from sklearn.base import BaseEstimator, TransformerMixin
 

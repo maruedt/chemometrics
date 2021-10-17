@@ -469,7 +469,7 @@ class _CutExclude(Constraint):
     def _make_excl_mat(self, A_shape):
         X, Y = _np.meshgrid(_np.arange(A_shape[1]), _np.arange(A_shape[0]))
         if self.exclude is None:
-            self._excl_mat = _np.zeros(X.shape, dtype=_np.bool)
+            self._excl_mat = _np.zeros(X.shape, dtype=bool)
         else:
             if self.exclude_axis == 0:
                 self._excl_mat = _np.in1d(Y.ravel(), self.exclude)\

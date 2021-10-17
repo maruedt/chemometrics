@@ -377,7 +377,7 @@ class TestConstraints(unittest.TestCase):
         out = constr_norm.transform(A)
         assert_allclose(A_fix2_ax1, A)
 
-    def test_cut_below():
+    def test_cut_below(self):
         """ Test cutting below (and not equal to) a value """
         A = np.array([[1, 2, 3, 4],
                       [4, 5, 6, 7],
@@ -395,7 +395,7 @@ class TestConstraints(unittest.TestCase):
         out = constr.transform(A)
         assert_allclose(A, A_transform)
 
-    def test_cut_below_exclude():
+    def test_cut_below_exclude(self):
         """ Test cutting below (and not equal to) a value """
         A = np.array([[1, 2, 3, 4], [4, 5, 6, 7], [7, 8, 9, 10]]).astype(float)
         A_transform_excl_0_ax1 = np.array([[1, 0, 0, 4],
@@ -429,7 +429,7 @@ class TestConstraints(unittest.TestCase):
         out = constr.transform(A)
         assert_allclose(A, A_transform_excl_0_ax0)
 
-    def test_cut_below_nonzerosum():
+    def test_cut_below_nonzerosum(self):
         """
         Test cutting below (and not equal to) a value with the constrain that
             no columns (axis=-1) will all become 0
@@ -446,7 +446,7 @@ class TestConstraints(unittest.TestCase):
         constr.transform(A)
         assert_allclose(A, A_correct)
 
-    def test_cut_below_nonzerosum_exclude():
+    def test_cut_below_nonzerosum_exclude(self):
         """
         Test cutting below (and not equal to) a value with the constrain that
             no columns (axis=-1) will all become 0
@@ -471,7 +471,7 @@ class TestConstraints(unittest.TestCase):
         # constr.transform(A)
         # assert_allclose(A, A_correct)
 
-    def test_cut_above_nonzerosum():
+    def test_cut_above_nonzerosum(self):
         """
         Test cutting above (and not equal to) a value with the constrain that
             no columns (axis=-1) will all become 0
@@ -493,7 +493,7 @@ class TestConstraints(unittest.TestCase):
         constr.transform(A)
         assert_allclose(A, A_correct)
 
-    def test_compress_below():
+    def test_compress_below(self):
         """ Test compressing below (and not equal to) a value """
         A = np.array([[1, 2, 3, 4], [4, 5, 6, 7], [7, 8, 9, 10]]).astype(float)
         A_transform = np.array([[4, 4, 4, 4],
@@ -509,7 +509,7 @@ class TestConstraints(unittest.TestCase):
         out = constr.transform(A)
         assert_allclose(A, A_transform)
 
-    def test_cut_above():
+    def test_cut_above(test_mcr_ideal_default):
         """ Test cutting above (and not equal to) a value """
         A = np.array([[1, 2, 3, 4], [4, 5, 6, 7], [7, 8, 9, 10]]).astype(float)
         A_transform = np.array([[1, 2, 3, 4],
@@ -525,7 +525,7 @@ class TestConstraints(unittest.TestCase):
         out = constr.transform(A)
         assert_allclose(A, A_transform)
 
-    def test_cut_above_exclude():
+    def test_cut_above_exclude(self):
         """ Test cutting above (and not equal to) a value """
         A = np.array([[1, 2, 3, 4], [4, 5, 6, 7], [7, 8, 9, 10]]).astype(float)
         A_transform_excl_0_ax1 = np.array([[1, 2, 3, 4],
@@ -727,7 +727,7 @@ class TestConstraints(unittest.TestCase):
         out = constr.transform(A)
         assert_allclose(A, A_transform_ax1)
 
-    def test_replace_zeros_non1fval_multifeature():
+    def test_replace_zeros_non1fval_multifeature(self):
         """ Test replace zeros using a 2 features with fval != 1 """
         A = np.array([[0.0, 0.0, 0.0, 0.0],
                       [0.25, 0.25, 0.0, 0.0],
@@ -920,8 +920,11 @@ class TestConstraints(unittest.TestCase):
                                      use_vals_below=1, lims_to_plane=False)
         out = constr.transform(C_ravel)
 
+        # reality check on constructed data
         self.assertTrue(C_ravel.min() < 0)
         self.assertTrue(C_ravel.max() > 1)
+
+        # check scaling of output data
         self.assertTrue(out[:, 0].min() < 0)
         self.assertTrue(out[:, 0].max() > 1)
         self.assertTrue(out[:, 1].min() < 0)
@@ -933,28 +936,11 @@ class TestConstraints(unittest.TestCase):
                                      use_vals_below=1, lims_to_plane=True)
         out = constr.transform(C_ravel)
 
-        self.assertTrue(C_ravel.min() < 0)
-        self.assertTrue(C_ravel.max() > 1)
+        # check scaling if limits to plane apply
         self.assertTrue(out[:, 0].min() >= 0)
         self.assertTrue(out[:, 0].max() <= 1)
         self.assertTrue(out[:, 1].min() < 0)
         self.assertTrue(out[:, 1].max() > 1)
-
-        # OVERWRITE
-        self.assertTrue(C_ravel[:, 0].min() < 0)
-        self.assertTrue(C_ravel[:, 0].max() > 1)
-        self.assertTrue(C_ravel[:, 1].min() < 0)
-        self.assertTrue(C_ravel[:, 1].max() > 1)
-
-        _ = ConstraintPlanarize(0, (10, 20), scaler=None, copy=False,
-                                use_vals_above=0,
-                                use_vals_below=1, lims_to_plane=True)
-        out = constr.transform(C_ravel)
-
-        self.assertTrue(C_ravel[:, 0].min() >= 0)
-        self.assertTrue(C_ravel[:, 0].max() <= 1)
-        self.assertTrue(C_ravel[:, 1].min() < 0)
-        self.assertTrue(C_ravel[:, 1].max() > 1)
 
 
 if __name__ == '__main__':

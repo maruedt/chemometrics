@@ -1,5 +1,5 @@
 """
-Testing pymcr.constraints
+Testing mcr.constraints
 
 """
 

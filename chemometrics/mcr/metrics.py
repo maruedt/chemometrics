@@ -1,5 +1,5 @@
 """
-Metrics used in pyMCR
+Metrics used in :mod:`chemometrics.mcr`
 
 All functions must take C, ST, D_actual, D_calculated
 """

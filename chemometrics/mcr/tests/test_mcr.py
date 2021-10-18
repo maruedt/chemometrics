@@ -1,9 +1,10 @@
-
+"""
+Test McrAR functionality
+"""
 
 import numpy as np
 
-
-from numpy.testing import assert_equal, assert_allclose
+from numpy.testing import assert_equal
 
 import unittest
 from chemometrics.mcr import McrAR

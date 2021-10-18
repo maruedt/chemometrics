@@ -1,5 +1,6 @@
 """
-pyMCR: Pythonic Multivariate Curve Resolution - Alternating Least Squares
+The :mod:`chemometrics.mcr` provides Multivariate Curve Resolution -
+Alternating Least Squares (MCR-ALS) functionality
 """
 
 from .mcr import McrAR

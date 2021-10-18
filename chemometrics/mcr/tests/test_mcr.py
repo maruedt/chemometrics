@@ -3,12 +3,13 @@
 import numpy as np
 
 
-from numpy.testing import assert_equal
+from numpy.testing import assert_equal, assert_allclose
 
 import unittest
 from chemometrics.mcr import McrAR
 from chemometrics.mcr.constraints import ConstraintNonneg, ConstraintNorm
 from chemometrics.mcr.regressors import OLS, NNLS
+from sklearn.linear_model import Ridge
 
 
 def dataset2():
@@ -306,9 +307,27 @@ class TestMcrAR(unittest.TestCase):
         mcrar = McrAR()
         mcrar.fit(D_known, ST=St_known)
 
-        assert mcrar.n_targets == C_known.shape[-1]  # n_components
-        assert mcrar.n_samples == D_known.shape[0]
-        assert mcrar.n_features == D_known.shape[-1]
+        self.assertTrue(mcrar.n_targets == C_known.shape[-1])  # n_components
+        self.assertTrue(mcrar.n_samples == D_known.shape[0])
+        self.assertTrue(mcrar.n_features == D_known.shape[-1])
+
+    def test_sklearn_linear_regression(self):
+        """ Test MCR-AR works with sklearn-regressor """
+        C_known, D_known, St_known = dataset2()
+
+        mcrar = McrAR(c_regr=Ridge(), st_regr=Ridge())
+        mcrar.fit(D_known, ST=St_known)
+
+        # check that variables are set correctly w external regressor
+        self.assertTrue(mcrar.n_targets == C_known.shape[-1])  # n_components
+        self.assertTrue(mcrar.n_samples == D_known.shape[0])
+        self.assertTrue(mcrar.n_features == D_known.shape[-1])
+
+        # check that Ridge is used
+        self.assertIsInstance(mcrar.c_regressor, Ridge)
+        self.assertIsInstance(mcrar.st_regressor, Ridge)
+        self.assertTrue(mcrar.c_regressor.n_features_in_ == C_known.shape[1])
+        self.assertTrue(mcrar.st_regressor.n_features_in_ == C_known.shape[1])
 
 
 if __name__ == '__main__':

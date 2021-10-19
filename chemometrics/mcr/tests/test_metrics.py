@@ -1,21 +1,25 @@
 """
-Testing pymcr.regressors
+Testing chemometrics.mcr.regressors
 
 """
 
-
-
-
 import numpy as np
 
-from numpy.testing import (assert_equal, assert_array_equal,
-                           assert_allclose)
+from chemometrics.mcr.metrics import mse
+import unittest
 
-from pymcr.metrics import mse
 
-def test_mse():
-    A = np.ones((3,3))
-    B = np.eye(3)
-    mse(None, None, A, B)
+class TestMSE(unittest.TestCase):
+    """
+    Test mse calculation
+    """
 
-# import pytest
+    def test_mse(self):
+        A = np.ones((3, 3))
+        B = np.eye(3)
+        error = mse(None, None, A, B)
+        self.assertEqual(error, 6/9)
+
+
+if __name__ == '__main__':
+    unittest.main()

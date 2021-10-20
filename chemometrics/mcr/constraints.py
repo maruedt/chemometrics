@@ -6,9 +6,9 @@ or overwrite input depending on copy attribute.
 """
 
 
-from abc import (ABC as _ABC, abstractmethod as _abstractmethod)
+from abc import (ABC, abstractmethod)
 
-import numpy as _np
+import numpy as np
 
 __all__ = ['Constraint', 'ConstraintNonneg', 'ConstraintCumsumNonneg',
            'ConstraintZeroEndPoints', 'ConstraintZeroCumSumEndPoints',
@@ -18,7 +18,7 @@ __all__ = ['Constraint', 'ConstraintNonneg', 'ConstraintCumsumNonneg',
            'ConstraintPlanarize']
 
 
-class Constraint(_ABC):
+class Constraint(ABC):
     """ Abstract class for constraints
 
     Parameters
@@ -30,7 +30,7 @@ class Constraint(_ABC):
     def __init__(self, copy=True):
         self.copy = copy
 
-    @_abstractmethod
+    @abstractmethod
     def transform(self, A):
         """ Transform A input based on constraint """
 
@@ -78,9 +78,9 @@ class ConstraintCumsumNonneg(Constraint):
         """ Apply cumsum nonnegative constraint"""
 
         if self.copy:
-            return A*(_np.cumsum(A, self.axis) > 0)
+            return A*(np.cumsum(A, self.axis) > 0)
         else:
-            A *= (_np.cumsum(A, self.axis) > 0)
+            A *= (np.cumsum(A, self.axis) > 0)
             return A
 
 
@@ -112,7 +112,7 @@ class ConstraintZeroEndPoints(Constraint):
     def transform(self, A):
         """ Apply cumsum nonnegative constraint"""
 
-        pix_vec = _np.arange(A.shape[self.axis])
+        pix_vec = np.arange(A.shape[self.axis])
         if (self.axis == 0):
             if self.span == 1:
                 slope = (A[-1, :] - A[0, :]) / (pix_vec[-1] - pix_vec[0])
@@ -123,14 +123,14 @@ class ConstraintZeroEndPoints(Constraint):
                          / (pix_vec[-self.span:].mean()
                          - pix_vec[:self.span].mean()))
                 intercept = (A[:self.span, :]
-                             - _np.dot(pix_vec[:self.span, None],
-                                       slope[None, :])).mean(axis=0)
+                             - np.dot(pix_vec[:self.span, None],
+                                      slope[None, :])).mean(axis=0)
             if self.copy:
-                return A - _np.dot(pix_vec[:, None],
-                                   slope[None, :]) - intercept[None, :]
+                return A - np.dot(pix_vec[:, None],
+                                  slope[None, :]) - intercept[None, :]
             else:
-                A -= (_np.dot(pix_vec[:, None],
-                              slope[None, :]) + intercept[None, :])
+                A -= (np.dot(pix_vec[:, None],
+                      slope[None, :]) + intercept[None, :])
                 return A
         else:
             if self.span == 1:
@@ -142,15 +142,15 @@ class ConstraintZeroEndPoints(Constraint):
                          / (pix_vec[-self.span:].mean()
                          - pix_vec[:self.span].mean()))
                 intercept = (A[:, :self.span]
-                             - _np.dot(slope[:, None],
-                                       pix_vec[None, :self.span])).mean(axis=1)
+                             - np.dot(slope[:, None],
+                                      pix_vec[None, :self.span])).mean(axis=1)
 
             if self.copy:
-                return A - _np.dot(slope[:, None],
-                                   pix_vec[None, :]) - intercept[:, None]
+                return A - np.dot(slope[:, None],
+                                  pix_vec[None, :]) - intercept[:, None]
             else:
-                A -= (_np.dot(slope[:, None],
-                              pix_vec[None, :]) + intercept[:, None])
+                A -= (np.dot(slope[:, None],
+                             pix_vec[None, :]) + intercept[:, None])
                 return A
 
 
@@ -278,8 +278,8 @@ class ConstraintNorm(Constraint):
             self.fix = [fix]
         elif isinstance(fix, (list, tuple)):
             self.fix = fix
-        elif isinstance(fix, _np.ndarray):
-            if _np.issubdtype(fix.dtype, _np.integer):
+        elif isinstance(fix, np.ndarray):
+            if np.issubdtype(fix.dtype, np.integer):
                 self.fix = fix.tolist()
             else:
                 raise TypeError('ndarrays must be of dtype int')
@@ -300,9 +300,9 @@ class ConstraintNorm(Constraint):
                     return A / A.sum(axis=self.axis)[None, :]
                 else:  # Fixed axes
                     fix_locs = self.fix
-                    not_fix_locs = [v for v in _np.arange(A.shape[0]).tolist()
+                    not_fix_locs = [v for v in np.arange(A.shape[0]).tolist()
                                     if self.fix.count(v) == 0]
-                    scaler = _np.ones(A.shape)
+                    scaler = np.ones(A.shape)
                     div = A[not_fix_locs, :].sum(axis=0)[None, :]
                     div[div == 0] = 1
                     scaler[not_fix_locs, :] = (
@@ -315,9 +315,9 @@ class ConstraintNorm(Constraint):
                     return A / A.sum(axis=self.axis)[:, None]
                 else:  # Fixed axis
                     fix_locs = self.fix
-                    not_fix_locs = [v for v in _np.arange(A.shape[-1]).tolist()
+                    not_fix_locs = [v for v in np.arange(A.shape[-1]).tolist()
                                     if self.fix.count(v) == 0]
-                    scaler = _np.ones(A.shape)
+                    scaler = np.ones(A.shape)
                     div = A[:, not_fix_locs].sum(axis=-1)[:, None]
                     div[div == 0] = 1
                     scaler[:, not_fix_locs] = (
@@ -336,9 +336,9 @@ class ConstraintNorm(Constraint):
                     return A
                 else:  # Fixed axes
                     fix_locs = self.fix
-                    not_fix_locs = [v for v in _np.arange(A.shape[0]).tolist()
+                    not_fix_locs = [v for v in np.arange(A.shape[0]).tolist()
                                     if self.fix.count(v) == 0]
-                    scaler = _np.ones(A.shape)
+                    scaler = np.ones(A.shape)
                     div = A[not_fix_locs, :].sum(axis=0)[None, :]
                     div[div == 0] = 1
                     scaler[not_fix_locs, :] = (
@@ -352,9 +352,9 @@ class ConstraintNorm(Constraint):
                     return A
                 else:  # Fixed axis
                     fix_locs = self.fix
-                    not_fix_locs = [v for v in _np.arange(A.shape[-1]).tolist()
+                    not_fix_locs = [v for v in np.arange(A.shape[-1]).tolist()
                                     if self.fix.count(v) == 0]
-                    scaler = _np.ones(A.shape)
+                    scaler = np.ones(A.shape)
                     div = A[:, not_fix_locs].sum(axis=-1)[:, None]
                     div[div == 0] = 1
                     scaler[:, not_fix_locs] = (
@@ -396,8 +396,8 @@ class ConstraintReplaceZeros(Constraint):
             self.feature = [feature]
         elif isinstance(feature, (list, tuple)):
             self.feature = feature
-        elif isinstance(feature, _np.ndarray):
-            if _np.issubdtype(feature.dtype, _np.integer):
+        elif isinstance(feature, np.ndarray):
+            if np.issubdtype(feature.dtype, np.integer):
                 self.feature = feature.tolist()
             else:
                 raise TypeError('ndarrays must be of dtype int')
@@ -413,7 +413,7 @@ class ConstraintReplaceZeros(Constraint):
         """ Apply constraint """
 
         if self.feature:
-            replacement = _np.zeros(A.shape[self.axis])
+            replacement = np.zeros(A.shape[self.axis])
             replacement[self.feature] = self.fval
             replacement /= replacement.sum()
             replacement *= self.fval
@@ -467,15 +467,15 @@ class _CutExclude(Constraint):
         self._excl_mat = None
 
     def _make_excl_mat(self, A_shape):
-        X, Y = _np.meshgrid(_np.arange(A_shape[1]), _np.arange(A_shape[0]))
+        X, Y = np.meshgrid(np.arange(A_shape[1]), np.arange(A_shape[0]))
         if self.exclude is None:
-            self._excl_mat = _np.zeros(X.shape, dtype=bool)
+            self._excl_mat = np.zeros(X.shape, dtype=bool)
         else:
             if self.exclude_axis == 0:
-                self._excl_mat = _np.in1d(Y.ravel(), self.exclude)\
+                self._excl_mat = np.in1d(Y.ravel(), self.exclude)\
                     .reshape(Y.shape)
             else:
-                self._excl_mat = _np.in1d(X.ravel(), self.exclude)\
+                self._excl_mat = np.in1d(X.ravel(), self.exclude)\
                     .reshape(X.shape)
 
 
@@ -518,12 +518,12 @@ class ConstraintCutBelow(_CutExclude):
                 return A
         else:
             if self.copy:
-                return A*(_np.alltrue(A < self.value, axis=self.axis,
-                                      keepdims=True)
+                return A*(np.alltrue(A < self.value, axis=self.axis,
+                                     keepdims=True)
                           + (A >= self.value) + self._excl_mat)
             else:
-                A *= (_np.alltrue(A < self.value, axis=self.axis,
-                                  keepdims=True)
+                A *= (np.alltrue(A < self.value, axis=self.axis,
+                                 keepdims=True)
                       + (A >= self.value) + self._excl_mat)
                 return A
 
@@ -597,12 +597,12 @@ class ConstraintCutAbove(_CutExclude):
                 return A
         else:
             if self.copy:
-                return A*(_np.alltrue(A > self.value, axis=self.axis,
-                                      keepdims=True)
+                return A*(np.alltrue(A > self.value, axis=self.axis,
+                                     keepdims=True)
                           + (A <= self.value) + self._excl_mat)
             else:
-                A *= (_np.alltrue(A > self.value, axis=self.axis,
-                                  keepdims=True)
+                A *= (np.alltrue(A > self.value, axis=self.axis,
+                                 keepdims=True)
                       + (A <= self.value) + self._excl_mat)
                 return A
 
@@ -681,7 +681,7 @@ class ConstraintPlanarize(Constraint):
         super().__init__(copy)
         if isinstance(target, int):
             self.target = [target]
-        elif isinstance(target, (list, tuple, _np.ndarray)):
+        elif isinstance(target, (list, tuple, np.ndarray)):
             self.target = target
         else:
             raise TypeError('target must be an int, list, 2D ndarray, '
@@ -706,10 +706,10 @@ class ConstraintPlanarize(Constraint):
     def _setup_xy(self, scaler):
 
         self.scaler = scaler
-        self._x = scaler*_np.arange(self.shape[1], dtype=float)
-        self._y = scaler*_np.arange(self.shape[0], dtype=float)
+        self._x = scaler*np.arange(self.shape[1], dtype=float)
+        self._y = scaler*np.arange(self.shape[0], dtype=float)
 
-        self._X, self._Y = _np.meshgrid(self._x, self._y)
+        self._X, self._Y = np.meshgrid(self._x, self._y)
         self._X = self._X.ravel()
         self._Y = self._Y.ravel()
 
@@ -717,7 +717,7 @@ class ConstraintPlanarize(Constraint):
         """ Set targets, t, to fit planes """
 
         if (self.scaler is None) | (self.recalc):
-            self._setup_xy(1e3 * _np.abs(A.max() - A.min()))
+            self._setup_xy(1e3 * np.abs(A.max() - A.min()))
 
         if self.copy:
             A2 = 1*A
@@ -727,23 +727,23 @@ class ConstraintPlanarize(Constraint):
             Y2 = 1*self._Y
             Z2 = 1*A[:, t]
 
-            Stack = _np.vstack((X2, Y2, Z2))
+            Stack = np.vstack((X2, Y2, Z2))
 
             if self.use_above is not None:
                 X2 = X2[Z2 > self.use_above]
                 Y2 = Y2[Z2 > self.use_above]
                 Z2 = Z2[Z2 > self.use_above]
-                Stack = _np.vstack((X2, Y2, Z2))
+                Stack = np.vstack((X2, Y2, Z2))
 
             if self.use_below is not None:
                 X2 = X2[Z2 < self.use_below]
                 Y2 = Y2[Z2 < self.use_below]
                 Z2 = Z2[Z2 < self.use_below]
-                Stack = _np.vstack((X2, Y2, Z2))
+                Stack = np.vstack((X2, Y2, Z2))
 
             Stack = Stack - Stack.mean(axis=-1)[:, None]
 
-            U, s, Vh = _np.linalg.svd(Stack, full_matrices=False)
+            U, s, Vh = np.linalg.svd(Stack, full_matrices=False)
             norm_to_plane = 1*U[:, -1]
 
             plane = (((-norm_to_plane[0] * (self._X - X2.mean()))

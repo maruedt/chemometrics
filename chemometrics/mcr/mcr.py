@@ -5,9 +5,9 @@ import sys as _sys
 import numpy as _np
 import logging as _logging
 
-from .regressors import OLS, NNLS
-from .constraints import ConstraintNonneg
-from .metrics import mse
+from chemometrics.mcr.regressors import OLS, NNLS
+from chemometrics.mcr.constraints import ConstraintNonneg
+from chemometrics.mcr.metrics import mse
 
 from sklearn.base import BaseEstimator, TransformerMixin
 

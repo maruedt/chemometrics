@@ -15,7 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with chemometrics.  If not, see <https://www.gnu.org/licenses/>.
 
-from .context import chemometrics as cm  # accounts for relativ path
+import chemometrics as cm  # accounts for relativ path
 from chemometrics import preprocessing as pp
 import numpy as np
 import unittest

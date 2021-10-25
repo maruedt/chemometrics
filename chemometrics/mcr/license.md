@@ -1,6 +1,6 @@
 The original code in this folder was written by Charles H Camp Jr:
-`charles.camp@nist.gov <mailto:charles.camp@nist.gov>`. The original code was
-licensed as follows:
+`charles.camp@nist.gov <mailto:charles.camp@nist.gov>` and released with
+following release note:
 
 "
 This software was developed by employees of the National Institute of Standards
@@ -28,7 +28,7 @@ OUT OF THE RESULTS OF, OR USE OF, THE SOFTWARE OR SERVICES PROVIDED HEREUNDER.
 "
 
 Changes to the original code were made as part of chemometrics. The changed
-files are published under the GPL v3.0 license. 
+files are published under the GPL v3.0 license.
 
 Copyright 2021 Matthias Rüdt
 

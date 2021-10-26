@@ -20,9 +20,9 @@
 
 
 """
-Built-in constraints
+McrAR constraints
 
-All classes need a transform class. Note, unlike sklearn, transform can copy
+All classes need a transform method. Note, unlike sklearn, transform can copy
 or overwrite input depending on copy attribute.
 """
 

@@ -26,7 +26,7 @@ Testing chemometrics.mcr.regressors
 
 import numpy as np
 
-from chemometrics.mcr.metrics import mse
+from chemometrics.mcr.metric import mse
 import unittest
 
 

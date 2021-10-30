@@ -26,9 +26,9 @@ import sys as _sys
 import numpy as _np
 import logging as _logging
 
-from chemometrics.mcr.regressors import OLS, NNLS
-from chemometrics.mcr.constraints import ConstraintNonneg
-from chemometrics.mcr.metrics import mse
+from chemometrics.mcr.regressor import OLS, NNLS
+import chemometrics.mcr.constraint as constraint
+from chemometrics.mcr.metric import mse
 
 from sklearn.base import BaseEstimator, TransformerMixin
 
@@ -163,8 +163,8 @@ class McrAR(TransformerMixin, BaseEstimator):
 
     def __init__(self, c_regr=OLS(), st_regr=OLS(), fit_kwargs={},
                  c_fit_kwargs={}, st_fit_kwargs={},
-                 c_constraints=[ConstraintNonneg()],
-                 st_constraints=[ConstraintNonneg()],
+                 c_constraints=[constraint.Nonneg()],
+                 st_constraints=[constraint.Nonneg()],
                  max_iter=50, err_fcn=mse,
                  tol_increase=0.0, tol_n_increase=10, tol_err_change=None,
                  tol_n_above_min=10

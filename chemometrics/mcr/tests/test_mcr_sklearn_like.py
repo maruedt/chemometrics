@@ -30,7 +30,7 @@ import unittest
 
 from chemometrics import mcr
 from chemometrics.mcr import McrAR
-from chemometrics.mcr.constraints import ConstraintNonneg, ConstraintNorm
+import chemometrics.mcr.constraint as constraint
 
 
 def dataset():
@@ -91,15 +91,15 @@ class TestMcrSklearnLike(unittest.TestCase):
         mcrar = McrAR(c_regr='OLS', st_regr='OLS', fit_kwargs={'ST': St_known})
         mcrar.fit(D_known, verbose=True)
         assert_equal(1, mcrar.n_iter_opt)
-        self.assertIsInstance(mcrar.c_regressor, mcr.regressors.OLS)
-        self.assertIsInstance(mcrar.st_regressor, mcr.regressors.OLS)
+        self.assertIsInstance(mcrar.c_regressor, mcr.regressor.OLS)
+        self.assertIsInstance(mcrar.st_regressor, mcr.regressor.OLS)
 
         mcrar = McrAR(c_regr='NNLS', st_regr='NNLS',
                       fit_kwargs={'ST': St_known})
         mcrar.fit(D_known)
         assert_equal(1, mcrar.n_iter_opt)
-        self.assertIsInstance(mcrar.c_regressor, mcr.regressors.NNLS)
-        self.assertIsInstance(mcrar.st_regressor, mcr.regressors.NNLS)
+        self.assertIsInstance(mcrar.c_regressor, mcr.regressor.NNLS)
+        self.assertIsInstance(mcrar.st_regressor, mcr.regressor.NNLS)
         self.assertTrue(((mcrar.D_ - D_known)**2).mean() < 1e-10)
         self.assertTrue(((mcrar.D_opt_ - D_known)**2).mean() < 1e-10)
 
@@ -123,8 +123,8 @@ class TestMcrSklearnLike(unittest.TestCase):
         # minimum; thus, the err_change gets really small with a relatively bad
         # error. The tol_err_change is set to None, so it makes it to max_iter.
         mcrar = McrAR(max_iter=50, c_regr='OLS', st_regr='OLS',
-                      st_constraints=[ConstraintNonneg()],
-                      c_constraints=[ConstraintNonneg(), ConstraintNorm()],
+                      st_constraints=[constraint.Nonneg()],
+                      c_constraints=[constraint.Nonneg(), constraint.Norm()],
                       tol_increase=None, tol_n_increase=None,
                       tol_err_change=None, tol_n_above_min=None,
                       fit_kwargs={'C': C_known*0 + 0.1})
@@ -140,8 +140,8 @@ class TestMcrSklearnLike(unittest.TestCase):
         # minimum; thus, the err_change gets really small with a relatively bad
         # error.
         mcrar = McrAR(max_iter=50, c_regr='OLS', st_regr='OLS',
-                      st_constraints=[ConstraintNonneg()],
-                      c_constraints=[ConstraintNonneg(), ConstraintNorm()],
+                      st_constraints=[constraint.Nonneg()],
+                      c_constraints=[constraint.Nonneg(), constraint.Norm()],
                       tol_increase=0, tol_n_increase=None,
                       tol_err_change=None, tol_n_above_min=None,
                       fit_kwargs={'C': C_known*0 + 0.1})
@@ -159,8 +159,8 @@ class TestMcrSklearnLike(unittest.TestCase):
         C_known, D_known, St_known = dataset()
 
         mcrar = McrAR(max_iter=50, c_regr='OLS', st_regr='OLS',
-                      st_constraints=[ConstraintNonneg()],
-                      c_constraints=[ConstraintNonneg(), ConstraintNorm()],
+                      st_constraints=[constraint.Nonneg()],
+                      c_constraints=[constraint.Nonneg(), constraint.Norm()],
                       tol_increase=None, tol_n_increase=0,
                       tol_err_change=None, tol_n_above_min=None,
                       fit_kwargs={'C': C_known*0 + 0.1})
@@ -173,8 +173,8 @@ class TestMcrSklearnLike(unittest.TestCase):
         C_known, D_known, St_known = dataset()
 
         mcrar = McrAR(max_iter=50, c_regr='OLS', st_regr='OLS',
-                      st_constraints=[ConstraintNonneg()],
-                      c_constraints=[ConstraintNonneg(), ConstraintNorm()],
+                      st_constraints=[constraint.Nonneg()],
+                      c_constraints=[constraint.Nonneg(), constraint.Norm()],
                       tol_increase=None, tol_n_increase=None,
                       tol_err_change=1e-20, tol_n_above_min=None,
                       fit_kwargs={'C': C_known})
@@ -193,8 +193,8 @@ class TestMcrSklearnLike(unittest.TestCase):
         C_known, D_known, St_known = dataset()
 
         mcrar = McrAR(max_iter=50, c_regr='OLS', st_regr='OLS',
-                      st_constraints=[ConstraintNonneg()],
-                      c_constraints=[ConstraintNonneg(), ConstraintNorm()],
+                      st_constraints=[constraint.Nonneg()],
+                      c_constraints=[constraint.Nonneg(), constraint.Norm()],
                       tol_increase=None, tol_n_increase=None,
                       tol_err_change=None, tol_n_above_min=0,
                       fit_kwargs={'C': C_known*0 + 0.1})
@@ -230,8 +230,8 @@ class TestMcrSklearnLike(unittest.TestCase):
         ST_guess[2, :] = np.random.randn(P)
 
         mcrar = McrAR(max_iter=50, tol_increase=100, tol_n_increase=10,
-                      st_constraints=[ConstraintNonneg()],
-                      c_constraints=[ConstraintNonneg(), ConstraintNorm()],
+                      st_constraints=[constraint.Nonneg()],
+                      c_constraints=[constraint.Nonneg(), constraint.Norm()],
                       tol_err_change=1e-10,
                       fit_kwargs={'ST': ST_guess, 'st_fix': [0, 1]})
 
@@ -268,8 +268,8 @@ class TestMcrSklearnLike(unittest.TestCase):
         C_guess[:, 2] = np.abs(np.random.randn(int(M*N))+0.1)
 
         mcrar = McrAR(max_iter=50, tol_increase=100, tol_n_increase=10,
-                      st_constraints=[ConstraintNonneg()],
-                      c_constraints=[ConstraintNonneg(), ConstraintNorm()],
+                      st_constraints=[constraint.Nonneg()],
+                      c_constraints=[constraint.Nonneg(), constraint.Norm()],
                       tol_err_change=1e-10,
                       fit_kwargs={'C': C_guess, 'c_fix': [0, 1]})
 
@@ -310,8 +310,8 @@ class TestMcrSklearnLike(unittest.TestCase):
         C_guess[:, 2] = np.abs(np.random.randn(int(M*N)))
 
         mcrar = McrAR(max_iter=50, tol_increase=100, tol_n_increase=10,
-                      st_constraints=[ConstraintNonneg()],
-                      c_constraints=[ConstraintNonneg(), ConstraintNorm()],
+                      st_constraints=[constraint.Nonneg()],
+                      c_constraints=[constraint.Nonneg(), constraint.Norm()],
                       tol_err_change=1e-10,
                       fit_kwargs={'C': C_guess,
                                   'ST': St_known,

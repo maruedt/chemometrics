@@ -29,7 +29,7 @@ import numpy as np
 from numpy.testing import (assert_equal, assert_array_equal,
                            assert_allclose)
 
-from chemometrics.mcr.regressors import OLS, NNLS
+from chemometrics.mcr.regressor import OLS, NNLS
 
 import unittest
 

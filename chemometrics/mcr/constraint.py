@@ -31,12 +31,10 @@ from abc import (ABC, abstractmethod)
 
 import numpy as np
 
-__all__ = ['Constraint', 'ConstraintNonneg', 'ConstraintCumsumNonneg',
-           'ConstraintZeroEndPoints', 'ConstraintZeroCumSumEndPoints',
-           'ConstraintNorm', 'ConstraintCutBelow', 'ConstraintCutAbove',
-           'ConstraintCompressBelow', 'ConstraintCutAbove',
-           'ConstraintCompressAbove', 'ConstraintReplaceZeros',
-           'ConstraintPlanarize']
+__all__ = ['Constraint', 'Nonneg', 'CumsumNonneg', 'ZeroEndPoints',
+           'ZeroCumSumEndPoints', 'Norm', 'CutBelow', 'CutAbove',
+           'CompressBelow', 'CutAbove', 'CompressAbove', 'ReplaceZeros',
+           'Planarize']
 
 
 class Constraint(ABC):
@@ -56,7 +54,7 @@ class Constraint(ABC):
         """ Transform A input based on constraint """
 
 
-class ConstraintNonneg(Constraint):
+class Nonneg(Constraint):
     """
     Non-negativity constraint. All negative entries made 0.
 
@@ -79,7 +77,7 @@ class ConstraintNonneg(Constraint):
             return A
 
 
-class ConstraintCumsumNonneg(Constraint):
+class CumsumNonneg(Constraint):
     """
     Cumulative-Summation non-negativity constraint. All negative
      entries made 0.
@@ -105,7 +103,7 @@ class ConstraintCumsumNonneg(Constraint):
             return A
 
 
-class ConstraintZeroEndPoints(Constraint):
+class ZeroEndPoints(Constraint):
     """
     Enforce the endpoints (or the mean over a range) is zero
 
@@ -175,7 +173,7 @@ class ConstraintZeroEndPoints(Constraint):
                 return A
 
 
-class ConstraintZeroCumSumEndPoints(Constraint):
+class ZeroCumSumEndPoints(Constraint):
     """
     Enforce the endpoints of the cumsum (or the mean over a range) is
     near-zero. Note: this is an approximation.
@@ -260,7 +258,7 @@ class ConstraintZeroCumSumEndPoints(Constraint):
                     return A
 
 
-class ConstraintNorm(Constraint):
+class Norm(Constraint):
     """
     Normalization constraint.
 
@@ -385,7 +383,7 @@ class ConstraintNorm(Constraint):
                     return A
 
 
-class ConstraintReplaceZeros(Constraint):
+class ReplaceZeros(Constraint):
     """
     Samples that sum-to-zero across axis are replaced with a vector of 0's
     except for a 1 at feature if a single value. In a concentration context,
@@ -500,7 +498,7 @@ class _CutExclude(Constraint):
                     .reshape(X.shape)
 
 
-class ConstraintCutBelow(_CutExclude):
+class CutBelow(_CutExclude):
     """
     Cut values below (and not-equal to) a certain threshold.
 
@@ -549,7 +547,7 @@ class ConstraintCutBelow(_CutExclude):
                 return A
 
 
-class ConstraintCompressBelow(Constraint):
+class CompressBelow(Constraint):
     """
     Compress values below (and not-equal to) a certain threshold (set to value)
 
@@ -579,7 +577,7 @@ class ConstraintCompressBelow(Constraint):
             return A
 
 
-class ConstraintCutAbove(_CutExclude):
+class CutAbove(_CutExclude):
     """
     Cut values above (and not-equal to) a certain threshold
 
@@ -628,7 +626,7 @@ class ConstraintCutAbove(_CutExclude):
                 return A
 
 
-class ConstraintCompressAbove(Constraint):
+class CompressAbove(Constraint):
     """
     Compress values above (and not-equal to) a certain threshold (set to value)
 
@@ -658,7 +656,7 @@ class ConstraintCompressAbove(Constraint):
             return A
 
 
-class ConstraintPlanarize(Constraint):
+class Planarize(Constraint):
     """
     Set a particular target to a plane
 

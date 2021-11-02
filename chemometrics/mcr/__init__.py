@@ -25,6 +25,6 @@ Alternating Least Squares (MCR-ALS) functionality
 """
 
 from .mcr import McrAR
-from . import constraints
-from . import metrics
-from . import regressors
+from . import constraint
+from . import metric
+from . import regressor

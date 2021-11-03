@@ -23,18 +23,26 @@ def generate_spectra(n_wl, n_band, bandwidth):
     r"""
     Generate a dummy spectra with n_band
 
+    A dummy spectra is generated based on a given number of peaks. The
+    bandwidth, location and height is selected randomly. The center of each
+    peak follows a uniform distribution over the range of the spectra.
+    Each peaks bandwidth is drawn from a gamma distribution. The gamma
+    distribution has a heavy tail resulting in the generation of (also) broad
+    peaks. The peak height is Poisson distributed with a mean height of 5. Each
+    peak in the artificial spectrum follows a Gaussian shape.
+
     Parameters
     ----------
     n_wl : int
         number of wavelengths/signals to generate
-    rel_lengthscale : float
-        lengths scale of the gaussian process kernel
     n_band : int
-        number of background spectra to generate
+        number of bands to generate
+    bandwidth : float
+        impacts the bandwidth of each band.
 
     Returns
     -------
-    spectra : (n_wl, )
+    spectra : ndarray (n_wl, )
         artificial spectra
     """
     wl = np.arange(n_wl)
@@ -82,6 +90,28 @@ def generate_background(n_wl, rel_lengthscale=0.5, size=1):
 def generate_data(n_wl=100, n_samples=100, n_conc=2, noise=0.1):
     """
     Generate artificial spectroscopic XY data without background
+
+    An artificial spectroscopic dataset is generated, which resembles a Raman,
+    FTIR acquisition. The spectra are disturbed by white noise. Concentrations
+    are uniformly distributed between 0 and 1.
+
+    Parameters
+    ----------
+    n_wl : int
+        number of wavelengths/signals to generate (default: 100)
+    n_samples : int
+        number of samples generated (default: 100)
+    n_conc : int
+        number of background spectra to generate
+    noise : float
+        white noise level in the artificial spectra
+
+    Returns
+    -------
+    X : (n_samples, n_wl)
+        artificial spectra
+    Y : (n_samples, n_conc)
+        artificial reference data
     """
     Y = np.random.uniform(size=[n_samples, n_conc])
     spectra = np.zeros(shape=[n_wl, n_conc])

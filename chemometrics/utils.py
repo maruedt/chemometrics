@@ -34,8 +34,8 @@ def generate_spectra(n_wl, n_band, bandwidth):
 
     Returns
     -------
-    background : (n_wl, n_band)
-        artificial background spectra
+    spectra : (n_wl, )
+        artificial spectra
     """
     wl = np.arange(n_wl)
     spectra = np.zeros(n_wl)

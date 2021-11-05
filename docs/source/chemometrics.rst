@@ -1,0 +1,23 @@
+﻿chemometrics
+============
+
+.. automodule:: chemometrics
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+

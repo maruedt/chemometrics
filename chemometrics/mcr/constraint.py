@@ -31,8 +31,10 @@ from abc import (ABC, abstractmethod)
 
 import numpy as np
 
+from sklearn.utils import check_array
+
 __all__ = ['Constraint', 'Nonneg', 'CumsumNonneg', 'ZeroEndPoints',
-           'ZeroCumSumEndPoints', 'Norm', 'CutBelow', 'CutAbove',
+           'ZeroCumSumEndPoints', 'Normalizer', 'CutBelow', 'CutAbove',
            'CompressBelow', 'CutAbove', 'CompressAbove', 'ReplaceZeros',
            'Planarize']
 
@@ -58,6 +60,10 @@ class Nonneg(Constraint):
     """
     Non-negativity constraint. All negative entries made 0.
 
+    The non-negativity constraint is typically used if a negative result would
+    be unphysical or at least highly unlikely. Typical examples: absolute
+    concentrations, absorption spectra.
+
     Parameters
     ----------
     copy : bool
@@ -70,17 +76,21 @@ class Nonneg(Constraint):
 
     def transform(self, A):
         """ Apply nonnegative constraint"""
-        if self.copy:
-            return A*(A > 0)
-        else:
-            A *= (A > 0)
-            return A
+        A = check_array(A, dtype="numeric", copy=self.copy, ensure_2d=False,
+                        allow_nd=True)
+        A *= (A > 0)
+        return A
 
 
 class CumsumNonneg(Constraint):
     """
-    Cumulative-Summation non-negativity constraint. All negative
-     entries made 0.
+    Cumulative-Summation non-negativity constraint
+
+    The `CumSumNonneg` constraint enforces the cumulative sum over the data
+    to always be positive. This is useful for processing first derivative
+    data if for the non-derived data negative entries would be unphysical or at
+    least highly unlikely. Typical example: first derivative of an absorption
+    spectra
 
     Parameters
     ----------
@@ -105,7 +115,15 @@ class CumsumNonneg(Constraint):
 
 class ZeroEndPoints(Constraint):
     """
-    Enforce the endpoints (or the mean over a range) is zero
+    Enforce the endpoints to be zero
+
+    The ZeroEndPoints constraint fits a linear baseline to the data and
+    subtracts the baseline from the data. Each component is handled
+    independently. If a span is given, first `span` points at each end of the
+    data are averaged and only thereafter, the baseline is calculated and
+    subtracted.
+    The ZeroEndPoints constraint may be useful if we want to prevent MCR from
+    modeling background contributions.
 
     Parameters
     ----------
@@ -129,7 +147,7 @@ class ZeroEndPoints(Constraint):
         self.span = span
 
     def transform(self, A):
-        """ Apply cumsum nonnegative constraint"""
+        """ Apply zero endpoints constraint"""
 
         pix_vec = np.arange(A.shape[self.axis])
         if (self.axis == 0):
@@ -175,8 +193,13 @@ class ZeroEndPoints(Constraint):
 
 class ZeroCumSumEndPoints(Constraint):
     """
-    Enforce the endpoints of the cumsum (or the mean over a range) is
-    near-zero. Note: this is an approximation.
+    Enforce certain points in cumulative sum to be near-zero.
+
+    Reduces the cumsum baseline of data by piecewise subtraction of
+    constant values between given nodes and the end points of the data. This
+    approach is useful for first derivative data with localized peaks and
+    no expected offset in the pure spectra. Each peak is delimited by a
+    node.
 
     Parameters
     ----------
@@ -186,7 +209,6 @@ class ZeroCumSumEndPoints(Constraint):
         In addition to end-points, other points to ensure are approximately 0
     axis : int
         Axis to operate on
-
     span : int
         Number of pixels along the ends to average.
     """
@@ -258,14 +280,19 @@ class ZeroCumSumEndPoints(Constraint):
                     return A
 
 
-class Norm(Constraint):
+class Normalizer(Constraint):
     """
     Normalization constraint.
+
+    Normalizes the data along the selected axis. This means, that the
+    transformed vector subsequently sums to one. If the magnitude of the
+    factorized scores and loadings is not fixed otherwise, Norm is necessary
+    for a well-defined MCR problem.
 
     Parameters
     ----------
     axis : int
-        Which axis of input matrix A to apply normalization acorss.
+        Which axis of input matrix A to apply normalization across.
     fix : list
         Keep fix-axes as-is and normalize the remaining axes based on the
         residual of the fixed axes.

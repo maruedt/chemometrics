@@ -148,7 +148,7 @@ class TestMcrAR(unittest.TestCase):
         # error. The tol_err_change is set to None, so it makes it to max_iter.
         mcrar = McrAR(max_iter=50, c_regr='OLS', st_regr='OLS',
                       st_constraints=[constraint.Nonneg()],
-                      c_constraints=[constraint.Nonneg(), constraint.Norm()],
+                      c_constraints=[constraint.Nonneg(), constraint.Normalizer()],
                       tol_increase=None, tol_n_increase=None,
                       tol_err_change=None, tol_n_above_min=None)
         mcrar.fit(D_known, C=C_known*0 + 0.1)
@@ -164,7 +164,7 @@ class TestMcrAR(unittest.TestCase):
         # error.
         mcrar = McrAR(max_iter=50, c_regr='OLS', st_regr='OLS',
                       st_constraints=[constraint.Nonneg()],
-                      c_constraints=[constraint.Nonneg(), constraint.Norm()],
+                      c_constraints=[constraint.Nonneg(), constraint.Normalizer()],
                       tol_increase=0, tol_n_increase=None,
                       tol_err_change=None, tol_n_above_min=None)
         mcrar.fit(D_known, C=C_known*0 + 0.1)
@@ -182,7 +182,7 @@ class TestMcrAR(unittest.TestCase):
 
         mcrar = McrAR(max_iter=50, c_regr='OLS', st_regr='OLS',
                       st_constraints=[constraint.Nonneg()],
-                      c_constraints=[constraint.Nonneg(), constraint.Norm()],
+                      c_constraints=[constraint.Nonneg(), constraint.Normalizer()],
                       tol_increase=None, tol_n_increase=0,
                       tol_err_change=None, tol_n_above_min=None)
         mcrar.fit(D_known, C=C_known*0 + 0.01)
@@ -195,7 +195,7 @@ class TestMcrAR(unittest.TestCase):
 
         mcrar = McrAR(max_iter=50, c_regr='OLS', st_regr='OLS',
                       st_constraints=[constraint.Nonneg()],
-                      c_constraints=[constraint.Nonneg(), constraint.Norm()],
+                      c_constraints=[constraint.Nonneg(), constraint.Normalizer()],
                       tol_increase=None, tol_n_increase=None,
                       tol_err_change=1e-20, tol_n_above_min=None)
         mcrar.fit(D_known, C=C_known)
@@ -214,7 +214,7 @@ class TestMcrAR(unittest.TestCase):
 
         mcrar = McrAR(max_iter=50, c_regr='OLS', st_regr='OLS',
                       st_constraints=[constraint.Nonneg()],
-                      c_constraints=[constraint.Nonneg(), constraint.Norm()],
+                      c_constraints=[constraint.Nonneg(), constraint.Normalizer()],
                       tol_increase=None, tol_n_increase=None,
                       tol_err_change=None, tol_n_above_min=0)
         mcrar.fit(D_known, C=C_known*0 + 0.1)
@@ -231,7 +231,7 @@ class TestMcrAR(unittest.TestCase):
 
         mcrar = McrAR(max_iter=50, tol_increase=100, tol_n_increase=10,
                       st_constraints=[constraint.Nonneg()],
-                      c_constraints=[constraint.Nonneg(), constraint.Norm()],
+                      c_constraints=[constraint.Nonneg(), constraint.Normalizer()],
                       tol_err_change=1e-10)
 
         mcrar.fit(D_known, ST=ST_guess, st_fix=[0, 1])
@@ -251,7 +251,7 @@ class TestMcrAR(unittest.TestCase):
 
         mcrar = McrAR(max_iter=50, tol_increase=100, tol_n_increase=10,
                       st_constraints=[constraint.Nonneg()],
-                      c_constraints=[constraint.Nonneg(), constraint.Norm()],
+                      c_constraints=[constraint.Nonneg(), constraint.Normalizer()],
                       tol_err_change=1e-10)
 
         mcrar.fit(D_known, C=C_guess, c_fix=[0, 1])
@@ -272,7 +272,7 @@ class TestMcrAR(unittest.TestCase):
 
         mcrar = McrAR(max_iter=50, tol_increase=100, tol_n_increase=10,
                       st_constraints=[constraint.Nonneg()],
-                      c_constraints=[constraint.Nonneg(), constraint.Norm()],
+                      c_constraints=[constraint.Nonneg(), constraint.Normalizer()],
                       tol_err_change=1e-10)
 
         mcrar.fit(D_known, C=C_guess, ST=St_known,

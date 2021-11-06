@@ -222,37 +222,37 @@ class TestConstraint(unittest.TestCase):
     def test_norm(self):
         """ Test normalization """
         # A must be dtype.float for in-place math (copy=False)
-        constr_norm = constraint.Norm(axis=0, copy=False)
+        constr_norm = constraint.Normalizer(axis=0, copy=False)
         A = np.array([[1, 2, 3], [-1, -2, -3], [1, 2, 3]])  # dtype: int32
         with self.assertRaises(TypeError):
             out = constr_norm.transform(A)
 
         # Axis must be 0,1, or -1
         with self.assertRaises(ValueError):
-            constr_norm = constraint.Norm(axis=2, copy=False)
+            constr_norm = constraint.Normalizer(axis=2, copy=False)
 
         A = np.array([[1, 2, 3], [-1, -2, -3], [1, 2, 3]], dtype=float)
         A_norm0 = A / A.sum(axis=0)[None, :]
         A_norm1 = A / A.sum(axis=1)[:, None]
 
-        constr_norm = constraint.Norm(axis=0, copy=True)
+        constr_norm = constraint.Normalizer(axis=0, copy=True)
         out = constr_norm.transform(A)
         assert_allclose(A_norm0, out)
 
-        constr_norm = constraint.Norm(axis=1, copy=True)
+        constr_norm = constraint.Normalizer(axis=1, copy=True)
         out = constr_norm.transform(A)
         assert_allclose(A_norm1, out)
 
-        constr_norm = constraint.Norm(axis=-1, copy=True)
+        constr_norm = constraint.Normalizer(axis=-1, copy=True)
         out = constr_norm.transform(A)
         assert_allclose(A_norm1, out)
 
-        constr_norm = constraint.Norm(axis=0, copy=False)
+        constr_norm = constraint.Normalizer(axis=0, copy=False)
         out = constr_norm.transform(A)
         assert_allclose(A_norm0, A)
 
         A = np.array([[1, 2, 3], [-1, -2, -3], [1, 2, 3]], dtype=float)
-        constr_norm = constraint.Norm(axis=1, copy=False)
+        constr_norm = constraint.Normalizer(axis=1, copy=False)
         out = constr_norm.transform(A)
         assert_allclose(A_norm1, A)
 
@@ -265,31 +265,31 @@ class TestConstraint(unittest.TestCase):
 
         # Fixed axes must be integers
         with self.assertRaises(TypeError):
-            constr_norm = constraint.Norm(axis=1, fix=2.2, copy=True)
+            constr_norm = constraint.Normalizer(axis=1, fix=2.2, copy=True)
 
         # Dtype must be integer related
         with self.assertRaises(TypeError):
-            constr_norm = constraint.Norm(axis=1, fix=np.array([2.2]),
+            constr_norm = constraint.Normalizer(axis=1, fix=np.array([2.2]),
                                           copy=True)
 
         # COPY: True
         # Fix of type int
-        constr_norm = constraint.Norm(axis=1, fix=2, copy=True)
+        constr_norm = constraint.Normalizer(axis=1, fix=2, copy=True)
         out = constr_norm.transform(A)
         assert_allclose(A_fix2_ax1, out)
 
         # Fix of type list
-        constr_norm = constraint.Norm(axis=1, fix=[2, 3], copy=True)
+        constr_norm = constraint.Normalizer(axis=1, fix=[2, 3], copy=True)
         out = constr_norm.transform(A)
         assert_allclose(A_fix2_ax1, out)
 
         # Fix of type tuple
-        constr_norm = constraint.Norm(axis=1, fix=(2), copy=True)
+        constr_norm = constraint.Normalizer(axis=1, fix=(2), copy=True)
         out = constr_norm.transform(A)
         assert_allclose(A_fix2_ax1, out)
 
         # Fix of type ndarray
-        constr_norm = constraint.Norm(axis=1, fix=np.array([2]), copy=True)
+        constr_norm = constraint.Normalizer(axis=1, fix=np.array([2]), copy=True)
         out = constr_norm.transform(A)
         assert_allclose(A_fix2_ax1, out)
 
@@ -300,21 +300,21 @@ class TestConstraint(unittest.TestCase):
         # Fix of type int
         A = np.array([[0.0, 0.2, 1.0, 0.0], [0.25, 0.25, 0.0, 0.0],
                       [0.3, 0.9, 0.6, 0.0]], dtype=float)
-        constr_norm = constraint.Norm(axis=1, fix=2, copy=False)
+        constr_norm = constraint.Normalizer(axis=1, fix=2, copy=False)
         out = constr_norm.transform(A)
         assert_allclose(A_fix2_ax1, A)
 
         # Fix of type list
         A = np.array([[0.0, 0.2, 1.0, 0.0], [0.25, 0.25, 0.0, 0.0],
                       [0.3, 0.9, 0.6, 0.0]], dtype=float)
-        constr_norm = constraint.Norm(axis=1, fix=[2, 3], copy=False)
+        constr_norm = constraint.Normalizer(axis=1, fix=[2, 3], copy=False)
         out = constr_norm.transform(A)
         assert_allclose(A_fix2_ax1, A)
 
         # Fix of type tuple
         A = np.array([[0.0, 0.2, 1.0, 0.0], [0.25, 0.25, 0.0, 0.0],
                      [0.3, 0.9, 0.6, 0.0]], dtype=float)
-        constr_norm = constraint.Norm(axis=1, fix=(2), copy=False)
+        constr_norm = constraint.Normalizer(axis=1, fix=(2), copy=False)
         out = constr_norm.transform(A)
         assert_allclose(A_fix2_ax1, A)
 
@@ -322,7 +322,7 @@ class TestConstraint(unittest.TestCase):
         A = np.array([[0.0, 0.2, 1.0, 0.0],
                       [0.25, 0.25, 0.0, 0.0],
                       [0.3, 0.9, 0.6, 0.0]], dtype=float)
-        constr_norm = constraint.Norm(axis=1, fix=np.array([2]), copy=False)
+        constr_norm = constraint.Normalizer(axis=1, fix=np.array([2]), copy=False)
         out = constr_norm.transform(A)
         assert_allclose(A_fix2_ax1, A)
 
@@ -336,22 +336,22 @@ class TestConstraint(unittest.TestCase):
                                [0.1, 0.3, 0.6, 0.0]], dtype=float).T
         # COPY: True
         # Fix of type int
-        constr_norm = constraint.Norm(axis=0, fix=2, copy=True)
+        constr_norm = constraint.Normalizer(axis=0, fix=2, copy=True)
         out = constr_norm.transform(A)
         assert_allclose(A_fix2_ax1, out)
 
         # Fix of type list
-        constr_norm = constraint.Norm(axis=0, fix=[2, 3], copy=True)
+        constr_norm = constraint.Normalizer(axis=0, fix=[2, 3], copy=True)
         out = constr_norm.transform(A)
         assert_allclose(A_fix2_ax1, out)
 
         # Fix of type tuple
-        constr_norm = constraint.Norm(axis=0, fix=(2), copy=True)
+        constr_norm = constraint.Normalizer(axis=0, fix=(2), copy=True)
         out = constr_norm.transform(A)
         assert_allclose(A_fix2_ax1, out)
 
         # Fix of type ndarray
-        constr_norm = constraint.Norm(axis=0, fix=np.array([2]), copy=True)
+        constr_norm = constraint.Normalizer(axis=0, fix=np.array([2]), copy=True)
         out = constr_norm.transform(A)
         assert_allclose(A_fix2_ax1, out)
 
@@ -364,7 +364,7 @@ class TestConstraint(unittest.TestCase):
         A = np.array([[0.0, 0.2, 1.0],
                       [0.25, 0.25, 0.0],
                       [0.3, 0.9, 0.6]], dtype=float).T
-        constr_norm = constraint.Norm(axis=0, fix=2, copy=False)
+        constr_norm = constraint.Normalizer(axis=0, fix=2, copy=False)
         out = constr_norm.transform(A)
         assert_allclose(A_fix2_ax1, A)
 
@@ -372,7 +372,7 @@ class TestConstraint(unittest.TestCase):
         A = np.array([[0.0, 0.2, 1.0],
                       [0.25, 0.25, 0.0],
                       [0.3, 0.9, 0.6]], dtype=float).T
-        constr_norm = constraint.Norm(axis=0, fix=[2], copy=False)
+        constr_norm = constraint.Normalizer(axis=0, fix=[2], copy=False)
         out = constr_norm.transform(A)
         assert_allclose(A_fix2_ax1, A)
 
@@ -380,7 +380,7 @@ class TestConstraint(unittest.TestCase):
         A = np.array([[0.0, 0.2, 1.0],
                       [0.25, 0.25, 0.0],
                       [0.3, 0.9, 0.6]], dtype=float).T
-        constr_norm = constraint.Norm(axis=0, fix=(2), copy=False)
+        constr_norm = constraint.Normalizer(axis=0, fix=(2), copy=False)
         out = constr_norm.transform(A)
         assert_allclose(A_fix2_ax1, A)
 
@@ -388,7 +388,7 @@ class TestConstraint(unittest.TestCase):
         A = np.array([[0.0, 0.2, 1.0],
                       [0.25, 0.25, 0.0],
                       [0.3, 0.9, 0.6]], dtype=float).T
-        constr_norm = constraint.Norm(axis=0, fix=np.array([2]), copy=False)
+        constr_norm = constraint.Normalizer(axis=0, fix=np.array([2]), copy=False)
         out = constr_norm.transform(A)
         assert_allclose(A_fix2_ax1, A)
 

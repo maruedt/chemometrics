@@ -35,8 +35,7 @@ from sklearn.utils import check_array
 
 __all__ = ['Constraint', 'Nonneg', 'CumsumNonneg', 'ZeroEndPoints',
            'ZeroCumSumEndPoints', 'Normalizer', 'CutBelow', 'CutAbove',
-           'CompressBelow', 'CutAbove', 'CompressAbove', 'ReplaceZeros',
-           'Planarize']
+           'CompressBelow', 'CutAbove', 'CompressAbove', 'ReplaceZeros']
 
 
 class Constraint(ABC):

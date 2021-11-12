@@ -223,9 +223,6 @@ class TestConstraint(unittest.TestCase):
         """ Test normalization """
         # A must be dtype.float for in-place math (copy=False)
         constr_norm = constraint.Normalizer(axis=0, copy=False)
-        A = np.array([[1, 2, 3], [-1, -2, -3], [1, 2, 3]])  # dtype: int32
-        with self.assertRaises(TypeError):
-            out = constr_norm.transform(A)
 
         # Axis must be 0,1, or -1
         with self.assertRaises(ValueError):

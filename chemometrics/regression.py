@@ -88,10 +88,11 @@ class PLSRegression(_PLSRegression):
         """
         Calculate the hat (projection) matrix
 
-        Calculate the hat matrix in the X/Y score space. The hat matrix $H$
-        projects the observed $Y$ onto the predicted $\hat Y$. For obtaining
-        the standard hat matrix, the provided X matrix should correspond to the
-        matrix used during the calibration (call to `fit`) [1].
+        Calculate the hat matrix in the X/Y score space. The hat matrix  :math:
+        'H' projects the observed :math: 'Y' onto the predicted :math: '\hat
+        Y'. For  obtaining the standard hat matrix, the provided X matrix
+        should  correspond to the matrix used during the calibration (call to
+        `fit`)  [1].
 
         Parameters
         ----------
@@ -157,18 +158,19 @@ class PLSRegression(_PLSRegression):
 
         Notes
         -----
-        The response-wise standard deviation $\sigma_j$ is calculated according
-        to
-        $$
-        \sigma_j = \sqrt{\frac{\sum_i=1^n r_{i,j}^2}{n - p}}.
-        $$
+        The response-wise standard deviation :math: '\sigma_j' is calculated
+        according to
+
+        .. math:: \sigma_j = \sqrt{\frac{\sum_i=1^n r_{i,j}^2}{n - p}}.
+
 
         Residuals are studentized according to
-        $$
-        \hat{r}_i = \frac{r_i}{\sigma\sqrt{(1-h_{ii})}},
-        $$
-        with $\hat{r}_i$ being the studentized residuals, $r_i$ the original
-        residuals and $h_{ii}$ the leverage.
+
+        .. math:: \hat{r}_i = \frac{r_i}{\sigma\sqrt{(1-h_{ii})}},
+
+        with :math: '\hat{r}_i' being the studentized residuals,
+        :math: 'r_i' the original residuals and :math: 'h_{ii}' the
+        leverage.
         """
         Y_pred = self.predict(X)
         residuals = Y_pred - Y
@@ -315,9 +317,10 @@ class PLSRegression(_PLSRegression):
         Notes
         -----
         Cooks distance is calculated according to
-        $$
-        D_i = \frac{r_i^2}{p\hat\sigma} \frac{h_{ii}}{(1-h_{ii})^2}
-        $$
+
+        .. math::
+
+            D_i = \frac{r_i^2}{p\hat\sigma} \frac{h_{ii}}{(1-h_{ii})^2}
         """
         h = self.leverage(X)
         residuals = self.residuals(X, Y, scaling='none')
@@ -363,12 +366,16 @@ class PLSRegression(_PLSRegression):
         -----
         The Cook's distance limit is calculated according to
 
-        $$\hat{r}_i &= \frac{r_i}{sqrt{MSE (1-h_ii)}}\\
-        &= \pm \frac{sqrt{D_{crit} p (1-h_ii)}{h_ii}}$$
+        .. math::
 
-        with $\hat{r}_i$ being the studentized residuals, $r_i$ the original
-        residuals, MSE the mean squared error, $h_{ii}$ the leverage,
-        $D_{crit}$ the critical distance, $p$ the number of latent variables.
+            \hat{r}_i &= \frac{r_i}{sqrt{MSE (1-h_ii)}}\\
+            &= \pm \frac{sqrt{D_{crit} p (1-h_ii)}{h_ii}}
+
+        with :math: '\hat{r}_i' being the studentized residuals,
+        :math: 'r_i' the original
+        residuals, MSE the mean squared error, :math: 'h_{ii}' the leverage,
+        :math: 'D_{crit}' the critical distance, :math: 'p' the number of
+        latent variables.
         """
         fig = plt.figure(figsize=(15, 15))
         Y_pred = self.predict(X)
@@ -475,15 +482,15 @@ def fit_pls(X, Y, pipeline=None, cv_object=None, max_lv=10):
     Auto-calibrate PLS model and generate analytical plots
 
     A PLS model is calibrated based on the maximization of the coefficient of
-    determination during cross-validation ($Q^2$). The function provides
+    determination during cross-validation (:math: 'Q^2'). The function provides
     multiple plots for assessing the model quality. The first figure addresses
     the model performance during cross validation and the estimation of optimal
-    number of latent variables by showing $R^2$/$Q^2$ values ($R^2 as bars,
-    $Q^2$ as boxplots based on the individual rotations). The second figure
-    shows four subplots with analytical information for the optimal model. The
-    plotted figures are: a) observed versus predicted 2) predicted versus
-    residuals 3) leverage versus residuals 4) Variable importance in projection
-    (VIP) scores.
+    number of latent variables by showing :math: 'R^2/Q^2' values (:math: 'R^2'
+    as bars, :math: 'Q^2' as boxplots based on the individual rotations). The
+    second figure shows four subplots with analytical information for the
+    optimal model. The plotted figures are: a) observed versus predicted 2)
+    predicted versus residuals 3) leverage versus residuals 4) Variable
+    importance in projection (VIP) scores.
 
     Parameters
     ----------

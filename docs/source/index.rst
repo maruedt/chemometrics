@@ -7,7 +7,9 @@ Welcome to chemometrics's documentation!
 ========================================
 
 .. toctree::
-   api
+  :maxdepth: 2
+
+  api
 
 
 

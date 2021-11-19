@@ -20,7 +20,7 @@
 
 
 """
-The :mod:`chemometrics.mcr` provides Multivariate Curve Resolution -
+The :mod:`chemometrics.mcr` module provides Multivariate Curve Resolution -
 Alternating Least Squares (MCR-ALS) functionality
 """
 

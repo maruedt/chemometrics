@@ -32,8 +32,8 @@ class TestPLSRegression(unittest.TestCase):
 
     def setUp(self):
         self.n_wl = 50
-        self.n_samples = 100
-        self.n_tests = 1000
+        self.n_samples = 500
+        self.n_tests = 100
         self.n_conc = 2
 
         self.Y = np.random.normal(size=[self.n_samples, self.n_conc])

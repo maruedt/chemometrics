@@ -99,12 +99,12 @@ class TestMcrAR(unittest.TestCase):
 
         mcrar = McrAR()
         mcrar.fit(D_known, ST=St_known)
-        self.assertEqual(1, mcrar.n_iter_opt)
+        self.assertLess(mcrar.n_iter_opt, 3)
         self.assertTrue(((mcrar.D_ - D_known)**2).mean() < 1e-10)
         self.assertTrue(((mcrar.D_opt_ - D_known)**2).mean() < 1e-10)
 
         mcrar.fit(D_known, C=C_known)
-        self.assertEqual(2, mcrar.n_iter_opt)
+        self.assertLess(mcrar.n_iter_opt, 3)
         self.assertTrue(((mcrar.D_ - D_known)**2).mean() < 1e-10)
         self.assertTrue(((mcrar.D_opt_ - D_known)**2).mean() < 1e-10)
 

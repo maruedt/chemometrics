@@ -73,13 +73,13 @@ class TestMcrSklearnLike(unittest.TestCase):
 
         mcrar = McrAR(fit_kwargs={'ST': St_known})
         mcrar.fit(D_known)
-        assert_equal(1, mcrar.n_iter_opt)
+        self.assertLess(mcrar.n_iter_opt, 3)
         self.assertTrue(((mcrar.D_ - D_known)**2).mean() < 1e-10)
         self.assertTrue(((mcrar.D_opt_ - D_known)**2).mean() < 1e-10)
 
         mcrar = McrAR(fit_kwargs={'C': C_known})
         mcrar.fit(D_known)
-        assert_equal(2, mcrar.n_iter_opt)
+        self.assertLess(mcrar.n_iter_opt, 3)
         self.assertTrue(((mcrar.D_ - D_known)**2).mean() < 1e-10)
         self.assertTrue(((mcrar.D_opt_ - D_known)**2).mean() < 1e-10)
 

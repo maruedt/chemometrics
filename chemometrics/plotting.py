@@ -98,10 +98,12 @@ def plot_svd(D, n_comp=5, n_eigenvalues=20):
     References
     ----------
     Plot style adapted from personal communication with Matthias Sawall as
-    in Figure 5 [1].
+    in Figure 5 [1]_.
+
     .. [1] M. Sawall, A. Bo¨rner, C. Kubis, D. Selent, R. Ludwig, and K.
-    Neymeyr. Model-free multivariate curve resolution combined with model-
-    based kinetics: Algorithm and applications. J. Chemom., 26:538–548, 2012.
+           Neymeyr. Model-free multivariate curve resolution combined with
+           model-based kinetics: Algorithm and applications. J. Chemom.,
+           26:538–548, 2012.
     """
     u, s, vh = linalg.svd(D)
 

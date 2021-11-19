@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 
 
 class PLSRegression(_PLSRegression):
-    """
+    r"""
     PLS regression with added chemometric functionality
     """
 
@@ -41,7 +41,7 @@ class PLSRegression(_PLSRegression):
         return self
 
     def _calculate_vip(self):
-        """ Calculate variable importance in projection (VIP)
+        r""" Calculate variable importance in projection (VIP)
 
         The VIP scores provide a concise summary of how important the different
         predictors are for the model. It summarizes and normalizes the
@@ -50,7 +50,7 @@ class PLSRegression(_PLSRegression):
         predictors were equally informative. Variable/predictor selection can
         easily be performed by dropping all variables with a score smaller than
         a certain threshold. Typically, 1.0 or 1.5 is used as cut-off. Method
-        adapted from [1].
+        adapted from [1]_.
 
         References
         ----------
@@ -64,16 +64,16 @@ class PLSRegression(_PLSRegression):
         return np.sqrt(self.n_features_in_ * counter / denominator)
 
     def _calculate_x_residual_std_(self, X):
-        """
+        r"""
         Calculate the standard deviation of the X residuals
 
-        The x residual standard deviation is calculated according to [1] not
+        The x residual standard deviation is calculated according to [1]_ not
         including the correction factor v (since it is not exactly defined in
-        [1]).
+        [1]_).
 
         References
         ----------
-        Calculation according to [1].
+        Calculation according to [1]_.
         .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
         Wikström, and S. Wold. Multi- and Megavariate Data Analysis, Part I
         Basic Principles and Applications. Second Edition.
@@ -85,14 +85,14 @@ class PLSRegression(_PLSRegression):
         return np.sqrt(sse_cal / norm_factor)
 
     def hat(self, X):
-        """
+        r"""
         Calculate the hat (projection) matrix
 
         Calculate the hat matrix in the X/Y score space. The hat matrix  :math:
         'H' projects the observed :math: 'Y' onto the predicted :math: '\hat
         Y'. For  obtaining the standard hat matrix, the provided X matrix
         should  correspond to the matrix used during the calibration (call to
-        `fit`)  [1].
+        `fit`)  [1]_.
 
         Parameters
         ----------
@@ -106,7 +106,7 @@ class PLSRegression(_PLSRegression):
 
         References
         ----------
-        Calculation according to [1]
+        Calculation according to [1]_
         .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
         Wikström, and S. Wold. Multi- and Megavariate Data Analysis, Part I
         Basic Principles and Applications. Second Edition.
@@ -115,7 +115,7 @@ class PLSRegression(_PLSRegression):
         return S @ np.linalg.inv(S.T @ S) @ S.T
 
     def leverage(self, X):
-        """
+        r"""
         Calculate the statistical leverage
 
         Calculate the leverage (self-influence of Y) in the X/Y score space.
@@ -135,7 +135,7 @@ class PLSRegression(_PLSRegression):
         return np.diag(self.hat(X))
 
     def residuals(self, X, Y, scaling='studentize'):
-        """
+        r"""
         Calculate (normalized) residuals
 
         Calculate the (normalized) residuals. The scaling scheme may be
@@ -163,7 +163,6 @@ class PLSRegression(_PLSRegression):
 
         .. math:: \sigma_j = \sqrt{\frac{\sum_i=1^n r_{i,j}^2}{n - p}}.
 
-
         Residuals are studentized according to
 
         .. math:: \hat{r}_i = \frac{r_i}{\sigma\sqrt{(1-h_{ii})}},
@@ -190,7 +189,7 @@ class PLSRegression(_PLSRegression):
         return residuals / scaling_factor
 
     def dmodx(self, X, normalize=True, absolute=False):
-        """
+        r"""
         Calculate distance to model hyperplane in X (DModX)
 
         DModX provides the distance to the model hyperplane spanned by the
@@ -219,7 +218,7 @@ class PLSRegression(_PLSRegression):
 
         References
         ----------
-        Calculations according to [1]
+        Calculations according to [1]_
         .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
         Wikström, and S. Wold. Multi- and Megavariate Data Analysis, Part I
         Basic Principles and Applications. Second Edition.
@@ -236,18 +235,18 @@ class PLSRegression(_PLSRegression):
         return dmodx
 
     def crit_dmodx(self, confidence=0.95):
-        """
+        r"""
         Critical distance to hyperplane based on an F2 test
 
         The critical distance to the model hyperplane is estimated based on
         an F2 distribution. Values above crit_dmodx may be considered outliers.
-        dmodx is only approximately F2 distributed [1]. It is thus worth noting
-        that the estimated critcal distance is biased. It however gives a
-        reasonable indication of points worth investigating.
+        dmodx is only approximately F2 distributed [1]_. It is thus worth
+        noting that the estimated critcal distance is biased. It however gives
+        a reasonable indication of points worth investigating.
 
         References
         ----------
-        Calculations according to [1]
+        Calculations according to [1]_
         .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
         Wikström, and S. Wold. Multi- and Megavariate Data Analysis, Part I
         Basic Principles and Applications. Second Edition.
@@ -259,7 +258,7 @@ class PLSRegression(_PLSRegression):
         return np.sqrt(f_crit)
 
     def dhypx(self, X):
-        """
+        r"""
         Normalized distance on hyperplane
 
         Provides a distance on the hyperplane, normalized by the distance
@@ -267,11 +266,11 @@ class PLSRegression(_PLSRegression):
         new data is comparable to the calibration data. The normalized dhypx
         is slightly biased towards larger values since the estimated
         x_residual_std_ is slightly underestimated during model calibration
-        [1].
+        [1]_.
 
         References
         ----------
-        Calculations according to [1]
+        Calculations according to [1]_
         .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
         Wikström, and S. Wold. Multi- and Megavariate Data Analysis, Part I
         Basic Principles and Applications. Second Edition.
@@ -281,12 +280,12 @@ class PLSRegression(_PLSRegression):
         return np.sum(x_scores2_norm, axis=1)
 
     def crit_dhypx(self, confidence=0.95):
-        """
+        r"""
         Calculate critical dhypx according to Hotelling's T2
 
         References
         ----------
-        Calculations according to [1]
+        Calculations according to [1]_
         .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
         Wikström, and S. Wold. Multi- and Megavariate Data Analysis, Part I
         Basic Principles and Applications. Second Edition.
@@ -299,7 +298,7 @@ class PLSRegression(_PLSRegression):
         return f_crit * factor
 
     def cooks_distance(self, X, Y):
-        """
+        r"""
         Calculate Cook's distance from the calibration data
 
         Parameters
@@ -331,7 +330,7 @@ class PLSRegression(_PLSRegression):
         return coefficient1[:, None] * coefficient2
 
     def plot(self, X, Y):
-        """
+        r"""
         Displays a figure with 4 common analytical plots for PLS models
 
         Generates a figure with four subplots providing analytical insights
@@ -434,7 +433,7 @@ class PLSRegression(_PLSRegression):
         return fig.axes
 
     def distance_plot(self, X, sample_id=None, confidence=0.95):
-        """
+        r"""
         Plot distances colinear and orthogonal to model predictor hyperplane
 
         Generates a figure with two subplots. The subplots provide information
@@ -452,7 +451,7 @@ class PLSRegression(_PLSRegression):
 
         References
         ----------
-        Calculations according to [1]
+        Calculations according to [1]_
         .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
         Wikström, and S. Wold. Multi- and Megavariate Data Analysis, Part I
         Basic Principles and Applications. Second Edition.
@@ -478,7 +477,7 @@ class PLSRegression(_PLSRegression):
 
 
 def fit_pls(X, Y, pipeline=None, cv_object=None, max_lv=10):
-    """
+    r"""
     Auto-calibrate PLS model and generate analytical plots
 
     A PLS model is calibrated based on the maximization of the coefficient of

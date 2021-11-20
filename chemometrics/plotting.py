@@ -24,7 +24,7 @@ import scipy.linalg as linalg
 
 def plot_colored_series(Y, x=None, reference=None):
     r"""
-    Plot matrix colored by position or `reference`
+    Plot lines colored by position or `reference`
 
     Generate a line plot with `x` on x-axis and one or multiple dataseries
     `Y`. The lines are either colored by position in the matrix `Y` or by
@@ -33,13 +33,13 @@ def plot_colored_series(Y, x=None, reference=None):
     Parameters
     ----------
     Y : (n, m) ndarray
-        Matrix containing data series to plot. The function expects. ``n``
-        datapoints in ``m``series.
+        Matrix containing data series to plot. The function expects. `n`
+        datapoints in `m` series.
     x : {None, (n,) ndarray}
         Location on x-axis
     reference : {None (default), (m,) ndarray}
         Reference values to color data series by. If None, the series are
-        colored by the position in the second dimension of matrix ``Y``.
+        colored by the position in the second dimension of matrix `Y`.
 
     Returns
     -------
@@ -100,7 +100,7 @@ def plot_svd(D, n_comp=5, n_eigenvalues=20):
     Plot style adapted from personal communication with Matthias Sawall as
     in Figure 5 [1]_.
 
-    .. [1] M. Sawall, A. Bo¨rner, C. Kubis, D. Selent, R. Ludwig, and K.
+    .. [1] M. Sawall, A. Börner, C. Kubis, D. Selent, R. Ludwig, and K.
            Neymeyr. Model-free multivariate curve resolution combined with
            model-based kinetics: Algorithm and applications. J. Chemom.,
            26:538–548, 2012.

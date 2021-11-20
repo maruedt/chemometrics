@@ -41,7 +41,13 @@ class McrAR(TransformerMixin, BaseEstimator):
     """
     Multivariate Curve Resolution - Alternating Regression
 
-    D = CS^T
+    Multivariate curve resolution factorizes data such that the factors
+    maximize the explained data. Additional constraints are given for the
+    scores and loadings, such as non-negativeness, baseline restrictions,
+    unimodality, etc. Due to its origin in the analysis of chemical
+    information, a different nomenclature is widely used in literature and also
+    in this implementation. Scores are interpreted as concentration matrices
+    `C_`, loadings are the transposed spectral matrices `ST_`.
 
 
     Parameters

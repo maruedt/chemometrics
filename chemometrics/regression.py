@@ -27,6 +27,19 @@ import matplotlib.pyplot as plt
 class PLSRegression(_PLSRegression):
     r"""
     PLS regression with added chemometric functionality
+
+
+    References
+    ----------
+    Calculations according to
+
+    .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
+           Wikström, and S. Wold. Multi- and Megavariate Data Analysis,
+           Part I Basic Principles and Applications. Second Edition.
+
+    .. [2] Mehmood et al. Chemometrics and Intelligent Laboratory Systems
+           118 (2012) 62–69.
+
     """
 
     def __init__(self, n_components=2, *, scale=False,
@@ -50,12 +63,8 @@ class PLSRegression(_PLSRegression):
         predictors were equally informative. Variable/predictor selection can
         easily be performed by dropping all variables with a score smaller than
         a certain threshold. Typically, 1.0 or 1.5 is used as cut-off. Method
-        adapted from [1]_.
+        adapted from [2]_.
 
-        References
-        ----------
-        .. [1] Mehmood et al. Chemometrics and
-        Intelligent Laboratory Systems 118 (2012) 62–69.
         """
         ss = np.sum(self.y_loadings_ ** 2, axis=0) *\
             np.sum(self.x_scores_ ** 2, axis=0)
@@ -70,13 +79,6 @@ class PLSRegression(_PLSRegression):
         The x residual standard deviation is calculated according to [1]_ not
         including the correction factor v (since it is not exactly defined in
         [1]_).
-
-        References
-        ----------
-        Calculation according to [1]_.
-        .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
-        Wikström, and S. Wold. Multi- and Megavariate Data Analysis, Part I
-        Basic Principles and Applications. Second Edition.
         """
         X_hat = self.inverse_transform(self.transform(X))
         sse_cal = np.sum((X - X_hat)**2)
@@ -104,12 +106,6 @@ class PLSRegression(_PLSRegression):
         hat : (n, n) ndarray
             Hat matrix, symmetric matrix, n x n samples
 
-        References
-        ----------
-        Calculation according to [1]_
-        .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
-        Wikström, and S. Wold. Multi- and Megavariate Data Analysis, Part I
-        Basic Principles and Applications. Second Edition.
         """
         S = self.transform(X)
         return S @ np.linalg.inv(S.T @ S) @ S.T
@@ -215,13 +211,6 @@ class PLSRegression(_PLSRegression):
         dmodx : (n, ) ndarray
             distance of n samples to model hyperplane
 
-
-        References
-        ----------
-        Calculations according to [1]_
-        .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
-        Wikström, and S. Wold. Multi- and Megavariate Data Analysis, Part I
-        Basic Principles and Applications. Second Edition.
         """
 
         sse = np.sum((X - self.inverse_transform(self.transform(X)))**2,
@@ -244,12 +233,6 @@ class PLSRegression(_PLSRegression):
         noting that the estimated critcal distance is biased. It however gives
         a reasonable indication of points worth investigating.
 
-        References
-        ----------
-        Calculations according to [1]_
-        .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
-        Wikström, and S. Wold. Multi- and Megavariate Data Analysis, Part I
-        Basic Principles and Applications. Second Edition.
         """
         degf_cali = self.n_features_in_ - self.n_components - 1
         degf_test = self.n_features_in_ - self.n_components
@@ -265,15 +248,9 @@ class PLSRegression(_PLSRegression):
         observed during calibration. It can be a useful measure to see whether
         new data is comparable to the calibration data. The normalized dhypx
         is slightly biased towards larger values since the estimated
-        x_residual_std_ is slightly underestimated during model calibration
+        `x_residual_std_` is slightly underestimated during model calibration
         [1]_.
 
-        References
-        ----------
-        Calculations according to [1]_
-        .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
-        Wikström, and S. Wold. Multi- and Megavariate Data Analysis, Part I
-        Basic Principles and Applications. Second Edition.
         """
         var_cal = np.var(self.x_scores_, axis=0)
         x_scores2_norm = self.transform(X)**2 / var_cal
@@ -283,12 +260,6 @@ class PLSRegression(_PLSRegression):
         r"""
         Calculate critical dhypx according to Hotelling's T2
 
-        References
-        ----------
-        Calculations according to [1]_
-        .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
-        Wikström, and S. Wold. Multi- and Megavariate Data Analysis, Part I
-        Basic Principles and Applications. Second Edition.
         """
         comp = self.n_components
         samples = self.x_scores_.shape[0]
@@ -320,6 +291,7 @@ class PLSRegression(_PLSRegression):
         .. math::
 
             D_i = \frac{r_i^2}{p\hat\sigma} \frac{h_{ii}}{(1-h_{ii})^2}
+
         """
         h = self.leverage(X)
         residuals = self.residuals(X, Y, scaling='none')
@@ -448,13 +420,6 @@ class PLSRegression(_PLSRegression):
         the calibration data. Large values indicate samples which show a
         significant trend not observed in the calibration data.
 
-
-        References
-        ----------
-        Calculations according to [1]_
-        .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
-        Wikström, and S. Wold. Multi- and Megavariate Data Analysis, Part I
-        Basic Principles and Applications. Second Edition.
         """
         plt.figure(figsize=(15, 15))
 

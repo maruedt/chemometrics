@@ -24,7 +24,14 @@ The :mod:`chemometrics.mcr` module provides Multivariate Curve Resolution -
 Alternating Least Squares (MCR-ALS) functionality
 """
 
-from .mcr import McrAR
+from ._mcr import McrAR
 from . import constraint
 from . import metric
 from . import regressor
+
+__all__ = [
+    "McrAR",
+    "constraint",
+    "metric",
+    "regressor"
+]

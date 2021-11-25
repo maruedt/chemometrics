@@ -14,7 +14,7 @@ Visualisation
 .. currentmodule:: chemometrics
 
 .. autosummary::
-   :toctree: generated
+   :toctree: generated/
    :recursive:
 
    plot_colored_series
@@ -25,19 +25,21 @@ Preprocessing
 =============
 
 .. autosummary::
- :toctree: generated
- :recursive:
+   :toctree: generated/
+   :template: class.rst
+   :recursive:
 
- Emsc
- AsymWhittaker
- Whittaker
+   Emsc
+   AsymWhittaker
+   Whittaker
 
 
-PLS model calibration
-=====================
+PLS modelling
+=============
 
 .. autosummary::
-   :toctree: generated
+   :toctree: generated/
+   :template: class.rst
    :recursive:
 
    PLSRegression
@@ -52,23 +54,26 @@ Multivariate curve resolution
     :no-members:
     :no-inherited-members:
 
+.. currentmodule:: chemometrics
+
 .. autosummary::
-   :toctree: generated
+   :toctree: generated/
    :recursive:
+   :template: module.rst
 
    mcr.McrAR
    mcr.constraint
+   mcr.regressor
+   mcr.metric
 
 
-
-
-Artificial data
-===============
+Artificial data generation
+==========================
 
 .. currentmodule:: chemometrics
 
 .. autosummary::
-   :toctree: generated
+   :toctree: generated/
    :recursive:
 
    generate_background

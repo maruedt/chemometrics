@@ -1,15 +1,31 @@
 .. chemometrics documentation master file, created by
    sphinx-quickstart on Fri Nov  5 21:20:08 2021.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
-Welcome to chemometrics's documentation!
-========================================
+
+Welcome!
+========
+
+**chemometrics** is a free and open source chemometric library for Python. Its
+main focus lies on the chemometric analysis of spectroscopic data (e.g.
+UV/Vis, NIR, Raman, NMR and MS). chemometrics builds on scikit-learn and
+extends its functionalities to support chemometric data analysis. The package
+provides methods for plotting, preprocessing and fitting data. In contrast to
+scikit-learn, chemometrics is mainly intended for interactive work.
+
+
+.. note::
+
+  chemometrics is work in progress. The API is still changing and new
+  functionalities are continuously added.
+
 
 .. toctree::
   :maxdepth: 2
 
   api
+  installation
+  examples
+  contributing
 
 
 
@@ -19,5 +35,4 @@ Indices and tables
 ==================
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`

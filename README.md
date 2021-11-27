@@ -1,13 +1,12 @@
-<<<<<<< HEAD
 [![codecov](https://codecov.io/gh/maruedt/chemometrics/branch/main/graph/badge.svg?token=PUAZA21N10)](https://codecov.io/gh/maruedt/chemometrics)
-=======
 [![Documentation Status](https://readthedocs.org/projects/chemometrics/badge/?version=latest)](https://chemometrics.readthedocs.io/en/latest/?badge=latest)
->>>>>>> docs
 
 # chemometrics
 chemometrics is a free and open source chemometric library for Python. Its main focus lies on the chemometric analysis of spectroscopic data (e.g. UV/Vis, NIR, Raman, NMR and MS). chemometrics builds on scikit-learn and extends its functionalities to support chemometric data analysis. The package provides methods for plotting, preprocessing and fitting data. In contrast to scikit-learn, chemometrics is mainly intended for interactive work.
 
 chemometrics is work in progress. The current features are mainly revolving around the (supervised) analysis of spectroscopic data.
+
+The documentation is available at https://chemometrics.readthedocs.io
 
 ## Example applications
 Plotting:

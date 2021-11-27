@@ -37,8 +37,6 @@ class PLSRegression(_PLSRegression):
            Wikström, and S. Wold. Multi- and Megavariate Data Analysis,
            Part I Basic Principles and Applications. Second Edition.
 
-    .. [2] Mehmood et al. Chemometrics and Intelligent Laboratory Systems
-           118 (2012) 62–69.
 
     """
 
@@ -65,6 +63,11 @@ class PLSRegression(_PLSRegression):
         a certain threshold. Typically, 1.0 or 1.5 is used as cut-off. Method
         adapted from [2]_.
 
+        References
+        ----------
+
+        .. [2] Mehmood et al. Chemometrics and Intelligent Laboratory Systems
+               118 (2012) 62–69.
         """
         ss = np.sum(self.y_loadings_ ** 2, axis=0) *\
             np.sum(self.x_scores_ ** 2, axis=0)
@@ -335,10 +338,13 @@ class PLSRegression(_PLSRegression):
 
         Notes
         -----
-        The Cook's distance limit is calculated according to
+        The residuals are studentized according to
 
         .. math:: \hat{r}_i = \frac{r_i}{\sqrt{MSE (1-h_{ii)}}}
-        .. math:: = \pm \frac{\sqrt{D_{crit} p (1-h_{ii})}}{h_{ii}}
+
+        The Cook's distance limit is calculated according to
+
+        .. math:: \hat{r}_i = \pm \sqrt{D_{crit} p \frac{(1-h_{ii})}{h_{ii}}}
 
         with :math:`\hat{r}_i` being the studentized residuals,
         :math:`r_i` the original

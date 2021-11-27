@@ -47,7 +47,7 @@ class McrAR(TransformerMixin, BaseEstimator):
     unimodality, etc. Due to its origin in the analysis of chemical
     information, a different nomenclature is widely used in literature and also
     in this implementation. Scores are interpreted as concentration matrices
-    `C_`, loadings are the transposed spectral matrices `ST_`.
+    ``C_``, loadings are the transposed spectral matrices ``ST_``.
 
 
     Parameters
@@ -67,7 +67,7 @@ class McrAR(TransformerMixin, BaseEstimator):
         kwargs sent to c_regr.fit method
 
     st_fit_kwargs : dict
-        kwargs sent to st_regr.fit method
+        kwargs sent to``st_regr.fit`` method
 
     c_constraints : list
         List of constraints applied to calculation of C matrix
@@ -112,7 +112,7 @@ class McrAR(TransformerMixin, BaseEstimator):
         failure)
 
     components_ : ndarray [n_targets, n_features]
-        Synonym for ST_, providing sklearn like compatibility
+        Synonym for ``ST_``, providing sklearn like compatibility
 
     C_opt_ : ndarray [n_samples, n_targets]
         [Optimal] C matrix for lowest err attribute
@@ -161,20 +161,29 @@ class McrAR(TransformerMixin, BaseEstimator):
     -   Built-in regressor classes (str can be used): OLS (ordinary least
         squares), NNLS (non-negatively constrained least squares). See
         mcr.regressors.
-    -   Built-in regressor methods can be given as a string to c_regr, st_regr;
+    -   Built-in regressor methods can be given as a string to ``c_regr``,
+        ``st_regr``;
         though instantiating an imported class gives more flexibility.
     -   Setting any tolerance to None turns that check off
 
     """
 
-    def __init__(self, c_regr=OLS(), st_regr=OLS(), fit_kwargs={},
-                 c_fit_kwargs={}, st_fit_kwargs={},
-                 c_constraints=[constraint.Nonneg()],
-                 st_constraints=[constraint.Nonneg()],
-                 max_iter=50, err_fcn=mse,
-                 tol_increase=0.0, tol_n_increase=10, tol_err_change=None,
-                 tol_n_above_min=10
-                 ):
+    def __init__(
+        self,
+        c_regr=OLS(),
+        st_regr=OLS(),
+        fit_kwargs={},
+        c_fit_kwargs={},
+        st_fit_kwargs={},
+        c_constraints=[constraint.Nonneg()],
+        st_constraints=[constraint.Nonneg()],
+        max_iter=50,
+        err_fcn=mse,
+        tol_increase=0.0,
+        tol_n_increase=10,
+        tol_err_change=None,
+        tol_n_above_min=10,
+    ):
         """
         Multivariate Curve Resolution - Alternating Regression
         """
@@ -230,31 +239,30 @@ class McrAR(TransformerMixin, BaseEstimator):
             attribute.
         """
         if isinstance(mth, str):
-            if mth.upper() == 'OLS':
+            if mth.upper() == "OLS":
                 return OLS()
-            elif mth.upper() == 'NNLS':
+            elif mth.upper() == "NNLS":
                 return NNLS()
             else:
-                raise ValueError('{} is unknown. Use NNLS or OLS.'.format(mth))
-        elif hasattr(mth, 'fit'):
+                raise ValueError("{} is unknown. Use NNLS or OLS.".format(mth))
+        elif hasattr(mth, "fit"):
             return mth
         else:
-            raise ValueError('Input class '
-                             '{} does not have a \'fit\' method'.format(mth))
+            raise ValueError(
+                "Input class " "{} does not have a 'fit' method".format(mth)
+            )
 
     @property
     def D_(self):
-        """ D matrix with current C and S^T matrices """
+        """:noindex:"""
         return _np.dot(self.C_, self.ST_)
 
     @property
     def D_opt_(self):
-        """ D matrix with optimal C and S^T matrices """
         return _np.dot(self.C_opt_, self.ST_opt_)
 
     @property
     def n_features(self):
-        """ Number of features """
         if self.ST_ is not None:
             return self.ST_.shape[-1]
         else:
@@ -262,7 +270,6 @@ class McrAR(TransformerMixin, BaseEstimator):
 
     @property
     def n_targets(self):
-        """ Number of targets """
         if self.C_ is not None:
             return self.C_.shape[1]
         else:
@@ -270,7 +277,6 @@ class McrAR(TransformerMixin, BaseEstimator):
 
     @property
     def n_samples(self):
-        """ Number of samples """
         if self.C_ is not None:
             return self.C_.shape[0]
         else:
@@ -281,12 +287,22 @@ class McrAR(TransformerMixin, BaseEstimator):
         if len(self.err) == 0:
             return True
         else:
-            return ([val > x for x in self.err].count(True) == 0)
+            return [val > x for x in self.err].count(True) == 0
 
-    def fit(self, D, C=None, ST=None, st_fix=None, c_fix=None, c_first=True,
-            verbose=False, post_iter_fcn=None, post_half_fcn=None):
+    def fit(
+        self,
+        D,
+        C=None,
+        ST=None,
+        st_fix=None,
+        c_fix=None,
+        c_first=True,
+        verbose=False,
+        post_iter_fcn=None,
+        post_half_fcn=None,
+    ):
         """
-        Perform MCR-AR. D = CS^T. Solve for C and S^T iteratively.
+        Find factors for decomposing D with MCR-AR method
 
         Parameters
         ----------
@@ -306,8 +322,8 @@ class McrAR(TransformerMixin, BaseEstimator):
             The concentration component numbers to keep fixed.
 
         c_first : bool
-            Calculate C first when both C and ST are provided. c_fix and st_fix
-            must also be provided in this circumstance.
+            Calculate C first when both C and ST are provided. ``c_fix`` and
+            ``st_fix`` must also be provided in this circumstance.
 
         verbose : bool
             Log iteration and per-least squares err results. See Notes.
@@ -321,12 +337,13 @@ class McrAR(TransformerMixin, BaseEstimator):
         Notes
         -----
 
-        -   Parameters to fit will SUPERCEDE anything in fit_kwargs, if
+        -   Parameters to fit will SUPERCEDE anything in ``fit_kwargs``, if
             provided during McrAR instantiation.
-        -   Note that providing C (or ST) to fit_kwargs and providing ST (or C)
+        -   Note that providing C (or ST) to ``fit_kwargs`` and providing
+            ``ST`` (or ``C``)
             to fit or fit_transform will raise an error.
-        -   When in doubt, clear fit_kwargs via self.fit_kwargs = {}
-        -   Does not affect verbose or c_first parameters
+        -   When in doubt, clear ``fit_kwargs`` via ``self.fit_kwargs = {}``
+        -   Does not affect ``verbose`` or ``c_first`` parameters
         -   Uses the native Python logging module rather than print statements;
             thus, to see the messages, one will need to log-to-file or stream
             to stdout. More info is available in the docs.
@@ -339,38 +356,36 @@ class McrAR(TransformerMixin, BaseEstimator):
             _logger.setLevel(_logging.INFO)
 
         if self.fit_kwargs:
-            temp = self.fit_kwargs.get('C')
+            temp = self.fit_kwargs.get("C")
             if (temp is not None) & (C is None):
                 C = temp
 
-            temp = self.fit_kwargs.get('ST')
+            temp = self.fit_kwargs.get("ST")
             if (temp is not None) & (ST is None):
                 ST = temp
 
-            temp = self.fit_kwargs.get('st_fix')
+            temp = self.fit_kwargs.get("st_fix")
             if (temp is not None) & (st_fix is None):
                 st_fix = temp
 
-            temp = self.fit_kwargs.get('c_fix')
+            temp = self.fit_kwargs.get("c_fix")
             if (temp is not None) & (c_fix is None):
                 c_fix = temp
 
-            temp = self.fit_kwargs.get('post_iter_fcn')
+            temp = self.fit_kwargs.get("post_iter_fcn")
             if (temp is not None) & (post_iter_fcn is None):
                 post_iter_fcn = temp
 
-            temp = self.fit_kwargs.get('post_half_fcn')
+            temp = self.fit_kwargs.get("post_half_fcn")
             if (temp is not None) & (post_iter_fcn is None):
                 post_half_fcn = temp
 
         # Ensure only C or ST provided
         if (C is None) & (ST is None):
-            raise TypeError('C or ST estimate must be provided')
-        elif (C is not None) & (ST is not None)\
-                & ((c_fix is None) | (st_fix is None)):
-            err_str1 = 'Only C or ST estimate must be provided, '
-            raise TypeError(
-                err_str1 + 'unless c_fix and st_fix are both provided')
+            raise TypeError("C or ST estimate must be provided")
+        elif (C is not None) & (ST is not None) & ((c_fix is None) | (st_fix is None)):
+            err_str1 = "Only C or ST estimate must be provided, "
+            raise TypeError(err_str1 + "unless c_fix and st_fix are both provided")
         else:
             self.C_ = C
             self.ST_ = ST
@@ -427,9 +442,10 @@ class McrAR(TransformerMixin, BaseEstimator):
 
                 if self.tol_n_above_min is not None:
                     if self.n_above_min > self.tol_n_above_min:
-                        err_str1 = 'Half-iterated {} times since ' \
-                                   'min '.format(self.n_above_min)
-                        err_str2 = 'error. Exiting.'
+                        err_str1 = "Half-iterated {} times since " "min ".format(
+                            self.n_above_min
+                        )
+                        err_str2 = "error. Exiting."
                         _logger.info(err_str1 + err_str2)
                         self.exit_tol_n_above_min = True
                         break
@@ -445,8 +461,10 @@ class McrAR(TransformerMixin, BaseEstimator):
                     self.err.append(1 * err_temp)
                     self.C_ = 1 * C_temp
                 else:
-                    err_str1 = 'Error increased above fractional' \
-                               'ctol_increase (C iter). Exiting'
+                    err_str1 = (
+                        "Error increased above fractional"
+                        "ctol_increase (C iter). Exiting"
+                    )
                     _logger.info(err_str1)
                     self.exit_tol_increase = True
                     break
@@ -461,17 +479,18 @@ class McrAR(TransformerMixin, BaseEstimator):
                 # Break if too many error-increases in a row
                 if self.tol_n_increase is not None:
                     if self.n_increase > self.tol_n_increase:
-                        out_str1 = 'Maximum error increases reached '
+                        out_str1 = "Maximum error increases reached "
                         _logger.info(
-                            out_str1 + '({}) (C iter). '
-                                       'Exiting.'.format(self.tol_n_increase))
+                            out_str1 + "({}) (C iter). "
+                            "Exiting.".format(self.tol_n_increase)
+                        )
                         self.exit_tol_n_increase = True
                         break
 
-                _logger.debug('Iter: {} (C)\t{}: '
-                              '{:.4e}'.format(self.n_iter,
-                                              self.err_fcn.__name__,
-                                              err_temp))
+                _logger.debug(
+                    "Iter: {} (C)\t{}: "
+                    "{:.4e}".format(self.n_iter, self.err_fcn.__name__, err_temp)
+                )
 
                 if post_half_fcn is not None:
                     post_half_fcn(self.C_, self.ST_, D, D_calc)
@@ -514,9 +533,10 @@ class McrAR(TransformerMixin, BaseEstimator):
 
                 if self.tol_n_above_min is not None:
                     if self.n_above_min > self.tol_n_above_min:
-                        err_str1 = 'Half-iterated {} times ' \
-                                   'since min '.format(self.n_above_min)
-                        err_str2 = 'error. Exiting.'
+                        err_str1 = "Half-iterated {} times " "since min ".format(
+                            self.n_above_min
+                        )
+                        err_str2 = "error. Exiting."
                         _logger.info(err_str1 + err_str2)
                         self.exit_tol_n_above_min = True
                         break
@@ -531,8 +551,10 @@ class McrAR(TransformerMixin, BaseEstimator):
                     self.err.append(1 * err_temp)
                     self.ST_ = 1 * ST_temp
                 else:
-                    err_str1 = 'Error increased above fractional ' \
-                               'tol_increase (ST iter). Exiting'
+                    err_str1 = (
+                        "Error increased above fractional "
+                        "tol_increase (ST iter). Exiting"
+                    )
                     _logger.info(err_str1)
                     self.exit_tol_increase = True
                     break
@@ -547,15 +569,18 @@ class McrAR(TransformerMixin, BaseEstimator):
                 # Break if too many error-increases in a row
                 if self.tol_n_increase is not None:
                     if self.n_increase > self.tol_n_increase:
-                        out_str = 'Maximum error increases reached '
-                        _logger.info(out_str + '({}) (ST iter). '
-                                     'Exiting.'.format(self.tol_n_increase))
+                        out_str = "Maximum error increases reached "
+                        _logger.info(
+                            out_str + "({}) (ST iter). "
+                            "Exiting.".format(self.tol_n_increase)
+                        )
                         self.exit_tol_n_increase = True
                         break
 
-                _logger.debug('Iter: {} (ST)\t{}: '
-                              '{:.4e}'.format(self.n_iter,
-                                              self.err_fcn.__name__, err_temp))
+                _logger.debug(
+                    "Iter: {} (ST)\t{}: "
+                    "{:.4e}".format(self.n_iter, self.err_fcn.__name__, err_temp)
+                )
 
                 if post_half_fcn is not None:
                     post_half_fcn(self.C_, self.ST_, D, D_calc)
@@ -564,7 +589,7 @@ class McrAR(TransformerMixin, BaseEstimator):
                     post_iter_fcn(self.C_, self.ST_, D, D_calc)
 
             if self.n_iter >= self.max_iter:
-                _logger.info('Max iterations reached ({}).'.format(num + 1))
+                _logger.info("Max iterations reached ({}).".format(num + 1))
                 self.exit_max_iter_reached = True
                 break
 
@@ -576,8 +601,10 @@ class McrAR(TransformerMixin, BaseEstimator):
             if (self.tol_err_change is not None) & (len(self.err) > 2):
                 err_differ = _np.abs(self.err[-1] - self.err[-3])
                 if err_differ < _np.abs(self.tol_err_change):
-                    _logger.info('Change in err below tol_err_change '
-                                 '({:.4e}). Exiting.'.format(err_differ))
+                    _logger.info(
+                        "Change in err below tol_err_change "
+                        "({:.4e}). Exiting.".format(err_differ)
+                    )
                     self.exit_tol_err_change = True
                     break
 
@@ -614,16 +641,14 @@ class McrAR(TransformerMixin, BaseEstimator):
 
     @property
     def components_(self):
-        """ This is just provided for sklearn-like functionality """
-
         return self.ST_
 
 
-if __name__ == '__main__':  # pragma: no cover
+if __name__ == "__main__":  # pragma: no cover
     # PyMCR uses the Logging facility to capture messaging
     # Sends logging messages to stdout (prints them)
     stdout_handler = _logging.StreamHandler(stream=_sys.stdout)
-    stdout_format = _logging.Formatter('%(message)s')
+    stdout_format = _logging.Formatter("%(message)s")
     stdout_handler.setFormatter(stdout_format)
     _logger.addHandler(stdout_handler)
 

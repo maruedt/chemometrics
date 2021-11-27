@@ -399,12 +399,6 @@ class Whittaker(TransformerMixin, BaseEstimator):
         y :
             Ignored
 
-        References
-        ----------
-        Explanation of cross-validation approximation in [1].
-
-        .. [1] Paul H. Eilers, A perfect smoother, Anal. Chem., vol 75, 14, pp.
-           3631-3636, 2003.
         """
         n_var = X.shape[0]
         z = self._transform(X)

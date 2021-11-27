@@ -24,11 +24,9 @@ Built-in least squares / regression methods.
 
 All models will follow the formalism, AX = B, solve for X.
 
-NOTE: coef_ will be X.T, which is the formalism that scikit-learn follows
-
 """
 
-from abc import (ABC, abstractmethod)
+from abc import ABC, abstractmethod
 
 import numpy as np
 
@@ -45,7 +43,6 @@ class LinearRegression(ABC):
 
     @property
     def coef_(self):
-        """ The transposed form of X. This is the formalism of scikit-learn """
         if self.X_ is None:
             return None
         else:
@@ -81,7 +78,7 @@ class OLS(LinearRegression):
     This is simply a wrapped version of Ordinary Least Squares
     (scipy.linalg.lstsq).
 
-    coef_ is X.T, which is the formalism of scikit-learn
+    ``coef_`` is X.T, which is the formalism of scikit-learn
 
     """
 
@@ -114,7 +111,7 @@ class NNLS(LinearRegression):
     This is simply a wrapped version of NNLS
     (scipy.optimize.nnls).
 
-    coef_ is X.T, which is the formalism of scikit-learn
+    ``coef_`` is ``X.T``, which is the formalism of scikit-learn
     """
 
     def __init__(self, *args, **kwargs):

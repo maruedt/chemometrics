@@ -1,0 +1,6 @@
+ipykernel
+nbsphinx
+numpy
+scipy
+scikit-learn
+matplotlib

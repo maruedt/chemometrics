@@ -18,14 +18,10 @@
 """
 Chemometrics: A chemometrics package for Python
 ===============================================
+chemometrics is a Python module providing chemometric functionality in
+the Python ecosystem for scientific computing and machine learning (numpy,
+scipy, matplotlib, scikit-learn).
 
-Documentation is available in the docstrings.
-
-Contents
---------
-Chemometrics provides functions for preprocessing,
-factorizing, plotting, analyzing and fitting
-chemical information.
 """
 
 

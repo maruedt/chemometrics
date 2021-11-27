@@ -1,0 +1,81 @@
+===
+API
+===
+
+.. currentmodule:: chemometrics
+
+.. automodule:: chemometrics
+    :no-members:
+    :no-inherited-members:
+
+Visualisation
+=============
+
+.. currentmodule:: chemometrics
+
+.. autosummary::
+   :toctree: generated/
+   :recursive:
+
+   plot_colored_series
+   plot_svd
+
+
+Preprocessing
+=============
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+   :recursive:
+
+   Emsc
+   AsymWhittaker
+   Whittaker
+
+
+PLS modelling
+=============
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+   :recursive:
+
+   PLSRegression
+   fit_pls
+
+
+Multivariate curve resolution
+=============================
+.. currentmodule:: chemometrics
+
+.. automodule:: chemometrics.mcr
+    :no-members:
+    :no-inherited-members:
+
+.. currentmodule:: chemometrics
+
+.. autosummary::
+   :toctree: generated/
+   :recursive:
+   :template: module.rst
+
+   mcr.McrAR
+   mcr.constraint
+   mcr.regressor
+   mcr.metric
+
+
+Artificial data generation
+==========================
+
+.. currentmodule:: chemometrics
+
+.. autosummary::
+   :toctree: generated/
+   :recursive:
+
+   generate_background
+   generate_data
+   generate_spectra

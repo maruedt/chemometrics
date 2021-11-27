@@ -56,17 +56,17 @@ def asym_ls(X, y, asym_factor=0.1):
     otherwise :math:`w_{ii} = 1 - asym_factor`
 
     The problem is solved by iteratively adjusting :math:`w` and using a normal
-    least-squares regression [1]. The alogrithm stops as soon as the weights
+    least-squares regression [1]_. The alogrithm stops as soon as the weights
     are not adjusted from the previous cycle or the maximum number of cycles
     are exceeded.
 
     References
     ----------
     .. [1] Hans F.M. Boelens, Reyer J. Dijkstra, Paul H.C. Eilers, Fiona
-    Fitzpatrick, Johan A. Westerhuis, New background correction method for
-    liquid chromatography with diode array detection, infrared spectroscopic
-    detection and Raman spectroscopic detection, J. Chromatogr. A, vol. 1057,
-    pp. 21-30, 2004.
+       Fitzpatrick, Johan A. Westerhuis, New background correction method for
+       liquid chromatography with diode array detection, infrared spectroscopic
+       detection and Raman spectroscopic detection, J. Chromatogr. A,
+       vol. 1057, pp. 21-30, 2004.
 
     Examples
     --------
@@ -148,22 +148,24 @@ class Emsc(TransformerMixin, BaseEstimator):
     ----------
     regressor_ : array of floats
         Matrix of regressor variables for background subtraction.
-
     coefficients_ : array of floats
         Coefficients of last transform.
 
+    Notes
+    -----
+    An introduction to EMSC is given in [1]_. Asymmetric least squares
+    regression may be looked up at [2]_.
+
     References
     ----------
-    An introduction to EMSC is given in [1]. Asymmetric least squares
-    regression may be looked up at [2].
     .. [1] Nils Kristian Afseth, Achim Kohler, Extended multiplicative signal
-    correction in vibrational spectroscopy, a tutorial, Chemometrics and
-    Intelligent Laboratory Systems, vol. 117, pp. 92-99, 2012.
+       correction in vibrational spectroscopy, a tutorial, Chemometrics and
+       Intelligent Laboratory Systems, vol. 117, pp. 92-99, 2012.
     .. [2] Hans F.M. Boelens, Reyer J. Dijkstra, Paul H.C. Eilers, Fiona
-    Fitzpatrick, Johan A. Westerhuis, New background correction method for
-    liquid chromatography with diode array detection, infrared spectroscopic
-    detection and Raman spectroscopic detection, J. Chromatogr. A, vol. 1057,
-    pp. 21-30, 2004.
+       Fitzpatrick, Johan A. Westerhuis, New background correction method for
+       liquid chromatography with diode array detection, infrared spectroscopic
+       detection and Raman spectroscopic detection, J. Chromatogr. A,
+       vol. 1057, pp. 21-30, 2004.
     """
 
     def __init__(self, p_order=2, background=None, normalize=False,
@@ -179,7 +181,7 @@ class Emsc(TransformerMixin, BaseEstimator):
         self.asym_factor = asym_factor
 
     def fit(self, X, y=None):
-        """
+        r"""
         Calculate regression matrix for later use.
 
         Parameters
@@ -187,7 +189,6 @@ class Emsc(TransformerMixin, BaseEstimator):
         X : (n, m) ndarray
             Data to be pretreated. ``n`` samples x ``m`` variables (typically
             wavelengths)
-
         y
             Ignored
         """
@@ -247,7 +248,7 @@ class Whittaker(TransformerMixin, BaseEstimator):
     r"""
     Smooth `X` with a whittaker smoother
 
-    `whittaker` smooths `X` with a whittaker smoother. The smoother smooths
+    `Whittaker` smooths `X` with a whittaker smoother. The smoother smooths
     the data with a non-parametric line constraint by its derivative
     smoothness. `penalty` defines the penalty on non-smoothness.
     The whittaker smoother is very efficient and a useful drop-in replacement
@@ -280,20 +281,20 @@ class Whittaker(TransformerMixin, BaseEstimator):
 
     Notes
     -----
-    `Whittaker` uses a sparse matrices for efficiency reasons. `X` may
+    `Whittaker` uses sparse matrices for efficiency reasons. `X` may
     however be a full matrix.
-    In contrast to the proposed algorithm by Eilers [1], no Cholesky
+    In contrast to the proposed algorithm by Eilers [1]_, no Cholesky
     decomposition is used. The reason is twofold. The Cholesky decomposition
     is not implemented for sparse matrices in Numpy/Scipy. Eilers uses the
     Cholesky decomposition to prevent Matlab from "reordering the sparse
     equation systems for minimal bandwidth". Matlab seems to rely on UMFPACK
-    for sparse matrix devision [2] which implements column reordering for
+    for sparse matrix devision [2]_ which implements column reordering for
     sparsity preservation. As sparse matrix we are working with is square and
     positive-definite, we can rely on the builtin `factorize` method, which
     solves with UMFPACK if installed, otherwise with SuperLU.
 
     Derivatives are implemented by multiplying the smoothed matrix with a
-    (local) difference matrix. This is not explicitly described in [1].
+    (local) difference matrix. This is not explicitly described in [1]_.
     However, the approach is consistent with the underlying idea of the
     Whittaker smoother as the (local) differences are used in the derivation of
     the filter. Note: the derivative should always be smaller equal to the
@@ -302,12 +303,11 @@ class Whittaker(TransformerMixin, BaseEstimator):
 
     References
     ----------
-    Application of whittaker smoother to spectroscopic data [1].
-
     .. [1] Paul H. Eilers, A perfect smoother, Anal. Chem., vol 75, 14, pp.
-    3631-3636, 2003.
+       3631-3636, 2003.
+
     .. [2] UMFPAC, https://en.wikipedia.org/wiki/UMFPACK, accessed
-    03.May.2020.
+       03.May.2020.
     """
 
     def __init__(self, penalty='auto', constraint_order=2, deriv=0):
@@ -324,7 +324,7 @@ class Whittaker(TransformerMixin, BaseEstimator):
         self.deriv = deriv
 
     def fit(self, X, y=None):
-        """
+        r"""
         Calculate regression matrix for later use.
 
         Parameters
@@ -350,7 +350,7 @@ class Whittaker(TransformerMixin, BaseEstimator):
         self.solve1d_ = splinalg.factorized(C.tocsc())
 
     def transform(self, X, copy=True):
-        """
+        r"""
         Do Whittaker smoothing.
 
         Parameters
@@ -399,12 +399,6 @@ class Whittaker(TransformerMixin, BaseEstimator):
         y :
             Ignored
 
-        References
-        ----------
-        Explanation of cross-validation approximation in [1].
-
-        .. [1] Paul H. Eilers, A perfect smoother, Anal. Chem., vol 75, 14, pp.
-        3631-3636, 2003.
         """
         n_var = X.shape[0]
         z = self._transform(X)
@@ -418,7 +412,7 @@ class Whittaker(TransformerMixin, BaseEstimator):
         return error
 
     def plot(self, X, logpenalty=[-4, 4]):
-        """
+        r"""
         Plot CV performance over given range
 
         Provides an analytical plot of the Whittaker filter score depending on
@@ -448,13 +442,13 @@ class Whittaker(TransformerMixin, BaseEstimator):
         return ax
 
     def _obj_fun(self, X, penalty):
-        "Objective funtion for penalty estimation"
+        r"Objective funtion for penalty estimation"
         self.penalty_ = 10**penalty
         self._fit(X)
         return self.score(X)
 
     def _estimate_penalty(self, X):
-        """
+        r"""
         Estimate optimal penalty based on score.
 
         The penalty of the whittaker filter is adjusted until the leave-one-out
@@ -498,26 +492,26 @@ class AsymWhittaker(TransformerMixin, BaseEstimator):
 
     Notes
     -----
-    `AsymWhittaker` uses a sparse matrices for efficiency reasons. `X` may
+    `AsymWhittaker` uses sparse matrices for efficiency reasons. `X` may
     however be a full matrix.
-    In contrast to the proposed algorithm by Eilers [1], no Cholesky
+    In contrast to the proposed algorithm by Eilers [1]_, no Cholesky
     decomposition is used. The reason is twofold. The Cholesky decomposition
     is not implemented for sparse matrices in Numpy/Scipy. Eilers uses the
     Cholesky decomposition to prevent Matlab from "reordering the sparse
     equation systems for minimal bandwidth". Matlab seems to rely on UMFPACK
-    for sparse matrix devision [2] which implements column reordering for
+    for sparse matrix devision [2]_ which implements column reordering for
     sparsity preservation. As the sparse matrix we are working with is square
     and positive-definite, we can rely on the builtin `factorize` method, which
     solves with UMFPACK if installed, otherwise with SuperLU.
 
     References
     ----------
-    Application of whittaker smoother to spectroscopic data [1].
+    Application of whittaker smoother to spectroscopic data [1]_.
 
     .. [1] Paul H. Eilers, A perfect smoother, Anal. Chem., vol 75, 14, pp.
-    3631-3636, 2003.
+       3631-3636, 2003.
     .. [2] UMFPAC, https://en.wikipedia.org/wiki/UMFPACK, accessed
-    03.May.2020.
+       03.May.2020.
     """
 
     def __init__(self, penalty, constraint_order=2, asym_factor=0.99):
@@ -526,7 +520,7 @@ class AsymWhittaker(TransformerMixin, BaseEstimator):
         self.asym_factor = asym_factor
 
     def fit(self, X, y=None):
-        """
+        r"""
         Calculate regression matrix for later use.
 
         Parameters
@@ -543,7 +537,7 @@ class AsymWhittaker(TransformerMixin, BaseEstimator):
         return self
 
     def transform(self, X, copy=True):
-        """
+        r"""
         Do asymmetric Whittaker background subtraction.
 
         Parameters

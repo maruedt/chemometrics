@@ -123,14 +123,10 @@ class TestConstraint(unittest.TestCase):
         """ Cum-Sum 0-Endpoints Constraint """
         A_diff1 = np.array([[1, 1, 1, 1],
                             [1, 1, 1, 1],
-                            [1, 1, 1, 1]]
-                           ).astype(float)
+                            [1, 1, 1, 1]]).astype(float)
         A_diff0 = np.array([[3, 3, 3, 3],
                             [3, 3, 3, 3],
                             [3, 3, 3, 3]]).astype(float)
-
-        # A_ax1 = np.array([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
-        # A_ax0 = np.array([[0, 0, 0], [0.5, 1, 1.5], [0, 0, 0]])
 
         # Axis 0
         constr_ax0 = constraint.ZeroCumSumEndPoints(copy=True, axis=0)
@@ -153,25 +149,27 @@ class TestConstraint(unittest.TestCase):
     def test_zerocumsumendpoints_nodes(self):
         """ Cum-Sum 0-Endpoints Constraint with defined nodes"""
 
-        A = np.array([[1, 2, 1, 12],
-                      [1, 2, 2, 3],
-                      [1, 2, 3, 6]]).astype(float)
+        A = np.array([[1, 2, 1, 12], [1, 2, 2, 3], [1, 2, 3, 6]]).astype(float)
         A_transform_ax0 = np.array([[0, 0, -1, 5],
                                     [0, 0, 0, -4],
                                     [0, 0, 1, -1]])
-        A_transform_ax1 = np.array([[-3, -2, -3, 8],
-                                    [-1, 0, 0, 1],
-                                    [-2, -1, 0, 3]])
+        A_transform_ax1 = np.array(
+            [[-3, -2, -3, 8],
+             [-1, 0, 0, 1],
+             [-2, -1, 0, 3]]
+            )
 
         # COPY Axis 0, node=0 (same as endpoints)
-        constr_ax0 = constraint.ZeroCumSumEndPoints(copy=True, nodes=[0],
+        constr_ax0 = constraint.ZeroCumSumEndPoints(copy=True,
+                                                    nodes=[0],
                                                     axis=0)
         out = constr_ax0.transform(A)
         assert_allclose(out, A_transform_ax0)
         # assert_allclose(np.cumsum(out, axis=0), 0)
 
         # COPY Axis -1, node=0 (same as endpoints)
-        constr_ax1 = constraint.ZeroCumSumEndPoints(copy=True, nodes=[0],
+        constr_ax1 = constraint.ZeroCumSumEndPoints(copy=True,
+                                                    nodes=[0],
                                                     axis=-1)
         out = constr_ax1.transform(A)
         assert_allclose(out, A_transform_ax1)
@@ -179,43 +177,49 @@ class TestConstraint(unittest.TestCase):
 
         # OVERWRITE, Axis = 0, node=0 (same as endpoints)
         A = np.array([[1, 2, 1, 12], [1, 2, 2, 3], [1, 2, 3, 6]]).astype(float)
-        constr_ax0 = constraint.ZeroCumSumEndPoints(copy=False, nodes=[0],
+        constr_ax0 = constraint.ZeroCumSumEndPoints(copy=False,
+                                                    nodes=[0],
                                                     axis=0)
         out = constr_ax0.transform(A)
         assert_allclose(A, A_transform_ax0)
 
         # OVERWRITE, Axis = 1, node=0 (same as endpoints)
         A = np.array([[1, 2, 1, 12], [1, 2, 2, 3], [1, 2, 3, 6]]).astype(float)
-        constr_ax1 = constraint.ZeroCumSumEndPoints(copy=False, nodes=[0],
+        constr_ax1 = constraint.ZeroCumSumEndPoints(copy=False,
+                                                    nodes=[0],
                                                     axis=-1)
         out = constr_ax1.transform(A)
         assert_allclose(A, A_transform_ax1)
 
         # COPY, Axis = 0, Nodes = all
         A = np.array([[1, 2, 1, 12], [1, 2, 2, 3], [1, 2, 3, 6]]).astype(float)
-        constr_ax0 = constraint.ZeroCumSumEndPoints(copy=True, nodes=[0, 1, 2],
+        constr_ax0 = constraint.ZeroCumSumEndPoints(copy=True,
+                                                    nodes=[0, 1, 2],
                                                     axis=0)
         out = constr_ax0.transform(A)
         assert_allclose(out, 0)
 
         # COPY, Axis = 1, Nodes = all
         A = np.array([[1, 2, 1, 12], [1, 2, 2, 3], [1, 2, 3, 6]]).astype(float)
-        constr_ax1 = constraint.ZeroCumSumEndPoints(copy=True,
-                                                    nodes=[0, 1, 2, 3], axis=1)
+        constr_ax1 = constraint.ZeroCumSumEndPoints(
+            copy=True, nodes=[0, 1, 2, 3], axis=1
+        )
         out = constr_ax1.transform(A)
         assert_allclose(out, 0)
 
         # OVERWRITE, Axis = 0, Nodes = all
         A = np.array([[1, 2, 1, 12], [1, 2, 2, 3], [1, 2, 3, 6]]).astype(float)
         constr_ax0 = constraint.ZeroCumSumEndPoints(copy=False,
-                                                    nodes=[0, 1, 2], axis=0)
+                                                    nodes=[0, 1, 2],
+                                                    axis=0)
         out = constr_ax0.transform(A)
         assert_allclose(A, 0)
 
         # OVERWRITE, Axis = 1, Nodes = all
         A = np.array([[1, 2, 1, 12], [1, 2, 2, 3], [1, 2, 3, 6]]).astype(float)
-        constr_ax1 = constraint.ZeroCumSumEndPoints(copy=False,
-                                                    nodes=[0, 1, 2, 3], axis=1)
+        constr_ax1 = constraint.ZeroCumSumEndPoints(
+            copy=False, nodes=[0, 1, 2, 3], axis=1
+        )
         out = constr_ax1.transform(A)
         assert_allclose(A, 0)
 
@@ -255,10 +259,16 @@ class TestConstraint(unittest.TestCase):
 
     def test_norm_fixed_axes(self):
         # AXIS = 1
-        A = np.array([[0.0, 0.2, 1.0, 0.0], [0.25, 0.25, 0.0, 0.0],
-                      [0.3, 0.9, 0.6, 0.0]], dtype=float)
-        A_fix2_ax1 = np.array([[0.0, 0.0, 1.0, 0.0], [0.5, 0.5, 0.0, 0.0],
-                               [0.1, 0.3, 0.6, 0.0]], dtype=float)
+        A = np.array(
+            [[0.0, 0.2, 1.0, 0.0],
+             [0.25, 0.25, 0.0, 0.0],
+             [0.3, 0.9, 0.6, 0.0]],
+            dtype=float,
+        )
+        A_fix2_ax1 = np.array(
+            [[0.0, 0.0, 1.0, 0.0], [0.5, 0.5, 0.0, 0.0], [0.1, 0.3, 0.6, 0.0]],
+            dtype=float,
+        )
 
         # Fixed axes must be integers
         with self.assertRaises(TypeError):
@@ -292,47 +302,71 @@ class TestConstraint(unittest.TestCase):
         assert_allclose(A_fix2_ax1, out)
 
         # COPY: False
-        A_fix2_ax1 = np.array([[0.0, 0.0, 1.0, 0.0], [0.5, 0.5, 0.0, 0.0],
-                               [0.1, 0.3, 0.6, 0.0]], dtype=float)
+        A_fix2_ax1 = np.array(
+            [[0.0, 0.0, 1.0, 0.0],
+             [0.5, 0.5, 0.0, 0.0],
+             [0.1, 0.3, 0.6, 0.0]],
+            dtype=float,
+        )
 
         # Fix of type int
-        A = np.array([[0.0, 0.2, 1.0, 0.0], [0.25, 0.25, 0.0, 0.0],
-                      [0.3, 0.9, 0.6, 0.0]], dtype=float)
+        A = np.array(
+            [[0.0, 0.2, 1.0, 0.0],
+             [0.25, 0.25, 0.0, 0.0],
+             [0.3, 0.9, 0.6, 0.0]],
+            dtype=float,
+        )
         constr_norm = constraint.Normalizer(axis=1, fix=2, copy=False)
         out = constr_norm.transform(A)
         assert_allclose(A_fix2_ax1, A)
 
         # Fix of type list
-        A = np.array([[0.0, 0.2, 1.0, 0.0], [0.25, 0.25, 0.0, 0.0],
-                      [0.3, 0.9, 0.6, 0.0]], dtype=float)
+        A = np.array(
+            [[0.0, 0.2, 1.0, 0.0],
+             [0.25, 0.25, 0.0, 0.0],
+             [0.3, 0.9, 0.6, 0.0]],
+            dtype=float,
+        )
         constr_norm = constraint.Normalizer(axis=1, fix=[2, 3], copy=False)
         out = constr_norm.transform(A)
         assert_allclose(A_fix2_ax1, A)
 
         # Fix of type tuple
-        A = np.array([[0.0, 0.2, 1.0, 0.0], [0.25, 0.25, 0.0, 0.0],
-                     [0.3, 0.9, 0.6, 0.0]], dtype=float)
+        A = np.array(
+            [[0.0, 0.2, 1.0, 0.0],
+             [0.25, 0.25, 0.0, 0.0],
+             [0.3, 0.9, 0.6, 0.0]],
+            dtype=float,
+        )
         constr_norm = constraint.Normalizer(axis=1, fix=(2), copy=False)
         out = constr_norm.transform(A)
         assert_allclose(A_fix2_ax1, A)
 
         # Fix of type ndarray
-        A = np.array([[0.0, 0.2, 1.0, 0.0],
-                      [0.25, 0.25, 0.0, 0.0],
-                      [0.3, 0.9, 0.6, 0.0]], dtype=float)
-        constr_norm = constraint.Normalizer(axis=1, fix=np.array([2]),
-                                            copy=False)
+        A = np.array(
+            [[0.0, 0.2, 1.0, 0.0],
+             [0.25, 0.25, 0.0, 0.0],
+             [0.3, 0.9, 0.6, 0.0]],
+            dtype=float,
+        )
+        constr_norm = constraint.Normalizer(axis=1, fix=np.array([2]), copy=False)
         out = constr_norm.transform(A)
         assert_allclose(A_fix2_ax1, A)
 
         # AXIS = 0
         # Lazy, so just transposed
-        A = np.array([[0.0, 0.2, 1.0, 0.0],
-                      [0.25, 0.25, 0.0, 0.0],
-                      [0.3, 0.9, 0.6, 0.0]], dtype=float).T
-        A_fix2_ax1 = np.array([[0.0, 0.0, 1.0, 0.0],
-                               [0.5, 0.5, 0.0, 0.0],
-                               [0.1, 0.3, 0.6, 0.0]], dtype=float).T
+        A = np.array(
+            [[0.0, 0.2, 1.0, 0.0],
+             [0.25, 0.25, 0.0, 0.0],
+             [0.3, 0.9, 0.6, 0.0]],
+            dtype=float,
+        ).T
+        A_fix2_ax1 = np.array(
+            [[0.0, 0.0, 1.0, 0.0],
+             [0.5, 0.5, 0.0, 0.0],
+             [0.1, 0.3, 0.6, 0.0]],
+            dtype=float,
+        ).T
         # COPY: True
         # Fix of type int
         constr_norm = constraint.Normalizer(axis=0, fix=2, copy=True)
@@ -356,38 +390,38 @@ class TestConstraint(unittest.TestCase):
         assert_allclose(A_fix2_ax1, out)
 
         # COPY: False
-        A_fix2_ax1 = np.array([[0.0, 0.0, 1.0],
-                               [0.5, 0.5, 0.0],
-                               [0.1, 0.3, 0.6]], dtype=float).T
+        A_fix2_ax1 = np.array(
+            [[0.0, 0.0, 1.0], [0.5, 0.5, 0.0], [0.1, 0.3, 0.6]], dtype=float
+        ).T
 
         # Fix of type int
-        A = np.array([[0.0, 0.2, 1.0],
-                      [0.25, 0.25, 0.0],
-                      [0.3, 0.9, 0.6]], dtype=float).T
+        A = np.array(
+            [[0.0, 0.2, 1.0], [0.25, 0.25, 0.0], [0.3, 0.9, 0.6]], dtype=float
+        ).T
         constr_norm = constraint.Normalizer(axis=0, fix=2, copy=False)
         out = constr_norm.transform(A)
         assert_allclose(A_fix2_ax1, A)
 
         # Fix of type list
-        A = np.array([[0.0, 0.2, 1.0],
-                      [0.25, 0.25, 0.0],
-                      [0.3, 0.9, 0.6]], dtype=float).T
+        A = np.array(
+            [[0.0, 0.2, 1.0], [0.25, 0.25, 0.0], [0.3, 0.9, 0.6]], dtype=float
+        ).T
         constr_norm = constraint.Normalizer(axis=0, fix=[2], copy=False)
         out = constr_norm.transform(A)
         assert_allclose(A_fix2_ax1, A)
 
         # Fix of type tuple
-        A = np.array([[0.0, 0.2, 1.0],
-                      [0.25, 0.25, 0.0],
-                      [0.3, 0.9, 0.6]], dtype=float).T
+        A = np.array(
+            [[0.0, 0.2, 1.0], [0.25, 0.25, 0.0], [0.3, 0.9, 0.6]], dtype=float
+        ).T
         constr_norm = constraint.Normalizer(axis=0, fix=(2), copy=False)
         out = constr_norm.transform(A)
         assert_allclose(A_fix2_ax1, A)
 
         # Fix of type ndarray
-        A = np.array([[0.0, 0.2, 1.0],
-                      [0.25, 0.25, 0.0],
-                      [0.3, 0.9, 0.6]], dtype=float).T
+        A = np.array(
+            [[0.0, 0.2, 1.0], [0.25, 0.25, 0.0], [0.3, 0.9, 0.6]], dtype=float
+        ).T
         constr_norm = constraint.Normalizer(axis=0, fix=np.array([2]),
                                             copy=False)
         out = constr_norm.transform(A)
@@ -395,9 +429,7 @@ class TestConstraint(unittest.TestCase):
 
     def test_cut_below(self):
         """ Test cutting below (and not equal to) a value """
-        A = np.array([[1, 2, 3, 4],
-                      [4, 5, 6, 7],
-                      [7, 8, 9, 10]]).astype(float)
+        A = np.array([[1, 2, 3, 4], [4, 5, 6, 7], [7, 8, 9, 10]]).astype(float)
         A_transform = np.array([[0, 0, 0, 4],
                                 [4, 5, 6, 7],
                                 [7, 8, 9, 10]]).astype(float)
@@ -414,12 +446,12 @@ class TestConstraint(unittest.TestCase):
     def test_cut_below_exclude(self):
         """ Test cutting below (and not equal to) a value """
         A = np.array([[1, 2, 3, 4], [4, 5, 6, 7], [7, 8, 9, 10]]).astype(float)
-        A_transform_excl_0_ax1 = np.array([[1, 0, 0, 4],
-                                           [4, 5, 6, 7],
-                                           [7, 8, 9, 10]]).astype(float)
-        A_transform_excl_0_ax0 = np.array([[1, 2, 3, 4],
-                                           [4, 5, 6, 7],
-                                           [7, 8, 9, 10]]).astype(float)
+        A_transform_excl_0_ax1 = np.array(
+            [[1, 0, 0, 4], [4, 5, 6, 7], [7, 8, 9, 10]]
+        ).astype(float)
+        A_transform_excl_0_ax0 = np.array(
+            [[1, 2, 3, 4], [4, 5, 6, 7], [7, 8, 9, 10]]
+        ).astype(float)
 
         # COPY
         constr = constraint.CutBelow(copy=True, value=4, exclude=0,
@@ -472,14 +504,16 @@ class TestConstraint(unittest.TestCase):
         A_correct = np.array([[0.3, 0.7], [0.3, 0.7], [0.7, 0.0]])
 
         # COPY
-        constr = constraint.CutBelow(copy=True, value=cutoff, axis_sumnz=-1,
-                                     exclude=0, exclude_axis=-1)
+        constr = constraint.CutBelow(
+            copy=True, value=cutoff, axis_sumnz=-1, exclude=0, exclude_axis=-1
+        )
         out = constr.transform(A)
         assert_allclose(out, A_correct)
 
         # OVERWRITE
-        constr = constraint.CutBelow(copy=False, value=cutoff, axis_sumnz=-1,
-                                     exclude=0, exclude_axis=-1)
+        constr = constraint.CutBelow(
+            copy=False, value=cutoff, axis_sumnz=-1, exclude=0, exclude_axis=-1
+        )
         _ = constr.transform(A)
         assert_allclose(A, A_correct)
 
@@ -544,12 +578,12 @@ class TestConstraint(unittest.TestCase):
     def test_cut_above_exclude(self):
         """ Test cutting above (and not equal to) a value """
         A = np.array([[1, 2, 3, 4], [4, 5, 6, 7], [7, 8, 9, 10]]).astype(float)
-        A_transform_excl_0_ax1 = np.array([[1, 2, 3, 4],
-                                           [4, 0, 0, 0],
-                                           [7, 0, 0, 0]]).astype(float)
-        A_transform_excl_2_ax0 = np.array([[1, 2, 3, 4],
-                                           [4, 0, 0, 0],
-                                           [7, 8, 9, 10]]).astype(float)
+        A_transform_excl_0_ax1 = np.array(
+            [[1, 2, 3, 4], [4, 0, 0, 0], [7, 0, 0, 0]]
+        ).astype(float)
+        A_transform_excl_2_ax0 = np.array(
+            [[1, 2, 3, 4], [4, 0, 0, 0], [7, 8, 9, 10]]
+        ).astype(float)
 
         constr = constraint.CutAbove(copy=True, value=4, exclude=0,
                                      exclude_axis=-1)
@@ -577,9 +611,11 @@ class TestConstraint(unittest.TestCase):
     def test_compress_above(self):
         """ Test compressing above (and not equal to) a value """
         A = np.array([[1, 2, 3, 4], [4, 5, 6, 7], [7, 8, 9, 10]]).astype(float)
-        A_transform = np.array([[1, 2, 3, 4],
-                                [4, 4, 4, 4],
-                                [4, 4, 4, 4]]).astype(float)
+        A_transform = np.array(
+            [[1, 2, 3, 4],
+             [4, 4, 4, 4],
+             [4, 4, 4, 4]]
+            ).astype(float)
 
         constr = constraint.CompressAbove(copy=True, value=4)
         out = constr.transform(A)
@@ -592,20 +628,35 @@ class TestConstraint(unittest.TestCase):
 
     def test_replace_zeros(self):
         """ Test replace zeros using a single feature """
-        A = np.array([[0.0, 0.0, 0.0, 0.0],
-                      [0.25, 0.25, 0.0, 0.0],
-                      [0.3, 0.9, 0.6, 0.0],
-                      [0.0, 0.0, 0.0, 0.0]], dtype=float)
+        A = np.array(
+            [
+                [0.0, 0.0, 0.0, 0.0],
+                [0.25, 0.25, 0.0, 0.0],
+                [0.3, 0.9, 0.6, 0.0],
+                [0.0, 0.0, 0.0, 0.0],
+            ],
+            dtype=float,
+        )
         # Axis=0, feature = 0
-        A_transform_ax0 = np.array([[0.0, 0.0, 0.0, 1.0],
-                                    [0.25, 0.25, 0.0, 0.0],
-                                    [0.3, 0.9, 0.6, 0.0],
-                                    [0.0, 0.0, 0.0, 0.0]], dtype=float)
+        A_transform_ax0 = np.array(
+            [
+                [0.0, 0.0, 0.0, 1.0],
+                [0.25, 0.25, 0.0, 0.0],
+                [0.3, 0.9, 0.6, 0.0],
+                [0.0, 0.0, 0.0, 0.0],
+            ],
+            dtype=float,
+        )
         # Axis=1, feature = 0
-        A_transform_ax1 = np.array([[1.0, 0.0, 0.0, 0.0],
-                                    [0.25, 0.25, 0.0, 0.0],
-                                    [0.3, 0.9, 0.6, 0.0],
-                                    [1.0, 0.0, 0.0, 0.0]], dtype=float)
+        A_transform_ax1 = np.array(
+            [
+                [1.0, 0.0, 0.0, 0.0],
+                [0.25, 0.25, 0.0, 0.0],
+                [0.3, 0.9, 0.6, 0.0],
+                [1.0, 0.0, 0.0, 0.0],
+            ],
+            dtype=float,
+        )
 
         # Axis 0, copy=True
         constr = constraint.ReplaceZeros(copy=True, axis=0, feature=0)
@@ -618,20 +669,30 @@ class TestConstraint(unittest.TestCase):
         assert_allclose(out, A_transform_ax1)
 
         # Axis 0, copy=FALSE
-        A = np.array([[0.0, 0.0, 0.0, 0.0],
-                      [0.25, 0.25, 0.0, 0.0],
-                      [0.3, 0.9, 0.6, 0.0],
-                      [0.0, 0.0, 0.0, 0.0]], dtype=float)
+        A = np.array(
+            [
+                [0.0, 0.0, 0.0, 0.0],
+                [0.25, 0.25, 0.0, 0.0],
+                [0.3, 0.9, 0.6, 0.0],
+                [0.0, 0.0, 0.0, 0.0],
+            ],
+            dtype=float,
+        )
 
         constr = constraint.ReplaceZeros(copy=False, axis=0, feature=0)
         out = constr.transform(A)
         assert_allclose(A, A_transform_ax0)
 
         # Axis 1, copy=FALSE
-        A = np.array([[0.0, 0.0, 0.0, 0.0],
-                      [0.25, 0.25, 0.0, 0.0],
-                      [0.3, 0.9, 0.6, 0.0],
-                      [0.0, 0.0, 0.0, 0.0]], dtype=float)
+        A = np.array(
+            [
+                [0.0, 0.0, 0.0, 0.0],
+                [0.25, 0.25, 0.0, 0.0],
+                [0.3, 0.9, 0.6, 0.0],
+                [0.0, 0.0, 0.0, 0.0],
+            ],
+            dtype=float,
+        )
 
         constr = constraint.ReplaceZeros(copy=False, axis=1, feature=0)
         out = constr.transform(A)
@@ -640,20 +701,35 @@ class TestConstraint(unittest.TestCase):
     def test_replace_zeros_multifeature(self):
         """ Replace zeros using multiple features """
 
-        A = np.array([[0.0, 0.0, 0.0, 0.0],
-                      [0.25, 0.25, 0.0, 0.0],
-                      [0.3, 0.9, 0.6, 0.0],
-                      [0.0, 0.0, 0.0, 0.0]], dtype=float)
+        A = np.array(
+            [
+                [0.0, 0.0, 0.0, 0.0],
+                [0.25, 0.25, 0.0, 0.0],
+                [0.3, 0.9, 0.6, 0.0],
+                [0.0, 0.0, 0.0, 0.0],
+            ],
+            dtype=float,
+        )
         # Axis=0, feature = [0,1]
-        A_transform_ax0 = np.array([[0.0, 0.0, 0.0, 0.5],
-                                    [0.25, 0.25, 0.0, 0.5],
-                                    [0.3, 0.9, 0.6, 0.0],
-                                    [0.0, 0.0, 0.0, 0.0]], dtype=float)
+        A_transform_ax0 = np.array(
+            [
+                [0.0, 0.0, 0.0, 0.5],
+                [0.25, 0.25, 0.0, 0.5],
+                [0.3, 0.9, 0.6, 0.0],
+                [0.0, 0.0, 0.0, 0.0],
+            ],
+            dtype=float,
+        )
         # Axis=1, feature = [0,1]
-        A_transform_ax1 = np.array([[0.5, 0.5, 0.0, 0.0],
-                                    [0.25, 0.25, 0.0, 0.0],
-                                    [0.3, 0.9, 0.6, 0.0],
-                                    [0.5, 0.5, 0.0, 0.0]], dtype=float)
+        A_transform_ax1 = np.array(
+            [
+                [0.5, 0.5, 0.0, 0.0],
+                [0.25, 0.25, 0.0, 0.0],
+                [0.3, 0.9, 0.6, 0.0],
+                [0.5, 0.5, 0.0, 0.0],
+            ],
+            dtype=float,
+        )
 
         # Axis 0, copy=True, feature=[0,1]
         constr = constraint.ReplaceZeros(copy=True, axis=0, feature=[0, 1])
@@ -677,20 +753,30 @@ class TestConstraint(unittest.TestCase):
         assert_allclose(out, A)
 
         # Axis 0, copy=FALSE, feature=[0,1]
-        A = np.array([[0.0, 0.0, 0.0, 0.0],
-                      [0.25, 0.25, 0.0, 0.0],
-                      [0.3, 0.9, 0.6, 0.0],
-                      [0.0, 0.0, 0.0, 0.0]], dtype=float)
+        A = np.array(
+            [
+                [0.0, 0.0, 0.0, 0.0],
+                [0.25, 0.25, 0.0, 0.0],
+                [0.3, 0.9, 0.6, 0.0],
+                [0.0, 0.0, 0.0, 0.0],
+            ],
+            dtype=float,
+        )
 
         constr = constraint.ReplaceZeros(copy=False, axis=0, feature=[0, 1])
         out = constr.transform(A)
         assert_allclose(A, A_transform_ax0)
 
         # Axis 1, copy=FALSE, feature=[0,1]
-        A = np.array([[0.0, 0.0, 0.0, 0.0],
-                      [0.25, 0.25, 0.0, 0.0],
-                      [0.3, 0.9, 0.6, 0.0],
-                      [0.0, 0.0, 0.0, 0.0]], dtype=float)
+        A = np.array(
+            [
+                [0.0, 0.0, 0.0, 0.0],
+                [0.25, 0.25, 0.0, 0.0],
+                [0.3, 0.9, 0.6, 0.0],
+                [0.0, 0.0, 0.0, 0.0],
+            ],
+            dtype=float,
+        )
 
         constr = constraint.ReplaceZeros(copy=False, axis=1, feature=[0, 1])
         out = constr.transform(A)
@@ -698,23 +784,39 @@ class TestConstraint(unittest.TestCase):
 
     def test_replace_zeros_non1fval(self):
         """ Test replace zeros using a single feature with fval != 1 """
-        A = np.array([[0.0, 0.0, 0.0, 0.0],
-                      [0.25, 0.25, 0.0, 0.0],
-                      [0.3, 0.9, 0.6, 0.0],
-                      [0.0, 0.0, 0.0, 0.0]], dtype=float)
+        A = np.array(
+            [
+                [0.0, 0.0, 0.0, 0.0],
+                [0.25, 0.25, 0.0, 0.0],
+                [0.3, 0.9, 0.6, 0.0],
+                [0.0, 0.0, 0.0, 0.0],
+            ],
+            dtype=float,
+        )
         # Axis=0, feature = 0
-        A_transform_ax0 = np.array([[0.0, 0.0, 0.0, 4.0],
-                                    [0.25, 0.25, 0.0, 0.0],
-                                    [0.3, 0.9, 0.6, 0.0],
-                                    [0.0, 0.0, 0.0, 0.0]], dtype=float)
+        A_transform_ax0 = np.array(
+            [
+                [0.0, 0.0, 0.0, 4.0],
+                [0.25, 0.25, 0.0, 0.0],
+                [0.3, 0.9, 0.6, 0.0],
+                [0.0, 0.0, 0.0, 0.0],
+            ],
+            dtype=float,
+        )
         # Axis=1, feature = 0
-        A_transform_ax1 = np.array([[4.0, 0.0, 0.0, 0.0],
-                                    [0.25, 0.25, 0.0, 0.0],
-                                    [0.3, 0.9, 0.6, 0.0],
-                                    [4.0, 0.0, 0.0, 0.0]], dtype=float)
+        A_transform_ax1 = np.array(
+            [
+                [4.0, 0.0, 0.0, 0.0],
+                [0.25, 0.25, 0.0, 0.0],
+                [0.3, 0.9, 0.6, 0.0],
+                [4.0, 0.0, 0.0, 0.0],
+            ],
+            dtype=float,
+        )
 
         # Axis 0, copy=True
-        constr = constraint.ReplaceZeros(copy=True, axis=0, feature=0, fval=4)
+        constr = constraint.ReplaceZeros(copy=True, axis=0, feature=0,
+                                         fval=4)
         out = constr.transform(A)
         assert_allclose(out, A_transform_ax0)
 
@@ -724,20 +826,30 @@ class TestConstraint(unittest.TestCase):
         assert_allclose(out, A_transform_ax1)
 
         # Axis 0, copy=FALSE
-        A = np.array([[0.0, 0.0, 0.0, 0.0],
-                      [0.25, 0.25, 0.0, 0.0],
-                      [0.3, 0.9, 0.6, 0.0],
-                      [0.0, 0.0, 0.0, 0.0]], dtype=float)
+        A = np.array(
+            [
+                [0.0, 0.0, 0.0, 0.0],
+                [0.25, 0.25, 0.0, 0.0],
+                [0.3, 0.9, 0.6, 0.0],
+                [0.0, 0.0, 0.0, 0.0],
+            ],
+            dtype=float,
+        )
 
         constr = constraint.ReplaceZeros(copy=False, axis=0, feature=0, fval=4)
         out = constr.transform(A)
         assert_allclose(A, A_transform_ax0)
 
         # Axis 1, copy=FALSE
-        A = np.array([[0.0, 0.0, 0.0, 0.0],
-                      [0.25, 0.25, 0.0, 0.0],
-                      [0.3, 0.9, 0.6, 0.0],
-                      [0.0, 0.0, 0.0, 0.0]], dtype=float)
+        A = np.array(
+            [
+                [0.0, 0.0, 0.0, 0.0],
+                [0.25, 0.25, 0.0, 0.0],
+                [0.3, 0.9, 0.6, 0.0],
+                [0.0, 0.0, 0.0, 0.0],
+            ],
+            dtype=float,
+        )
 
         constr = constraint.ReplaceZeros(copy=False, axis=1, feature=0, fval=4)
         out = constr.transform(A)
@@ -745,20 +857,35 @@ class TestConstraint(unittest.TestCase):
 
     def test_replace_zeros_non1fval_multifeature(self):
         """ Test replace zeros using a 2 features with fval != 1 """
-        A = np.array([[0.0, 0.0, 0.0, 0.0],
-                      [0.25, 0.25, 0.0, 0.0],
-                      [0.3, 0.9, 0.6, 0.0],
-                      [0.0, 0.0, 0.0, 0.0]], dtype=float)
+        A = np.array(
+            [
+                [0.0, 0.0, 0.0, 0.0],
+                [0.25, 0.25, 0.0, 0.0],
+                [0.3, 0.9, 0.6, 0.0],
+                [0.0, 0.0, 0.0, 0.0],
+            ],
+            dtype=float,
+        )
         # Axis=0, feature = 0
-        A_transform_ax0 = np.array([[0.0, 0.0, 0.0, 2.0],
-                                    [0.25, 0.25, 0.0, 2.0],
-                                    [0.3, 0.9, 0.6, 0.0],
-                                    [0.0, 0.0, 0.0, 0.0]], dtype=float)
+        A_transform_ax0 = np.array(
+            [
+                [0.0, 0.0, 0.0, 2.0],
+                [0.25, 0.25, 0.0, 2.0],
+                [0.3, 0.9, 0.6, 0.0],
+                [0.0, 0.0, 0.0, 0.0],
+            ],
+            dtype=float,
+        )
         # Axis=1, feature = 0
-        A_transform_ax1 = np.array([[2.0, 2.0, 0.0, 0.0],
-                                    [0.25, 0.25, 0.0, 0.0],
-                                    [0.3, 0.9, 0.6, 0.0],
-                                    [2.0, 2.0, 0.0, 0.0]], dtype=float)
+        A_transform_ax1 = np.array(
+            [
+                [2.0, 2.0, 0.0, 0.0],
+                [0.25, 0.25, 0.0, 0.0],
+                [0.3, 0.9, 0.6, 0.0],
+                [2.0, 2.0, 0.0, 0.0],
+            ],
+            dtype=float,
+        )
 
         # Axis 0, copy=True
         constr = constraint.ReplaceZeros(copy=True, axis=0, feature=[0, 1],
@@ -773,10 +900,15 @@ class TestConstraint(unittest.TestCase):
         assert_allclose(out, A_transform_ax1)
 
         # Axis 0, copy=FALSE
-        A = np.array([[0.0, 0.0, 0.0, 0.0],
-                      [0.25, 0.25, 0.0, 0.0],
-                      [0.3, 0.9, 0.6, 0.0],
-                      [0.0, 0.0, 0.0, 0.0]], dtype=float)
+        A = np.array(
+            [
+                [0.0, 0.0, 0.0, 0.0],
+                [0.25, 0.25, 0.0, 0.0],
+                [0.3, 0.9, 0.6, 0.0],
+                [0.0, 0.0, 0.0, 0.0],
+            ],
+            dtype=float,
+        )
 
         constr = constraint.ReplaceZeros(copy=False, axis=0, feature=[0, 1],
                                          fval=4)
@@ -784,16 +916,78 @@ class TestConstraint(unittest.TestCase):
         assert_allclose(A, A_transform_ax0)
 
         # Axis 1, copy=FALSE
-        A = np.array([[0.0, 0.0, 0.0, 0.0],
-                      [0.25, 0.25, 0.0, 0.0],
-                      [0.3, 0.9, 0.6, 0.0],
-                      [0.0, 0.0, 0.0, 0.0]], dtype=float)
+        A = np.array(
+            [
+                [0.0, 0.0, 0.0, 0.0],
+                [0.25, 0.25, 0.0, 0.0],
+                [0.3, 0.9, 0.6, 0.0],
+                [0.0, 0.0, 0.0, 0.0],
+            ],
+            dtype=float,
+        )
 
         constr = constraint.ReplaceZeros(copy=False, axis=1, feature=[0, 1],
                                          fval=4)
         out = constr.transform(A)
         assert_allclose(A, A_transform_ax1)
 
+    def test_unimodal(self):
+        n_samples = 500
+        n_components = 3
 
-if __name__ == '__main__':
+        constr = constraint.Unimodal(copy=True)
+        A = np.random.randn(n_samples, n_components)
+        out = constr.transform(A)
+
+        # assert that shape is not changed
+        self.assertEqual(A.shape, out.shape)
+
+        # assert that maximum remains in the same location
+        argmaxA = np.argmax(A, axis=0)
+        argmaxout = np.argmax(out, axis=0)
+        assert_allclose(argmaxA, argmaxout)
+
+        # assert that vectors are monotonically increasing befor max,
+        # and monotonically decreasing after max.
+        diff = np.diff(out, axis=0)
+        argmaxout -= 1  # correct for shift due to diff
+        mask_low = np.arange(diff.shape[0])[:, None] <= argmaxout[:, None].T
+        mask_high = np.arange(diff.shape[0])[:, None] > argmaxout[:, None].T
+
+        self.assertTrue(np.all(diff[mask_low] >= 0))
+        self.assertTrue(np.all(diff[mask_high] <= 0))
+
+        # check if columns can be excluded
+        target_columns = [2]
+        other_column = [0, 1]
+        constr = constraint.Unimodal(columns=target_columns, copy=True)
+        A = np.random.randn(n_samples, n_components)
+        out = constr.transform(A)
+
+        # assert that maximum remains in the same location
+        argmaxA = np.argmax(A, axis=0)
+        argmaxout = np.argmax(out, axis=0)
+        assert_allclose(argmaxA, argmaxout)
+
+        # assert that vectors are monotonically increasing befor max,
+        # and monotonically decreasing after max.
+        diff = np.diff(out, axis=0)
+        argmaxout -= 1  # correct for shift due to diff
+        mask_low = np.arange(diff.shape[0])[:, None] <= argmaxout[:, None].T
+        mask_high = np.arange(diff.shape[0])[:, None] > argmaxout[:, None].T
+
+        # remove untreated columns
+        mask_low_target = mask_low.copy()
+        mask_high_target = mask_high.copy()
+        mask_low_target[:, other_column] = 0
+        mask_high_target[:, other_column] = 0
+
+        # test that treated columns are unimodal
+        self.assertTrue(np.all(diff[mask_low_target] >= 0))
+        self.assertTrue(np.all(diff[mask_high_target] <= 0))
+        # test that some columns are not unimodal
+        self.assertTrue(np.any(diff[mask_low] < 0))
+
+
+if __name__ == "__main__":
     unittest.main()

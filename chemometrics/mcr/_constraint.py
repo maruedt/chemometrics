@@ -27,15 +27,26 @@ or overwrite input depending on copy attribute.
 """
 
 
-from abc import (ABC, abstractmethod)
+from abc import ABC, abstractmethod
 
 import numpy as np
 
 from sklearn.utils import check_array
 
-__all__ = ['Constraint', 'Nonneg', 'CumsumNonneg', 'ZeroEndPoints',
-           'ZeroCumSumEndPoints', 'Normalizer', 'CutBelow', 'CutAbove',
-           'CompressBelow', 'CompressAbove', 'ReplaceZeros']
+__all__ = [
+    "Constraint",
+    "Nonneg",
+    "CumsumNonneg",
+    "ZeroEndPoints",
+    "ZeroCumSumEndPoints",
+    "Normalizer",
+    "CutBelow",
+    "CutAbove",
+    "CompressBelow",
+    "CompressAbove",
+    "ReplaceZeros",
+    "Unimodal",
+]
 
 
 class Constraint(ABC):
@@ -76,7 +87,7 @@ class Nonneg(Constraint):
     def transform(self, A):
         """ Apply nonnegative constraint"""
         A = check_array(A, dtype="numeric", copy=self.copy)
-        A *= (A > 0)
+        A *= A > 0
         return A
 
 
@@ -105,7 +116,7 @@ class CumsumNonneg(Constraint):
         """ Apply cumsum nonnegative constraint"""
         A = check_array(A, dtype="numeric", copy=self.copy)
 
-        A *= (np.cumsum(A, self.axis) > 0)
+        A *= np.cumsum(A, self.axis) > 0
         return A
 
 
@@ -137,7 +148,7 @@ class ZeroEndPoints(Constraint):
         """ A must be non-negative"""
         super().__init__(copy)
         if [0, 1, -1].count(axis) != 1:
-            raise TypeError('Axis must be 0, 1, or -1')
+            raise TypeError("Axis must be 0, 1, or -1")
 
         self.axis = axis
         self.span = span
@@ -148,24 +159,23 @@ class ZeroEndPoints(Constraint):
         A = check_array(A, dtype="numeric", copy=self.copy)
 
         # generate view with relevant axis in first dimension
-        if (self.axis != 0):
+        if self.axis != 0:
             A = A.T
 
         pix_vec = np.arange(A.shape[0])
-        delta_x = (A[-self.span:, :].mean(axis=0)
-                   - A[:self.span, :].mean(axis=0))
-        delta_y = (pix_vec[-self.span:].mean()
-                   - pix_vec[:self.span].mean())
+        A_start = A[: self.span, :]
+        A_end = A[-self.span:, :]
+        delta_x = A_end.mean(axis=0) - A_start.mean(axis=0)
+        delta_y = pix_vec[-self.span:].mean() - pix_vec[:self.span].mean()
         slope = delta_x / delta_y
-        intercept = (A[:self.span, :]
-                     - np.dot(pix_vec[:self.span, None],
-                              slope[None, :])).mean(axis=0)
+        intercept = (
+            A_start - np.dot(pix_vec[: self.span, None], slope[None, :])
+        ).mean(axis=0)
 
-        A -= (np.dot(pix_vec[:, None],
-              slope[None, :]) + intercept[None, :])
+        A -= np.dot(pix_vec[:, None], slope[None, :]) + intercept[None, :]
 
         # restore original array format
-        if (self.axis != 0):
+        if self.axis != 0:
             A = A.T
         return A
 
@@ -196,7 +206,7 @@ class ZeroCumSumEndPoints(Constraint):
 
         self.nodes = nodes
         if [0, 1, -1].count(axis) != 1:
-            raise TypeError('Axis must be 0, 1, or -1')
+            raise TypeError("Axis must be 0, 1, or -1")
 
         self.axis = axis
 
@@ -205,7 +215,7 @@ class ZeroCumSumEndPoints(Constraint):
         A = check_array(A, dtype="numeric", copy=self.copy)
 
         # generate view with relevant axis in first dimension
-        if (self.axis != 0):
+        if self.axis != 0:
             A = A.T
 
         if self.nodes:
@@ -221,12 +231,11 @@ class ZeroCumSumEndPoints(Constraint):
         # subtract constant between nodes
         for num in range(len(self.nodes) - 1):
             n0 = self.nodes[num]
-            n1 = self.nodes[num+1]
-            A[n0:n1, :] -= A[n0:n1, :]\
-                .mean(0)[None, :]
+            n1 = self.nodes[num + 1]
+            A[n0:n1, :] -= A[n0:n1, :].mean(0)[None, :]
 
         # restore original array format
-        if (self.axis != 0):
+        if self.axis != 0:
             A = A.T
         return A
 
@@ -245,8 +254,8 @@ class Normalizer(Constraint):
     axis : int
         Which axis of input matrix A to apply normalization across.
     fix : list
-        Keep fix-axes as-is and normalize the remaining axes based on the
-        residual of the fixed axes.
+        Keep fixed entries as-is and normalize the remaining entries such
+        that total is 1.
     set_zeros_to_feature : int
         Set all samples which sum-to-zero across axis to 1 for a particular
          feature (See Notes)
@@ -279,13 +288,15 @@ class Normalizer(Constraint):
             if np.issubdtype(fix.dtype, np.integer):
                 self.fix = fix.tolist()
             else:
-                raise TypeError('fix ndarray must be of dtype int')
+                raise TypeError("fix ndarray must be of dtype int")
         else:
-            raise TypeError('Parameter fix must be of type None, int, list,',
-                            'tuple, ndarray')
+            raise TypeError(
+                "Parameter fix must be of type None, int, list,",
+                "tuple, ndarray"
+            )
 
         if not ((axis == 0) | (axis == 1) | (axis == -1)):
-            raise ValueError('Axis must be 0,1, or -1')
+            raise ValueError("Axis must be 0,1, or -1")
         self.axis = axis
 
     def transform(self, A):
@@ -293,24 +304,25 @@ class Normalizer(Constraint):
         A = check_array(A, dtype=float, copy=self.copy)
 
         # generate view with relevant axis in first dimension
-        if (self.axis != 0):
+        if self.axis != 0:
             A = A.T
 
         if not self.fix:  # No fixed axes
             A /= A.sum(axis=0)[None, :]
         else:  # Fixed axes
-            not_fix_locs = [v for v in np.arange(A.shape[0]).tolist()
-                            if self.fix.count(v) == 0]
+            axis_list = np.arange(A.shape[0]).tolist()
+            not_fix_locs = [
+                v for v in axis_list if self.fix.count(v) == 0
+            ]
             scaler = np.ones(A.shape)
             div = A[not_fix_locs, :].sum(axis=0)[None, :]
             div[div == 0] = 1
-            scaler[not_fix_locs, :] = (
-                (1 - A[self.fix, :].sum(axis=0)[None, :]) / div
-            )
+            sum_fixed = A[self.fix, :].sum(axis=0)[None, :]
+            scaler[not_fix_locs, :] = (1 - sum_fixed) / div
             A *= scaler
 
         # restore original array format
-        if (self.axis != 0):
+        if self.axis != 0:
             A = A.T
 
         return A
@@ -352,13 +364,15 @@ class ReplaceZeros(Constraint):
             if np.issubdtype(feature.dtype, np.integer):
                 self.feature = feature.tolist()
             else:
-                raise TypeError('ndarrays must be of dtype int')
+                raise TypeError("ndarrays must be of dtype int")
         else:
-            raise TypeError('Parameter feature must be of type None, int,'
-                            + 'list, tuple, ndarray')
+            raise TypeError(
+                "Parameter feature must be of type None, int,"
+                + "list, tuple, ndarray"
+            )
 
         if not ((axis == 0) | (axis == 1) | (axis == -1)):
-            raise ValueError('Axis must be 0,1, or -1')
+            raise ValueError("Axis must be 0,1, or -1")
         self.axis = axis
 
     def transform(self, A):
@@ -366,7 +380,7 @@ class ReplaceZeros(Constraint):
         A = check_array(A, dtype=float, copy=self.copy)
 
         # generate view with relevant axis in first dimension
-        if (self.axis != 0):
+        if self.axis != 0:
             A = A.T
 
         if self.feature:
@@ -378,7 +392,7 @@ class ReplaceZeros(Constraint):
             A[:, A.sum(axis=0) == 0] = replacement[:, None]
 
         # restore original array format
-        if (self.axis != 0):
+        if self.axis != 0:
             A = A.T
         return A
 
@@ -405,8 +419,14 @@ class _CutExclude(Constraint):
         Make copy of input data, A; otherwise, overwrite (if mutable)
     """
 
-    def __init__(self, value=0, axis_sumnz=None, exclude=None,
-                 exclude_axis=-1, copy=False):
+    def __init__(
+        self,
+        value=0,
+        axis_sumnz=None,
+        exclude=None,
+        exclude_axis=-1,
+        copy=False
+    ):
         """ """
         super().__init__(copy)
         self.value = value
@@ -461,11 +481,22 @@ class CutBelow(_CutExclude):
         Make copy of input data, A; otherwise, overwrite (if mutable)
     """
 
-    def __init__(self, value=0, axis_sumnz=None, exclude=None, exclude_axis=-1,
-                 copy=False):
+    def __init__(
+        self,
+        value=0,
+        axis_sumnz=None,
+        exclude=None,
+        exclude_axis=-1,
+        copy=False
+    ):
         """ Initialize """
-        super().__init__(value=value, axis_sumnz=axis_sumnz, exclude=exclude,
-                         exclude_axis=exclude_axis, copy=copy)
+        super().__init__(
+            value=value,
+            axis_sumnz=axis_sumnz,
+            exclude=exclude,
+            exclude_axis=exclude_axis,
+            copy=copy,
+        )
 
     def transform(self, A):
         """ Apply cut-below value constraint"""
@@ -476,10 +507,13 @@ class CutBelow(_CutExclude):
 
         # change behavior depending if axis_sumnz was defined or not
         if self.axis is None:
-            A *= ((A >= self.value) | self._excl_mat)
+            A *= (A >= self.value) | self._excl_mat
         else:
-            A *= (np.alltrue(A < self.value, axis=self.axis, keepdims=True)
-                  + (A >= self.value) + self._excl_mat)
+            A *= (
+                np.alltrue(A < self.value, axis=self.axis, keepdims=True)
+                + (A >= self.value)
+                + self._excl_mat
+            )
         return A
 
 
@@ -510,11 +544,22 @@ class CutAbove(_CutExclude):
         Make copy of input data, A; otherwise, overwrite (if mutable)
     """
 
-    def __init__(self, value=0, axis_sumnz=None, exclude=None, exclude_axis=-1,
-                 copy=False):
+    def __init__(
+        self,
+        value=0,
+        axis_sumnz=None,
+        exclude=None,
+        exclude_axis=-1,
+        copy=False
+    ):
         """ """
-        super().__init__(value=value, axis_sumnz=axis_sumnz, exclude=exclude,
-                         exclude_axis=exclude_axis, copy=copy)
+        super().__init__(
+            value=value,
+            axis_sumnz=axis_sumnz,
+            exclude=exclude,
+            exclude_axis=exclude_axis,
+            copy=copy,
+        )
 
     def transform(self, A):
         """ Apply cut-above value constraint"""
@@ -525,10 +570,13 @@ class CutAbove(_CutExclude):
 
         # change behavior depending if axis_sumnz was defined or not
         if self.axis is None:
-            A *= ((A <= self.value) | self._excl_mat)
+            A *= (A <= self.value) | self._excl_mat
         else:
-            A *= (np.alltrue(A > self.value, axis=self.axis, keepdims=True)
-                  + (A <= self.value) + self._excl_mat)
+            A *= (
+                np.alltrue(A > self.value, axis=self.axis, keepdims=True)
+                + (A <= self.value)
+                + self._excl_mat
+            )
         return A
 
 
@@ -557,8 +605,8 @@ class CompressBelow(Constraint):
         """ Apply compress-below value constraint"""
         A = check_array(A, dtype=float, copy=self.copy)
 
-        temp = self.value*(A < self.value)
-        A *= (A >= self.value)
+        temp = self.value * (A < self.value)
+        A *= A >= self.value
         A += temp
         return A
 
@@ -588,7 +636,70 @@ class CompressAbove(Constraint):
         """ Apply compress-above value constraint"""
         A = check_array(A, dtype=float, copy=self.copy)
 
-        temp = self.value*(A > self.value)
-        A *= (A <= self.value)
+        temp = self.value * (A > self.value)
+        A *= A <= self.value
         A += temp
         return A
+
+
+class Unimodal(Constraint):
+    """
+    Enforce column-wise unimodality of data.
+
+    The constraint ensures that one value per column represents a maximum
+    while values before the maximum increase monotonically, values after the
+    maximum decrease monotonically. The constraint is useful for e.g.
+    chromatographic data where typically unimodal peaks are observed.
+
+    Parameters
+    ----------
+
+    copy : bool
+        Make copy of input data, A; otherwise, overwrite (if mutable). default:
+        False
+    columns : None (default) or list
+        Which columns of input matrix A to apply unimodality across.
+    """
+
+    def __init__(self, copy=False, columns=None):
+        super().__init__()
+
+        self.columns = columns
+        self.copy = copy
+
+    def transform(self, A):
+        """
+        Apply unimodal constraint to A
+        """
+        A = check_array(A, dtype=float, copy=self.copy)
+
+        columns = self.columns
+        if columns is None:
+            columns = range(A.shape[1])
+
+        temp = np.apply_along_axis(
+                self._vtransform_to_unimodal,
+                0,
+                A[:, columns])
+        A[:, columns] = temp
+        return A
+
+    def _vtransform_to_unimodal(self, vector):
+        """Transform vector to unimodal"""
+        diff = np.diff(vector)
+        indmax = np.argmax(vector)
+        maxval = vector[indmax]
+
+        # make diffs before indmax >=0, after indmax <=0
+        # this implies (non-strict) monotonity
+        mask_ascending = diff[:indmax] < 0
+        mask_descending = diff[indmax:] > 0
+        mask = np.hstack((mask_ascending, mask_descending))
+        diff[mask] = 0
+
+        # integrate & redefine offset
+        vector[1:] = vector[0] + np.cumsum(diff)
+        deltamax = maxval - vector[indmax]
+        vector += deltamax
+
+        return vector

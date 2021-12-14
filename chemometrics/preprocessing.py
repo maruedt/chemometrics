@@ -121,7 +121,7 @@ def _asym_ls_y1d(X, y, asym_factor=0.1, max_cycles=10):
 
 class Emsc(TransformerMixin, BaseEstimator):
     r"""
-    Performs extended multiplicative scatter correction (EMSC).
+    Perform extended multiplicative scatter correction (EMSC)
 
     `Emsc` is a spectral pretreatment which is based on a linear decomposition
     of data into baseline contributions and chemical information. Baseline
@@ -246,9 +246,9 @@ class Emsc(TransformerMixin, BaseEstimator):
 
 class Whittaker(TransformerMixin, BaseEstimator):
     r"""
-    Smooth `X` with a whittaker smoother
+    Smooth with a Whittaker filter
 
-    `Whittaker` smooths `X` with a whittaker smoother. The smoother smooths
+    `Whittaker` smooths `X` with a Whittaker filter. The filter smooths
     the data with a non-parametric line constraint by its derivative
     smoothness. `penalty` defines the penalty on non-smoothness.
     The whittaker smoother is very efficient and a useful drop-in replacement
@@ -351,7 +351,7 @@ class Whittaker(TransformerMixin, BaseEstimator):
 
     def transform(self, X, copy=True):
         r"""
-        Do Whittaker smoothing.
+        Do Whittaker smoothing
 
         Parameters
         ----------
@@ -372,7 +372,7 @@ class Whittaker(TransformerMixin, BaseEstimator):
 
     def _transform(self, X, copy=True):
         """
-        Perform the filtering without differentiation.
+        Perform the filtering without differentiation
         """
         X = check_array(X, estimator=self, dtype=FLOAT_DTYPES, copy=copy)
         X = np.apply_along_axis(self.solve1d_, 1, X)
@@ -381,9 +381,9 @@ class Whittaker(TransformerMixin, BaseEstimator):
 
     def score(self, X, y=None):
         r"""
-        Calculate cross-validation error of whittaker smoother.
+        Calculate cross-validation error of Whittaker filter
 
-        Computes the cross-validation error of a whittaker smoother by a
+        Computes the cross-validation error of a Whittaker filter by a
         leave-one-out cross-validation scheme. The algorithm uses an
         approximation scheme and does not perform the explicit leave-one-out
         cross-validation. Users need should be careful when applying this
@@ -449,9 +449,9 @@ class Whittaker(TransformerMixin, BaseEstimator):
 
     def _estimate_penalty(self, X):
         r"""
-        Estimate optimal penalty based on score.
+        Estimate optimal penalty based on score
 
-        The penalty of the whittaker filter is adjusted until the leave-one-out
+        The penalty of the Whittaker filter is adjusted until the leave-one-out
         error is minimized. The function uses Brent's algorithm and varies
         `penalty_` on a logarithmic scale.
         """
@@ -538,7 +538,7 @@ class AsymWhittaker(TransformerMixin, BaseEstimator):
 
     def transform(self, X, copy=True):
         r"""
-        Do asymmetric Whittaker background subtraction.
+        Do asymmetric Whittaker background subtraction
 
         Parameters
         ----------
@@ -576,10 +576,10 @@ class AsymWhittaker(TransformerMixin, BaseEstimator):
 
 def _get_whittaker_lhs(n_var, penalty, constraint_order, weights=None):
     r"""
-    Return the left matrix for whittaker smoothing
+    Return the left matrix for Whittaker filter
 
     Warning: if weights are used, also right hand side (i.e. unsmoothed data)
-    needs to be multiplied by weights)
+    needs to be multiplied by weights.
     """
     D = _sp_diff_matrix(n_var, constraint_order)
     if weights is None:
@@ -593,7 +593,7 @@ def _get_whittaker_lhs(n_var, penalty, constraint_order, weights=None):
 def _calc_whittaker_h_bar(n_var, penalty, constraint_order,
                           size_estimator=100):
     r"""
-    Calculate estimate of the mean diagonal of the whittaker smoother matrix.
+    Calculate estimate of the mean diagonal of the Whittaker smoother matrix
     """
     # reduce size of estimator if necessary
     if n_var < size_estimator:
@@ -612,7 +612,7 @@ def _calc_whittaker_h_bar(n_var, penalty, constraint_order,
 
 def _sp_diff_matrix(m, diff_order=1):
     r"""
-    Generate a sparse difference matrix used for ``whittaker``
+    Generate a sparse difference matrix used for ``Whittaker``
     """
     E = sparse.eye(m, format='csc')
     for i in range(diff_order):

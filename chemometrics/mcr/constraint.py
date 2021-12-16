@@ -33,9 +33,10 @@ from ._constraint import (
     CutAbove,
     CompressBelow,
     CompressAbove,
-    ReplaceZeros
+    ReplaceZeros,
+    Unimodal,
 )
 
 __all__ = ['Constraint', 'Nonneg', 'CumsumNonneg', 'ZeroEndPoints',
            'ZeroCumSumEndPoints', 'Normalizer', 'CutBelow', 'CutAbove',
-           'CompressBelow', 'CompressAbove', 'ReplaceZeros']
+           'CompressBelow', 'CompressAbove', 'ReplaceZeros', 'Unimodal']

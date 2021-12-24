@@ -19,7 +19,7 @@
 import matplotlib.pyplot as plt
 import matplotlib.cm
 import numpy as np
-import scipy.linalg as linalg
+from sklearn.utils.extmath import randomized_svd
 
 
 def plot_colored_series(Y, x=None, reference=None):
@@ -105,7 +105,7 @@ def plot_svd(D, n_comp=5, n_eigenvalues=20):
            model-based kinetics: Algorithm and applications. J. Chemom.,
            26:538–548, 2012.
     """
-    u, s, vh = linalg.svd(D)
+    u, s, vh = randomized_svd(D, n_components=n_eigenvalues, random_state=None)
 
     _ = plt.figure(figsize=(15, 5))
     plt.subplot(131)

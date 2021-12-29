@@ -194,7 +194,7 @@ class TestPLSRegression(unittest.TestCase):
         absolut_dmodx = dmodx**2 * (self.X.shape[1] - self.pls.n_components)
         X_hat_bar = self.pls.x_scores_ @ self.pls.x_loadings_.T
         ss_X_hat = np.sum(X_hat_bar**2, axis=1)
-        X_bar = self.X - self.pls.x_mean_.T
+        X_bar = self.X - np.mean(self.X, axis=0)
         ss_X = np.sum(X_bar**2, axis=1)
         self.assertTrue(np.allclose(ss_X_hat + absolut_dmodx, ss_X,
                                     atol=1e-2))

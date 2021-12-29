@@ -40,9 +40,9 @@ class PLSRegression(_PLSRegression):
 
     """
 
-    def __init__(self, n_components=2, *, scale=False,
+    def __init__(self, n_components=2, *,
                  max_iter=500, tol=1e-06, copy=True):
-        super().__init__(n_components=n_components, scale=scale,
+        super().__init__(n_components=n_components, scale=False,
                          max_iter=max_iter, tol=tol, copy=copy)
 
     def fit(self, X, Y):

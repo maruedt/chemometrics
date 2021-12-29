@@ -22,6 +22,7 @@ import unittest
 import scipy.sparse as sparse
 import matplotlib
 import matplotlib.pyplot as plt
+from numpy.testing import assert_allclose
 
 
 class TestAsym_ls(unittest.TestCase):
@@ -108,6 +109,22 @@ class TestEmsc(unittest.TestCase):
         D_pretreated = emsc.fit_transform(D)
         self.assertTrue(np.all(np.isclose(np.zeros([n_series, n_variables]),
                         D_pretreated)))
+
+    def test_normalization(self):
+        r"""
+        Test if spectra are normalized
+        """
+        X, y = cm.generate_data(n_wl=99, n_samples=50, n_conc=2, noise=0.1)
+
+        emsc = cm.Emsc(normalize=True)
+
+        X_pretreated = emsc.fit_transform(X)
+        background = np.dot(emsc.coefficients_[:, :-1],
+                            emsc.regressor_[:, :-1].T)
+        X_reconstructed =  background \
+                         + emsc.coefficients_[:, -1][:, None]*X_pretreated
+
+        assert_allclose(X, X_reconstructed)
 
 
 class Testwhittaker(unittest.TestCase):

@@ -217,6 +217,7 @@ class Emsc(TransformerMixin, BaseEstimator):
         X_bar = np.mean(X, axis=0)[:, None]  # mean spectra
         beta_X_bar = asym_ls(regressor, X_bar, asym_factor=self.asym_factor)
         X_bar_pretreated = X_bar - np.dot(regressor, beta_X_bar)
+        X_bar_pretreated /= np.sum(X_bar_pretreated) # normalize
         self.regressor_ = np.concatenate((regressor, X_bar_pretreated), axis=1)
 
         return self
@@ -236,12 +237,13 @@ class Emsc(TransformerMixin, BaseEstimator):
         # perform EMSC on data
         coefficients = asym_ls(self.regressor_, X.T,
                                asym_factor=self.asym_factor)
-        X = X.T - np.dot(self.regressor_[:, :-1], coefficients[:-1, :])
+        X -= np.dot(self.regressor_[:, :-1], coefficients[:-1, :]).T
+
         if self.normalize:
-            X = X @ np.diag(1/coefficients[-1, :])
+            X /= coefficients[-1, :][:, None]
 
         self.coefficients_ = coefficients.T
-        return X.T
+        return X
 
 
 class Whittaker(TransformerMixin, BaseEstimator):

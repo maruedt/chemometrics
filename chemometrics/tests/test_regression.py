@@ -21,6 +21,7 @@ import unittest
 from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.cross_decomposition import PLSRegression
 from sklearn.model_selection import KFold
+from sklearn.preprocessing import StandardScaler
 import matplotlib
 from scipy.stats import binom
 
@@ -303,6 +304,14 @@ class TestFit_pls(unittest.TestCase):
         X, Y = cm.generate_data()
         with self.assertRaises(TypeError):
             cm.fit_pls(X, Y, pipeline="string as an example wrong object")
+
+    def test_pipeline(self):
+        """
+        Test if pipeline is accepted as input argument
+        """
+        X, Y = cm.generate_data()
+        pipeline = make_pipeline(StandardScaler(), cm.PLSRegression())
+        model, analysis = cm.fit_pls(X, Y, pipeline=pipeline)
 
     def test_accept_cv_object(self):
         """

@@ -526,7 +526,7 @@ def fit_pls(X, Y, pipeline=None, cv_object=None, max_lv=10):
 
     # plot PLS performance after preprocessing
     if len(pipeline) > 1:
-        X_preprocessed = pipeline[:-1].predict(X)
+        X_preprocessed = pipeline[:-1].transform(X)
     else:
         X_preprocessed = X
     pipeline[-1].plot(X_preprocessed, Y)

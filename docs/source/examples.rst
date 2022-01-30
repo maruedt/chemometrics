@@ -11,3 +11,4 @@ below.
   examples/basic_pls_example.ipynb
   examples/pls_and_emsc.ipynb
   examples/whittaker.ipynb
+  examples/mcr.ipynb

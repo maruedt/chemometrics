@@ -58,4 +58,4 @@ python -m pip install chemometrics
 ## Copyright and license
 chemometrics is released under GPLv3.
 
-Copyright 2021 Matthias Rüdt
+Copyright 2021, 2022 Matthias Rüdt

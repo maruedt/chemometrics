@@ -708,8 +708,6 @@ class IHM(TransformerMixin, MultiOutputMixin,
 
         if self.method == 'LG':
             self._largest_gradient()
-        elif self.method == 'elastic_net':
-            self._elastic_net()
         else:
             raise(KeyError(f'Unkown method {self.method}'))
 
@@ -763,27 +761,6 @@ class IHM(TransformerMixin, MultiOutputMixin,
         self._bl = result.x[:breaks[0]]
         self._weights = result.x[breaks[0]:breaks[1]]
 
-    def _elastic_net(self):
-
-        linearized_parameters = np.concatenate([
-            self._bl,
-            self._weights,
-            self._shifts,
-            self._peak_parameters.ravel()
-        ])
-        result = least_squares(
-            self._obj_fun_elastic_net,
-            linearized_parameters)
-
-        breaks = self.linearized_breakpoints_
-        self._bl = result.x[:breaks[0]]
-        self._weights = result.x[breaks[0]:breaks[1]]
-        self._shifts = result.x[breaks[1]:breaks[2]]
-        self._peak_parameters = np.reshape(
-            result.x[breaks[2]:breaks[3]], self.peak_parameters.shape
-        )
-
-
     def _obj_fun_global_par(self, global_param):
         breaks = self.linearized_breakpoints_
         bl = global_param[:breaks[0]]
@@ -814,24 +791,6 @@ class IHM(TransformerMixin, MultiOutputMixin,
         spectrum = self._compile_spectrum(self._bl, self._weights,
                                           self._shifts, peak_parameters)
         return self._current_spectrum - spectrum
-
-    def _obj_fun_elastic_net(self, parameters):
-        """
-        Objective function for elastic net algorithm
-        """
-        breaks = self.linearized_breakpoints_
-        bl = parameters[:breaks[0]]
-        weights = parameters[breaks[0]:breaks[1]]
-        shifts = parameters[breaks[1]:breaks[2]]
-        peak_parameters = np.reshape(parameters[breaks[2]:],
-                                     self.peak_parameters.shape)
-
-        spectrum = self._compile_spectrum(bl, weights, shifts, peak_parameters)
-        sse = np.sum((spectrum - self._current_spectrum)**2)
-        reg_linear = np.sum(np.abs(peak_parameters - self.peak_parameters))
-        reg_quad = np.sum((peak_parameters - self.peak_parameters)**2)
-
-        return sse + self.alpha*reg_linear + self.beta*reg_quad
 
     def _compile_spectrum(self, bl, weights, shifts, peak_parameters):
         """

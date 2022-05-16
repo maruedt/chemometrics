@@ -468,6 +468,15 @@ class Test_IHM_LG(unittest.TestCase):
         length = self.ihm.linearized_breakpoints_[-1]
         self.assertTrue(transformed.shape == (n_spectra, length))
 
+    def test_raises_unkown_method(self):
+        """
+        Assert that error is raised if an unkown method is provided to ihm
+        """
+        with self.assertRaises(KeyError):
+            ihm = cm.regression.IHM(self.feature_vector, self.ini_parameters,
+                                    method='unkown method')
+            ihm.transform(self.test_spectrum[:, None])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,4 +1,4 @@
-# Copyright 2021 Matthias Rüdt
+# Copyright 2021, 2022 Matthias Rüdt
 #
 # This file is part of chemometrics.
 #
@@ -17,6 +17,7 @@
 
 import chemometrics as cm  # accounts for relativ path
 import numpy as np
+from numpy.testing import assert_allclose, assert_equal
 import unittest
 from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.cross_decomposition import PLSRegression
@@ -356,3 +357,117 @@ class TestFit_pls(unittest.TestCase):
         keys = ['q2', 'r2', 'figure_cv', 'figure_model']
         for key in keys:
             self.assertIn(key, calibration_info)
+
+
+class Test_IHM_LG(unittest.TestCase):
+    """
+    Test IHM class
+    """
+    def setUp(self):
+        """
+        Initialize a dummy instance of ihm
+        """
+        self.n_features = 200
+        self.feature_vector = np.arange(self.n_features)
+        self.ini_parameters = [
+            np.array([[50, 1, 0.5, 10], [150, 0.5, 0.2, 5]]).T,
+            np.array([[100, 1, 0.5, 15]]).T
+        ]
+        self.ihm = cm.regression.IHM(self.feature_vector, self.ini_parameters)
+
+        # generate set of target parameters different from starting point
+        self.true_param = self.ihm.peak_parameters.copy()
+        self.true_param *=1.1
+
+        self.bl = np.array([1, 1, 0.5])
+        self.weights = np.array([0.7, 0.3])
+        self.shift = np.zeros(2)
+
+        # generate spectrum & fit ihm model
+        self.test_spectrum = self.ihm._compile_spectrum(
+            self.bl, self.weights, self.shift, self.true_param
+        )
+        self.ihm._adjust2spectrum(self.test_spectrum)
+
+    def test_init(self):
+        """
+        Assert that initalization of IHM runs as expected
+        """
+        ihm = self.ihm
+        n_components = len(self.ini_parameters)
+        self.assertTrue(
+            self.ihm.peak_parameters.shape == (4, 3))
+        assert_equal(self.ihm.features, self.feature_vector)
+        self.assertTrue(ihm.bl_order == 2)
+        self.assertTrue(ihm.n_components_ == len(self.ini_parameters))
+
+        assert_allclose(ihm._component_breaks, np.array([2, 3]))
+        linearized_breakpoints = np.array([3, 2, 2, 12]).cumsum()
+        assert_allclose(ihm.linearized_breakpoints_, linearized_breakpoints)
+
+        assert_allclose(ihm._baseline.shape, np.array([3, self.n_features]))
+
+    def test_compile_spectrum_shape(self):
+        """
+        Test _compile spectrum
+        """
+        bl = np.array([1, 1, 0.001])
+        weights = np.ones([2])
+        shift = np.zeros([2])
+
+        spectrum = self.ihm._compile_spectrum(
+            bl, weights, shift, self.ihm.peak_parameters
+        )
+
+        self.assertTrue(spectrum.shape==(self.n_features, ))
+
+    def test_adjust2spectrum_baseline(self):
+        """
+        Assert that _adjust2spectrum baselin is close in dummy case
+        """
+        # check baseline parameters
+        assert_allclose(self.ihm._bl, self.bl, rtol=1e-1)
+
+    def test_adjust2spectrum_peak_parameters(self):
+        # check peak positions
+        estimated_param = self.ihm._peak_parameters.copy()
+        start = 0
+        for i, end in enumerate(self.ihm._component_breaks):
+            estimated_param[0, start:end] += self.ihm._shifts[i]
+            start = end
+        assert_allclose(estimated_param[0, :], self.true_param[0, :],
+                        rtol=1e-2)
+
+    def test_adjust2spectrum_spectrum(self):
+        # check accuracy of estimated spectrum
+        estimated_spectrum = self.ihm._compile_spectrum(
+            self.ihm._bl, self.ihm._weights, self.ihm._shifts,
+            self.ihm._peak_parameters
+        )
+        assert_allclose(estimated_spectrum, self.test_spectrum, rtol=1e-2)
+
+    def test_transform_shape(self):
+        """
+        Assert that a matrix of parameters is returned by transform
+        """
+        n_spectra = 3
+        spectra = np.zeros([n_spectra, self.n_features])
+        pparam = self.ihm.peak_parameters.copy()
+        rng = np.random.default_rng(0)
+
+        for i in range(n_spectra):
+            bl = rng.uniform(size=[3])
+            weights = rng.uniform(size=[2])
+            shifts = rng.uniform(size=[2])
+            p_scaler = rng.uniform(low=0.5, high=1.5)
+            spectra[i, :] = self.ihm._compile_spectrum(
+                bl, weights, shifts, p_scaler*pparam
+            )
+
+        transformed = self.ihm.transform(spectra)
+        length = self.ihm.linearized_breakpoints_[-1]
+        self.assertTrue(transformed.shape == (n_spectra, length))
+
+
+if __name__ == "__main__":
+    unittest.main()

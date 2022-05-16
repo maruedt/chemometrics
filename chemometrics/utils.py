@@ -1,4 +1,4 @@
-# Copyright 2021 Matthias Rüdt
+# Copyright 2021, 2022 Matthias Rüdt
 #
 # This file is part of chemometrics.
 #
@@ -146,9 +146,10 @@ def pseudo_voigt_spectra(x, parameter):
         evaluated wavelengths
     parameters : (4, n_peaks)
         parameter definition for voigt profiles. parameters[0, :] define the
-        peak heights. parameters[1, :] defines percentage of Lorentzian to
-        Gauss profile. parameters[2, :] defines the peak location.
-        parameters[3, :] defines the half width at half height of the peak.
+        peak positions. parameters[1, :] is proportional to the peak area.
+        parameters[2, :] define the percentage of Lorentzian to
+        Gauss profile.
+        parameters[3, :] define the half width at half height of the peak.
 
     Returns
     -------
@@ -158,7 +159,7 @@ def pseudo_voigt_spectra(x, parameter):
     Notes
     -----
     The pseudo-Voigt peaks are implemented similarly as described in [3]_.
-    However, the parameters are chosen such that they do only affect one
+    The parameters are chosen such that they do only affect one
     statistical property of the profile: The definition of the peak width is
     selected such that the Full Width at Half Maximum (FWHM) does not change
     when changing the relative contributions of the Gaussian/Lorentzian
@@ -167,17 +168,14 @@ def pseudo_voigt_spectra(x, parameter):
     was chosen as the absolute peak height is a more intuitive parameter than
     the peak area.
 
-    References
-    ----------
-    .. [3] Kriesten et al. Chemometrics and Intelligent Laboratory Systems
-           91 (2008) 181-193.
-
     """
+    if x.ndim == 1:
+        x = x[:, None]
 
-    alpha = parameter[0, :, None] # n_peaks x 1
-    beta = parameter[1, :, None] # n_peaks x 1
-    gamma2 = (parameter[2, :, None].T**2) # 1 x n_peaks
-    omega = parameter[3, :, None].T # 1 x n_peaks
+    alpha = parameter[1, :, None] # n_peaks x 1
+    beta = parameter[2, :, None] # n_peaks x 1
+    gamma2 = (parameter[3, :, None].T**2) # 1 x n_peaks
+    omega = parameter[0, :, None].T # 1 x n_peaks
 
     # shift x coordinates
     delta_x2 = (x-omega)**2 # n_wl x n_peaks
@@ -186,7 +184,7 @@ def pseudo_voigt_spectra(x, parameter):
     gaussian_matrix = np.exp(-np.log(2) * delta_x2/gamma2)
 
     # calculate matrix of Lorentzian peaks (n_wl x n_peaks)
-    lorentzian_matrix = 1/(1+delta_x2/gamma2)
+    lorentzian_matrix = gamma2/(gamma2+delta_x2)
 
     # convert to vector by matrix multiplication w scaling factor
     gaussian_vector = gaussian_matrix @ (alpha * beta)

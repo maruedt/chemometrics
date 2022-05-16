@@ -1,4 +1,4 @@
-# Copyright 2021 Matthias Rüdt
+# Copyright 2021, 2022 Matthias Rüdt
 #
 # This file is part of chemometrics.
 #
@@ -75,9 +75,9 @@ class TestPsaudoVoigt(unittest.TestCase):
         """
         wl = np.arange(1000)[:, None]
         par_list = [
-                np.array([[1, 0, 50, 500],]).T,
-                np.array([[1, 0.3, 50, 500],]).T,
-                np.array([[1, 1, 40, 280],]).T
+                np.array([[500, 1, 0.5, 10],]).T,
+                np.array([[500, 1, 0.5, 20],]).T,
+                np.array([[280, 1, 0.2, 30],]).T
         ]
 
 
@@ -86,9 +86,9 @@ class TestPsaudoVoigt(unittest.TestCase):
 
             # calculate mode (wl_max)
             wl_max = wl[np.argmax(spec)][0]
-            assert_allclose(parameters[3], wl_max)
+            assert_allclose(parameters[0], wl_max)
             signal_max = np.max(spec)
-            assert_allclose(parameters[0], signal_max)
+            assert_allclose(parameters[1], signal_max)
 
             # calculate fwhm by inverting half (>wl_max) of the
             # propability  density function and analyzing width
@@ -96,4 +96,4 @@ class TestPsaudoVoigt(unittest.TestCase):
             invPDF = interp1d(spec[wl_max:,0], wl[wl_max:,0])
             fwhm = 2*(invPDF(signal_max/2)-wl_max)
 
-            assert_allclose(fwhm, 2*parameters[2])
+            assert_allclose(fwhm, 2*parameters[3])

@@ -1,4 +1,4 @@
-# Copyright 2021 Matthias Rüdt
+# Copyright 2021, 2022 Matthias Rüdt
 #
 # This file is part of chemometrics.
 #
@@ -19,9 +19,14 @@ import sklearn
 from sklearn.cross_decomposition import PLSRegression as _PLSRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import cross_val_score, KFold
+from sklearn.base import (BaseEstimator, RegressorMixin, TransformerMixin,
+                          MultiOutputMixin)
 import numpy as np
 from scipy import stats
+from scipy.optimize import least_squares
+from scipy.optimize._numdiff import approx_derivative
 import matplotlib.pyplot as plt
+from .utils import pseudo_voigt_spectra
 
 
 class PLSRegression(_PLSRegression):
@@ -544,3 +549,305 @@ def fit_pls(X, Y, pipeline=None, cv_object=None, max_lv=10):
     }
 
     return pipeline, analysis
+
+
+class IHM(TransformerMixin, MultiOutputMixin,
+                    BaseEstimator):
+    """
+    Indirect Hard Modeling (IHM) of spectra
+
+    IHM models spectra based on a mechanistic model of multiple
+    pure component spectra each consisting of flexible peaks. The spectra are
+    described by the peak parameters. For new spectra, the mechanistic spectral
+    model is adjusted by a parameter optimization. This allows to correct for
+    a variety of effects such as instrument specific shifts or sensor
+    variability. The optimized mechanistic spectra are used for concentration
+    predictions. Note: The first component spectra is always assumed to be the
+    solvent.
+
+    Parameters
+    ----------
+    features : ndarray of shape (n_features, 1), default=None
+        feature-related x variable
+
+    peak_parameters : list of ndarrays
+        List of peak parameter arrays
+
+    bl_order : int (default: 2)
+        Order of background polynome
+
+    spectra_generator : function, default=pseudo_voigt_spectra
+        Reference to spectra-generating function
+
+    method : {'LG', 'elastic-net'}
+        Algorithm for spectral fit:
+            - 'LG' (default): largest gradient method as descirbed in
+                [EKriesten]_.
+
+    gradient_truncation : int (default: 20)
+        For peak_parameter fitting, only step along the most important gradient
+        directions up to the number of directions given by
+        `gradient_truncation`.
+
+
+    Attributes
+    ----------
+    coef_ : ndarray of shape (n_components,)
+        Regression coefficient to convert regression weights into a
+        concentration. The first component is always assumed to be the solvent.
+        coef_ is obtained from a CLS regression during the fit.
+
+    n_components_ : int
+        Number of components in model
+
+    linearized_breakpoints_ : ndarray
+        Vector which indicates at what point different sections of the
+        linarized parameter vector end. Structure: (backkground parameters,
+        component weights, component shifts, spectra parameters)
+
+    Notes
+    -----
+    The current optimization strategy follows the largest gradient approach
+    described in [EKriesten]_ . To reduce the complexity of the optimization
+    problem, first global parameters are optimized (background, spectral shift,
+    spectral weights). Peak parameters are optimized one by one depending
+    on the gradient size up to a certain number of parameters.
+
+    Nomenclature
+    ------------
+    features:
+        feature or spectral dimension (e.g. wavelength, wavenumber)
+
+    peak:
+        a feature-associated effect described by a scaled
+        probablity function
+
+    component:
+        a chemical species described by a linear combination of peaks
+
+    baseline:
+        slowely varying effect not associated to a specific component
+
+    spectra:
+        a linear combination of multiple components and baseline effects
+
+    References
+    ----------
+    Implemented according to
+    .. [EKriesten] Kriesten et al. Chemometrics and Intelligent Laboratory
+        Systems 91 (2008) 181-193.
+    """
+
+    def __init__(self, features, peak_parameters, bl_order=2,
+                 spectra_generator=pseudo_voigt_spectra,
+                 method='LG',
+                 gradient_truncation=20,
+                 alpha=0.1, beta=0.1):
+
+        self.features = features
+        self.n_components_ = len(peak_parameters)
+        self.peak_parameters = np.concatenate(peak_parameters, axis=1)
+        self.spectra_generator = spectra_generator
+        self.bl_order = bl_order
+        self.gradient_truncation = gradient_truncation
+        self.method = method
+        self.alpha = alpha
+        self.beta = beta
+
+        n_peakparameters = self.peak_parameters.size
+
+        # summarize breaks in peak_parameters matrix
+        self._component_breaks = np.array(
+            [component.shape[1] for component in peak_parameters]
+        ).cumsum()
+
+        # summarize information on total parameters
+        self.linearized_breakpoints_ = np.array((
+                self.bl_order+1, # baseline
+                self.n_components_, # component weights
+                self.n_components_, # component shifts
+                n_peakparameters # number of peakparameter
+            )).cumsum()
+
+        # prepare polynomial baseline matrix for later use
+        self._baseline = np.zeros((self.bl_order+1, self.features.shape[0]))
+        multiplier = np.linspace(-1, 1, num=self.features.shape[0])
+        for i in range(0, self.bl_order+1):
+            self._baseline[i, :] = multiplier ** i
+
+    def fit(self, X):
+        pass
+
+    def transform(self, X):
+        """
+        Transform spectra in IHM parameter set
+        """
+        n_spectra = X.shape[0]
+        estimated_parameters = np.zeros(
+            n_spectra, self.linearized_breakpoints_[-1]
+        )
+
+        Y = np.apply_along_axis(self._adjust2spectrum, 1, X)
+        return Y
+
+    def _adjust2spectrum(self, spectrum):
+        self._current_spectrum = spectrum
+        # intialize parameter estimates
+        self._weights = np.ones(self.n_components_)
+        self._bl = np.zeros(self.bl_order+1)
+        self._shifts = np.zeros(self.n_components_)
+        self._peak_parameters = self.peak_parameters.copy()
+
+        # fit global parameters
+        ini_par = np.concatenate([self._bl, self._weights, self._shifts])
+        result = least_squares(self._obj_fun_global_par, ini_par)
+        breaks = self.linearized_breakpoints_
+        self._bl = result.x[:breaks[0]]
+        self._weights = result.x[breaks[0]:breaks[1]]
+        self._shifts = result.x[breaks[1]:breaks[2]]
+
+        if self.method == 'LG':
+            self._largest_gradient()
+        elif self.method == 'elastic_net':
+            self._elastic_net()
+        else:
+            raise(KeyError(f'Unkown method {self.method}'))
+
+        linearized_parameters = np.concatenate([
+            self._bl,
+            self._weights,
+            self._shifts,
+            self._peak_parameters.ravel()
+        ])
+        return linearized_parameters
+
+    def _largest_gradient(self):
+        breaks = self.linearized_breakpoints_
+        # select parameters for optimization
+        jac = approx_derivative(lambda x: np.sum(self._obj_fun_all_peak_parameters(x)**2),
+                                self.peak_parameters.ravel())
+        parameter_sequence = np.argsort(jac)[::-1]
+        mask = np.zeros(self.peak_parameters.shape)
+
+        if self.gradient_truncation < parameter_sequence.size:
+            mask[parameter_sequence[:self.gradient_truncation]] = 1
+        else:
+            mask[:] = 1
+
+        # adjust peak positions
+        estimate_pp = least_squares(
+            self._obj_fun_peak_position,
+            self._peak_parameters[0, :],
+            jac_sparsity=np.ones(self.features.shape[0])[:, None]*mask[0, :, None].T
+        )
+        self._peak_parameters[0, :] = estimate_pp.x
+
+        # fit baseline, weights
+        ini_par = np.concatenate([self._bl, self._weights])
+        result = least_squares(self._obj_fun_baseline_weights, ini_par)
+        self._bl = result.x[:breaks[0]]
+        self._weights = result.x[breaks[0]:breaks[1]]
+
+        # optimize all peak parameters
+        estimate_pp = least_squares(
+            self._obj_fun_all_peak_parameters,
+            self.peak_parameters.ravel(),
+            jac_sparsity=np.ones(self.features.shape[0])[:, None]*mask.ravel()[:, None].T
+        )
+        self._peak_parameters = np.reshape(estimate_pp.x,
+                                           self.peak_parameters.shape)
+
+        # fit baseline, weights
+        ini_par = np.concatenate([self._bl, self._weights])
+        result = least_squares(self._obj_fun_baseline_weights, ini_par)
+        self._bl = result.x[:breaks[0]]
+        self._weights = result.x[breaks[0]:breaks[1]]
+
+    def _elastic_net(self):
+
+        linearized_parameters = np.concatenate([
+            self._bl,
+            self._weights,
+            self._shifts,
+            self._peak_parameters.ravel()
+        ])
+        result = least_squares(
+            self._obj_fun_elastic_net,
+            linearized_parameters)
+
+        breaks = self.linearized_breakpoints_
+        self._bl = result.x[:breaks[0]]
+        self._weights = result.x[breaks[0]:breaks[1]]
+        self._shifts = result.x[breaks[1]:breaks[2]]
+        self._peak_parameters = np.reshape(
+            result.x[breaks[2]:breaks[3]], self.peak_parameters.shape
+        )
+
+
+    def _obj_fun_global_par(self, global_param):
+        breaks = self.linearized_breakpoints_
+        bl = global_param[:breaks[0]]
+        weights = global_param[breaks[0]:breaks[1]]
+        shifts = global_param[breaks[1]:breaks[2]]
+        spectrum = self._compile_spectrum(bl, weights, shifts,
+                                          self._peak_parameters)
+        return self._current_spectrum - spectrum
+
+    def _obj_fun_peak_position(self, peak_positions):
+        # generate adjusted peak parameter set
+        peak_parameters = self._peak_parameters.copy()
+        peak_parameters[0, :] = peak_positions
+        spectrum = self._compile_spectrum(self._bl, self._weights,
+                                          self._shifts, peak_parameters)
+        return self._current_spectrum - spectrum
+
+    def _obj_fun_baseline_weights(self, bl_weights):
+        breaks = self.linearized_breakpoints_
+        bl = bl_weights[:breaks[0]]
+        weights = bl_weights[breaks[0]:breaks[1]]
+        spectrum = self._compile_spectrum(bl, weights, self._shifts,
+                                          self._peak_parameters)
+        return self._current_spectrum - spectrum
+
+    def _obj_fun_all_peak_parameters(self, peak_parameters):
+        peak_parameters = peak_parameters.reshape(self.peak_parameters.shape)
+        spectrum = self._compile_spectrum(self._bl, self._weights,
+                                          self._shifts, peak_parameters)
+        return self._current_spectrum - spectrum
+
+    def _obj_fun_elastic_net(self, parameters):
+        """
+        Objective function for elastic net algorithm
+        """
+        breaks = self.linearized_breakpoints_
+        bl = parameters[:breaks[0]]
+        weights = parameters[breaks[0]:breaks[1]]
+        shifts = parameters[breaks[1]:breaks[2]]
+        peak_parameters = np.reshape(parameters[breaks[2]:],
+                                     self.peak_parameters.shape)
+
+        spectrum = self._compile_spectrum(bl, weights, shifts, peak_parameters)
+        sse = np.sum((spectrum - self._current_spectrum)**2)
+        reg_linear = np.sum(np.abs(peak_parameters - self.peak_parameters))
+        reg_quad = np.sum((peak_parameters - self.peak_parameters)**2)
+
+        return sse + self.alpha*reg_linear + self.beta*reg_quad
+
+    def _compile_spectrum(self, bl, weights, shifts, peak_parameters):
+        """
+        Generate a spectrum based on provided parameter set
+        """
+
+        # generate pure component spectra
+        pure_spectra = np.zeros([self.n_components_, self.features.shape[0]])
+        start_ind = 0
+        for i, end_ind in enumerate(self._component_breaks):
+            pure_spectra[i, :] = self.spectra_generator(
+                self.features - shifts[i],
+                peak_parameters[:, start_ind:end_ind]
+            ).T
+            start_ind = end_ind
+        # generate spectra
+        spectra = weights @ pure_spectra
+        baseline = bl @ self._baseline
+        return spectra + baseline

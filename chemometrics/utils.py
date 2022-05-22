@@ -172,13 +172,13 @@ def pseudo_voigt_spectra(x, parameter):
     if x.ndim == 1:
         x = x[:, None]
 
-    alpha = parameter[1, :, None] # n_peaks x 1
-    beta = parameter[2, :, None] # n_peaks x 1
-    gamma2 = (parameter[3, :, None].T**2) # 1 x n_peaks
-    omega = parameter[0, :, None].T # 1 x n_peaks
+    alpha = parameter[1, :, None]  # n_peaks x 1
+    beta = parameter[2, :, None]  # n_peaks x 1
+    gamma2 = (parameter[3, :, None].T**2)  # 1 x n_peaks
+    omega = parameter[0, :, None].T  # 1 x n_peaks
 
     # shift x coordinates
-    delta_x2 = (x-omega)**2 # n_wl x n_peaks
+    delta_x2 = (x-omega)**2  # n_wl x n_peaks
 
     # calculate matrix of Gaussian peaks (n_wl x n_peaks)
     gaussian_matrix = np.exp(-np.log(2) * delta_x2/gamma2)

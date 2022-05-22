@@ -24,7 +24,7 @@ from sklearn.cross_decomposition import PLSRegression
 from sklearn.model_selection import KFold
 from sklearn.preprocessing import StandardScaler
 import matplotlib
-from test_base import TestLVmixin
+from chemometrics.tests.test_base import TestLVmixin
 
 
 class TestPLSRegression(unittest.TestCase, TestLVmixin):

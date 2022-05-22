@@ -20,7 +20,6 @@ import numpy as np
 import unittest
 from numpy.testing import assert_allclose
 from scipy.interpolate import interp1d
-from scipy.integrate import trapezoid
 
 
 class TestGenerate_spectra(unittest.TestCase):
@@ -47,6 +46,7 @@ class TestGenerate_spectra(unittest.TestCase):
         spectra = cm.generate_spectra(n_wl, n_bands, bandwidth)
         isZero = np.all(np.isclose(np.zeros(n_wl), spectra))
         self.assertTrue(isZero)
+
 
 class TestPsaudoVoigt(unittest.TestCase):
     r"""
@@ -75,11 +75,10 @@ class TestPsaudoVoigt(unittest.TestCase):
         """
         wl = np.arange(1000)[:, None]
         par_list = [
-                np.array([[500, 1, 0.5, 10],]).T,
-                np.array([[500, 1, 0.5, 20],]).T,
-                np.array([[280, 1, 0.2, 30],]).T
+                np.array([[500, 1, 0.5, 10], ]).T,
+                np.array([[500, 1, 0.5, 20], ]).T,
+                np.array([[280, 1, 0.2, 30], ]).T
         ]
-
 
         for parameters in par_list:
             spec = cm.pseudo_voigt_spectra(wl, parameters)
@@ -93,7 +92,7 @@ class TestPsaudoVoigt(unittest.TestCase):
             # calculate fwhm by inverting half (>wl_max) of the
             # propability  density function and analyzing width
 
-            invPDF = interp1d(spec[wl_max:,0], wl[wl_max:,0])
+            invPDF = interp1d(spec[wl_max:, 0], wl[wl_max:, 0])
             fwhm = 2*(invPDF(signal_max/2)-wl_max)
 
             assert_allclose(fwhm, 2*parameters[3])

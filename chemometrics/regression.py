@@ -19,10 +19,12 @@ import sklearn
 from sklearn.cross_decomposition import PLSRegression as _PLSRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import cross_val_score, KFold
-from sklearn.base import (BaseEstimator, RegressorMixin, TransformerMixin,
-                          MultiOutputMixin)
+from sklearn.base import (
+    BaseEstimator,
+    TransformerMixin,
+    MultiOutputMixin
+)
 import numpy as np
-from scipy import stats
 from scipy.optimize import least_squares
 from scipy.optimize._numdiff import approx_derivative
 import matplotlib.pyplot as plt
@@ -420,7 +422,7 @@ def fit_pls(X, Y, pipeline=None, cv_object=None, max_lv=10):
 
 
 class IHM(TransformerMixin, MultiOutputMixin,
-                    BaseEstimator):
+          BaseEstimator):
     """
     Indirect Hard Modeling (IHM) of spectra
 
@@ -531,10 +533,10 @@ class IHM(TransformerMixin, MultiOutputMixin,
 
         # summarize information on total parameters
         self.linearized_breakpoints_ = np.array((
-                self.bl_order+1, # baseline
-                self.n_components_, # component weights
-                self.n_components_, # component shifts
-                n_peakparameters # number of peakparameter
+                self.bl_order+1,  # baseline
+                self.n_components_,  # component weights
+                self.n_components_,  # component shifts
+                n_peakparameters  # number of peakparameter
             )).cumsum()
 
         # prepare polynomial baseline matrix for later use
@@ -550,11 +552,6 @@ class IHM(TransformerMixin, MultiOutputMixin,
         """
         Transform spectra in IHM parameter set
         """
-        n_spectra = X.shape[0]
-        estimated_parameters = np.zeros(
-            n_spectra, self.linearized_breakpoints_[-1]
-        )
-
         Y = np.apply_along_axis(self._adjust2spectrum, 1, X)
         return Y
 
@@ -590,8 +587,10 @@ class IHM(TransformerMixin, MultiOutputMixin,
     def _largest_gradient(self):
         breaks = self.linearized_breakpoints_
         # select parameters for optimization
-        jac = approx_derivative(lambda x: np.sum(self._obj_fun_all_peak_parameters(x)**2),
-                                self.peak_parameters.ravel())
+        jac = approx_derivative(
+            lambda x: np.sum(self._obj_fun_all_peak_parameters(x)**2),
+            self.peak_parameters.ravel()
+        )
         parameter_sequence = np.argsort(jac)[::-1]
         mask = np.zeros(self.peak_parameters.shape)
 
@@ -601,10 +600,11 @@ class IHM(TransformerMixin, MultiOutputMixin,
             mask[:] = 1
 
         # adjust peak positions
+        sparsity = np.ones(self.features.shape[0])[:, None]*mask[0, :, None].T
         estimate_pp = least_squares(
             self._obj_fun_peak_position,
             self._peak_parameters[0, :],
-            jac_sparsity=np.ones(self.features.shape[0])[:, None]*mask[0, :, None].T
+            jac_sparsity=sparsity
         )
         self._peak_parameters[0, :] = estimate_pp.x
 
@@ -615,10 +615,13 @@ class IHM(TransformerMixin, MultiOutputMixin,
         self._weights = result.x[breaks[0]:breaks[1]]
 
         # optimize all peak parameters
+        sparsity = np.ones(
+            self.features.shape[0]
+        )[:, None]*mask.ravel()[:, None].T
         estimate_pp = least_squares(
             self._obj_fun_all_peak_parameters,
             self.peak_parameters.ravel(),
-            jac_sparsity=np.ones(self.features.shape[0])[:, None]*mask.ravel()[:, None].T
+            jac_sparsity=sparsity
         )
         self._peak_parameters = np.reshape(estimate_pp.x,
                                            self.peak_parameters.shape)

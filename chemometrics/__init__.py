@@ -30,3 +30,4 @@ from .plotting import *
 from .utils import *
 from .regression import *
 from . import mcr
+from .decomposition import PCA

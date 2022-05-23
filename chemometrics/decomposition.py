@@ -1,3 +1,9 @@
+# Governed by two licenses
+#
+# Parts of the documentation:
+# Adapted from sklearn, released under BSD-3 clause license
+#
+# Everything not adapted from sklearn:
 # Copyright 2022 Matthias Rüdt
 #
 # This file is part of chemometrics.
@@ -53,15 +59,52 @@ class PCA(_PCA, LVmixin):
         self.random_state = random_state
 
     def fit(self, X, y=None):
+        """
+        Fit the model with X.
+
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+        y : Ignored
+            Ignored.
+
+        Returns
+        -------
+        self : object
+            Returns the instance itself.
+        """
         self.x_scores_ = super().fit_transform(X)
         self.x_residual_std_ = self._calculate_x_residual_std_(X)
         return self
 
     def fit_transform(self, X, y=None):
+        """Fit the model with X and apply the dimensionality reduction on X.
+        Parameters
+        ----------
+        X : array-like of shape (n_samples, n_features)
+            Training data, where `n_samples` is the number of samples
+            and `n_features` is the number of features.
+        y : Ignored
+            Ignored.
+        Returns
+        -------
+        X_new : ndarray of shape (n_samples, n_components)
+            Transformed values.
+        Notes
+        -----
+        This method returns a Fortran-ordered array. To convert it to a
+        C-ordered array, use 'np.ascontiguousarray'.
+        """
         self.x_scores_ = super().fit_transform(X)
         self.x_residual_std_ = self._calculate_x_residual_std_(X)
         return self.x_scores.copy()
 
     @property
     def x_loadings_(self):
+        """
+        x_loadings_ : ndarray of shape (n_features, n_components)
+            The loadings of `X`.
+        """
         return self.components_.T

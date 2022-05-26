@@ -26,6 +26,14 @@ class LVmixin():
 
     Latent variable models are projection models which transform the X data
     into a latent structure.
+
+    References
+    ----------
+    Calculations according to
+
+    .. [Eriksson] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
+           Wikström, and S. Wold. Multi- and Megavariate Data Analysis,
+           Part I Basic Principles and Applications. Second Edition.
     """
 
     @property
@@ -43,9 +51,9 @@ class LVmixin():
         r"""
         Calculate the standard deviation of the X residuals
 
-        The x residual standard deviation is calculated according to [1]_ not
-        including the correction factor v (since it is not exactly defined in
-        [1]_).
+        The x residual standard deviation is calculated according to
+        [Eriksson]_ not including the correction factor v (since it is not
+        exactly defined in [Eriksson]_).
         """
         X_hat = self.inverse_transform(self.transform(X))
         sse_cal = np.sum((X - X_hat)**2)
@@ -98,9 +106,9 @@ class LVmixin():
 
         The critical distance to the model hyperplane is estimated based on
         an F2 distribution. Values above crit_dmodx may be considered outliers.
-        dmodx is only approximately F2 distributed [1]_. It is thus worth
-        noting that the estimated critcal distance is biased. It however gives
-        a reasonable indication of points worth investigating.
+        dmodx is only approximately F2 distributed [Eriksson]_. It is thus
+        worthnoting that the estimated critcal distance is biased. It however
+        gives a reasonable indication of points worth investigating.
 
         """
         degf_cali = self.n_features_in_ - self._n_components - 1
@@ -118,7 +126,7 @@ class LVmixin():
         new data is comparable to the calibration data. The normalized dhypx
         is slightly biased towards larger values since the estimated
         `x_residual_std_` is slightly underestimated during model calibration
-        [1]_.
+        [Eriksson]_.
 
         """
         var_cal = np.var(self.x_scores_, axis=0)

@@ -19,6 +19,9 @@ import chemometrics as cm
 import numpy as np
 import unittest
 from chemometrics.tests.test_base import TestLVmixin
+from sklearn.pipeline import make_pipeline, Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.model_selection import KFold
 
 
 class TestPCA(unittest.TestCase, TestLVmixin):
@@ -50,3 +53,71 @@ class TestPCA(unittest.TestCase, TestLVmixin):
             scale=noise,
             size=[self.n_tests, self.n_wl]
         )
+
+
+class TestFit_pca(unittest.TestCase):
+    """
+    Test fit_pca function.
+    """
+
+    def test_raise_TypeError_pipeline(self):
+        """
+        Test if function raises a TypeError if wrong pipeline is provided
+        """
+        X, Y = cm.generate_data()
+        with self.assertRaises(TypeError):
+            cm.fit_pca(X, pipeline="string as an example wrong object")
+
+    def test_pipeline(self):
+        """
+        Test if pipeline is accepted as input argument
+        """
+        X, Y = cm.generate_data()
+        pipeline = make_pipeline(StandardScaler(), cm.PCA())
+        model, analysis = cm.fit_pca(X, pipeline=pipeline)
+
+    def test_accept_cv_object(self):
+        """
+        Test if function accepts a cv object
+        """
+        X, Y = cm.generate_data()
+        n_splits = 7
+        model, analysis = cm.fit_pca(X, cv_object=KFold(n_splits=n_splits))
+        self.assertTrue(analysis['q2'].shape[0] == n_splits)
+
+    def test_return_type(self):
+        """
+        Test if functions returns an object of type Pipeline
+        """
+        max_lv = 11
+        X, Y = cm.generate_data()
+        # basic example
+        self._assert_return_args(cm.fit_pca(X, max_lv=max_lv))
+
+        # with pipeline provided
+        pipe = make_pipeline(cm.PCA())
+        self._assert_return_args(cm.fit_pca(X, pipeline=pipe))
+
+        # with cross validation
+        cv = KFold()
+        self._assert_return_args(cm.fit_pca(X, cv_object=cv))
+
+    def _assert_return_args(self, returned_args):
+        """
+        Assert that the returned arguments of fit_pca are correct
+        """
+        # first return argument must be a pipeline
+        pipeline = returned_args[0]
+        self.assertIsInstance(pipeline, Pipeline)
+        self.assertIsInstance(pipeline[-1], cm.PCA)
+
+        # second return argument must capture info on calibration/cv in dict
+        calibration_info = returned_args[1]
+        self.assertIsInstance(calibration_info, dict)
+        keys = ['q2', 'r2', 'figure_cv', 'figure_model']
+        for key in keys:
+            self.assertIn(key, calibration_info)
+
+
+if __name__ == "__main__":
+    unittest.main()

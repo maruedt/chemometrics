@@ -41,7 +41,7 @@ class PLSRegression(_PLSRegression, LVmixin):
     ----------
     Calculations according to
 
-    .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
+    .. [Eriksson] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
            Wikström, and S. Wold. Multi- and Megavariate Data Analysis,
            Part I Basic Principles and Applications. Second Edition.
 
@@ -92,7 +92,7 @@ class PLSRegression(_PLSRegression, LVmixin):
         :math:`H` projects the observed :math:`Y` onto the predicted
         :math:`\hat Y`. For  obtaining the standard hat matrix, the provided X
         matrix should  correspond to the matrix used during the calibration
-        (call to `fit`)  [1]_.
+        (call to `fit`)  [Eriksson]_.
 
         Parameters
         ----------

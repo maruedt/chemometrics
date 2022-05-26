@@ -41,6 +41,12 @@ class TestPlot_colored_spectra(unittest.TestCase):
         for line in lines:
             self.assertTrue(type(line) == matplotlib.lines.Line2D)
 
+    def tearDown(self):
+        """
+        Clean plots etc
+        """
+        matplotlib.pyplot.close()
+
 
 class TestPlot_svd(unittest.TestCase):
     r"""
@@ -66,3 +72,9 @@ class TestPlot_svd(unittest.TestCase):
         self.assertEqual(len(fig.axes[0].lines), n_comp)
         self.assertEqual(len(fig.axes[1].lines), n_eigenvalues)
         self.assertEqual(len(fig.axes[2].lines), n_comp)
+
+    def tearDown(self):
+        """
+        Clean plots etc
+        """
+        matplotlib.pyplot.close()

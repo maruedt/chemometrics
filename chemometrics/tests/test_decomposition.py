@@ -22,6 +22,7 @@ from chemometrics.tests.test_base import TestLVmixin
 from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import KFold
+import matplotlib
 
 
 class TestPCA(unittest.TestCase, TestLVmixin):
@@ -53,6 +54,12 @@ class TestPCA(unittest.TestCase, TestLVmixin):
             scale=noise,
             size=[self.n_tests, self.n_wl]
         )
+
+    def tearDown(self):
+        """
+        Clean plots etc
+        """
+        matplotlib.pyplot.close()
 
 
 class TestFit_pca(unittest.TestCase):
@@ -117,6 +124,12 @@ class TestFit_pca(unittest.TestCase):
         keys = ['q2', 'r2', 'figure_cv', 'figure_model']
         for key in keys:
             self.assertIn(key, calibration_info)
+
+    def tearDown(self):
+        """
+        Clean plots etc
+        """
+        matplotlib.pyplot.close()
 
 
 if __name__ == "__main__":

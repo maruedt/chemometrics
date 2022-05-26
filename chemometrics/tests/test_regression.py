@@ -188,6 +188,12 @@ class TestPLSRegression(unittest.TestCase, TestLVmixin):
 
         self.assertTrue(np.allclose(np.abs(residuals), inverted_res))
 
+    def tearDown(self):
+        """
+        Clean plots etc
+        """
+        matplotlib.pyplot.close()
+
 
 class TestFit_pls(unittest.TestCase):
     """
@@ -253,6 +259,12 @@ class TestFit_pls(unittest.TestCase):
         keys = ['q2', 'r2', 'figure_cv', 'figure_model']
         for key in keys:
             self.assertIn(key, calibration_info)
+
+    def tearDown(self):
+        """
+        Clean plots etc
+        """
+        matplotlib.pyplot.close()
 
 
 class Test_IHM_LG(unittest.TestCase):
@@ -372,6 +384,8 @@ class Test_IHM_LG(unittest.TestCase):
             ihm = cm.regression.IHM(self.feature_vector, self.ini_parameters,
                                     method='unkown method')
             ihm.transform(self.test_spectrum[:, None])
+
+
 
 
 if __name__ == "__main__":

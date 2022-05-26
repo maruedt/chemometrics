@@ -34,6 +34,18 @@ Preprocessing
    Whittaker
 
 
+Decomposition
+=============
+
+.. autosummary::
+   :toctree: generated/
+   :template: class.rst
+   :recursive:
+
+   PCA
+   fit_pca
+
+
 PLS modelling
 =============
 

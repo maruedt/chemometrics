@@ -46,7 +46,7 @@ Decomposition
    fit_pca
 
 
-PLS modelling
+Regression
 =============
 
 .. autosummary::
@@ -56,6 +56,8 @@ PLS modelling
 
    PLSRegression
    fit_pls
+   IHM
+   IHMRegression
 
 
 Multivariate curve resolution
@@ -91,3 +93,4 @@ Artificial data generation
    generate_background
    generate_data
    generate_spectra
+   pseudo_voigt_spectra

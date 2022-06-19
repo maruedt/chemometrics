@@ -1,0 +1,15 @@
+name: cm_dev
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - cython
+  - matplotlib
+  - scipy
+  - numpy
+  - scikit-learn
+  - jupyterlab
+  - pandas
+  - nbsphinx
+  - pandoc
+prefix: /home/matthias/anaconda3/envs/cm_dev

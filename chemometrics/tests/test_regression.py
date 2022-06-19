@@ -43,7 +43,7 @@ class TestPLSRegression(unittest.TestCase, TestLVmixin):
         spectra = np.zeros(shape=[self.n_wl, self.n_conc])
 
         for i in range(self.n_conc):
-            spectra[:, i] = cm.generate_spectra(self.n_wl, self.n_wl//20, 1)
+            spectra[:, i] = cm.generate_spectra(self.n_wl, self.n_wl // 20, 1)
 
         self.X = self.Y @ spectra.T + np.random.normal(
             scale=noise,
@@ -62,13 +62,13 @@ class TestPLSRegression(unittest.TestCase, TestLVmixin):
         """
         Test the shape of the vip variable
         """
-        self.assertTrue(self.model.vip_.shape == (self.n_wl, ))
+        self.assertTrue(self.model.vip_.shape == (self.n_wl,))
 
     def test_vip_value(self):
         """
         Test that sum of squared VIPs == number of X variables (definition!)
         """
-        self.assertTrue(np.isclose(np.sum(self.model.vip_**2), self.n_wl))
+        self.assertTrue(np.isclose(np.sum(self.model.vip_ ** 2), self.n_wl))
 
     def test_hat_shape(self):
         """
@@ -105,7 +105,7 @@ class TestPLSRegression(unittest.TestCase, TestLVmixin):
         Test that leverage provides correct matrix shape
         """
         leverage = self.model.leverage(self.X)
-        self.assertTrue(leverage.shape == (self.n_samples, ))
+        self.assertTrue(leverage.shape == (self.n_samples,))
 
     def test_leverage_definition(self):
         """
@@ -138,7 +138,7 @@ class TestPLSRegression(unittest.TestCase, TestLVmixin):
                                               scaling='studentize')
         std_estimated = residuals_unscld / residuals_std
 
-        std = np.sqrt(np.sum(residuals_unscld**2, axis=0)
+        std = np.sqrt(np.sum(residuals_unscld ** 2, axis=0)
                       / (self.X.shape[0] - self.model.n_components))[:, None].T
 
         stud_scaling = residuals_std / residuals_stud
@@ -180,8 +180,8 @@ class TestPLSRegression(unittest.TestCase, TestLVmixin):
         residuals = self.model.residuals(self.X, self.Y, scaling='none')
 
         h = self.model.leverage(self.X)
-        weighting = (1-h)**2/h
-        mse = (np.sum(residuals**2, axis=0)
+        weighting = (1 - h) ** 2 / h
+        mse = (np.sum(residuals ** 2, axis=0)
                / (self.X.shape[0] - self.model.n_components))[:, None].T
         inverted_res = np.sqrt(cook * self.model.n_components * mse
                                * weighting[:, None])
@@ -267,10 +267,11 @@ class TestFit_pls(unittest.TestCase):
         matplotlib.pyplot.close()
 
 
-class Test_IHM_LG(unittest.TestCase):
+class Test_IHM(unittest.TestCase):
     """
     Test IHM class
     """
+
     def setUp(self):
         """
         Initialize a dummy instance of ihm
@@ -327,11 +328,11 @@ class Test_IHM_LG(unittest.TestCase):
             bl, weights, shift, self.ihm.peak_parameters
         )
 
-        self.assertTrue(spectrum.shape == (self.n_features, ))
+        self.assertTrue(spectrum.shape == (self.n_features,))
 
     def test_adjust2spectrum_baseline(self):
         """
-        Assert that _adjust2spectrum baselin is close in dummy case
+        Assert that _adjust2spectrum baseline is close in dummy case
         """
         # check baseline parameters
         assert_allclose(self.ihm._bl, self.bl, rtol=1e-1)
@@ -369,7 +370,7 @@ class Test_IHM_LG(unittest.TestCase):
             shifts = rng.uniform(size=[2])
             p_scaler = rng.uniform(low=0.5, high=1.5)
             spectra[i, :] = self.ihm._compile_spectrum(
-                bl, weights, shifts, p_scaler*pparam
+                bl, weights, shifts, p_scaler * pparam
             )
 
         transformed = self.ihm.transform(spectra)
@@ -386,7 +387,63 @@ class Test_IHM_LG(unittest.TestCase):
             ihm.transform(self.test_spectrum[:, None])
 
 
+class Test_IHMRegression(unittest.TestCase):
+    """
+    Test IHMRegression class
+    """
 
+    def setUp(self):
+        """
+        Initialize a dummy instance of ihm
+        """
+        self.n_features = 200
+        self.n_samples = 5
+        rng = np.random.default_rng(seed=10)
+
+        # prepare and initialize IHMRegression
+        self.feature_vector = np.arange(self.n_features)
+        self.ini_parameters = [
+            np.array([[50, 1, 0.5, 10], [150, 0.5, 0.2, 5]]).T,
+            np.array([[100, 1, 0.5, 15]]).T
+        ]
+        self.ihm = cm.regression.IHMRegression(self.feature_vector, self.ini_parameters)
+
+        # generate set of target parameters for regression
+        self.true_param = self.ihm.peak_parameters.copy()
+        self.true_param *= 1.1
+
+        # generate test spectra and concentrations
+        self.X = np.zeros([self.n_samples, self.n_features])
+        # molar weight of solvent = 1 mol/kg
+        self.y = np.ones([self.n_samples, len(self.ini_parameters)])
+        # concentration of second component varies randomly
+        self.y[:, 1] = rng.uniform(high=5, size=[self.n_samples])
+        self.weights = np.array([10, 1])
+
+        for i in range(self.n_samples):
+            self.bl = rng.uniform(high=0.2, size=3)
+            self.shift = np.zeros(2)
+            conc_weights = self.y[i, :] * self.weights
+
+            # generate spectrum
+            self.X[i, :] = self.ihm._compile_spectrum(
+                self.bl, conc_weights, self.shift, self.true_param
+            )
+
+    def test_fit_precision(self):
+        """
+        Test if fit estimates parameters accurately
+        """
+        ihm = self.ihm.fit(self.X, self.y)
+        analytical_coef = np.array([1, self.weights[0]])
+        assert_allclose(np.diag(ihm.regressor_.coef_), analytical_coef, rtol=1e-1, atol=0.2)
+
+    def test_predict(self):
+        """
+        Test concentration prediction on calibration set
+        """
+        y_pred = self.ihm.fit(self.X, self.y).predict(self.X)
+        assert_allclose(y_pred, self.y, rtol=1e-1, atol=0.2)
 
 if __name__ == "__main__":
     unittest.main()

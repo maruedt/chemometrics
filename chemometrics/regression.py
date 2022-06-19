@@ -17,13 +17,14 @@
 
 import sklearn
 from sklearn.cross_decomposition import PLSRegression as _PLSRegression
-from sklearn.pipeline import make_pipeline
+from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.model_selection import cross_val_score, KFold
 from sklearn.base import (
     BaseEstimator,
     TransformerMixin,
     MultiOutputMixin
 )
+from sklearn.linear_model import LinearRegression
 import numpy as np
 from scipy.optimize import least_squares
 from scipy.optimize._numdiff import approx_derivative
@@ -320,7 +321,7 @@ class PLSRegression(_PLSRegression, LVmixin):
         return fig.axes
 
 
-def fit_pls(X, Y, pipeline=None, cv_object=None, max_lv=10):
+def fit_pls(X, Y, pipeline: Pipeline = None, cv_object=None, max_lv=10):
     r"""
     Auto-calibrate PLS model and generate analytical plots
 
@@ -424,52 +425,38 @@ def fit_pls(X, Y, pipeline=None, cv_object=None, max_lv=10):
 class IHM(TransformerMixin, MultiOutputMixin,
           BaseEstimator):
     """
-    Indirect Hard Modeling (IHM) of spectra
+    Indirect Hard Modeling (IHM) without linear regression
 
     IHM models spectra based on a mechanistic model of multiple
     pure component spectra each consisting of flexible peaks. The spectra are
     described by the peak parameters. For new spectra, the mechanistic spectral
     model is adjusted by a parameter optimization. This allows to correct for
     a variety of effects such as instrument specific shifts or sensor
-    variability. The optimized mechanistic spectra are used for concentration
-    predictions. Note: The first component spectra is always assumed to be the
-    solvent.
+    variability. IHM returns the parameters of the fitted model.
 
     Parameters
     ----------
     features : ndarray of shape (n_features, 1), default=None
         feature-related x variable
-
     peak_parameters : list of ndarrays
         List of peak parameter arrays
-
     bl_order : int (default: 2)
         Order of background polynome
-
     spectra_generator : function, default=pseudo_voigt_spectra
         Reference to spectra-generating function
-
-    method : {'LG', 'elastic-net'}
+    method : {'LG'}
         Algorithm for spectral fit:
             - 'LG' (default): largest gradient method as descirbed in
                 [EKriesten]_.
-
     gradient_truncation : int (default: 20)
         For peak_parameter fitting, only step along the most important gradient
         directions up to the number of directions given by
         `gradient_truncation`.
 
-
     Attributes
     ----------
-    coef_ : ndarray of shape (n_components,)
-        Regression coefficient to convert regression weights into a
-        concentration. The first component is always assumed to be the solvent.
-        coef_ is obtained from a CLS regression during the fit.
-
     n_components_ : int
         Number of components in model
-
     linearized_breakpoints_ : ndarray
         Vector which indicates at what point different sections of the
         linarized parameter vector end. Structure: (backkground parameters,
@@ -486,18 +473,14 @@ class IHM(TransformerMixin, MultiOutputMixin,
     Nomenclature
     ------------
     features:
-        feature or spectral dimension (e.g. wavelength, wavenumber)
-
+        vector of feature or spectral dimension (e.g. wavelength, wavenumber)
     peak:
         a feature-associated effect described by a scaled
         probablity function
-
     component:
         a chemical species described by a linear combination of peaks
-
     baseline:
         slowely varying effect not associated to a specific component
-
     spectra:
         a linear combination of multiple components and baseline effects
 
@@ -511,8 +494,7 @@ class IHM(TransformerMixin, MultiOutputMixin,
     def __init__(self, features, peak_parameters, bl_order=2,
                  spectra_generator=pseudo_voigt_spectra,
                  method='LG',
-                 gradient_truncation=20,
-                 alpha=0.1, beta=0.1):
+                 gradient_truncation=20):
 
         self.features = features
         self.n_components_ = len(peak_parameters)
@@ -521,8 +503,6 @@ class IHM(TransformerMixin, MultiOutputMixin,
         self.bl_order = bl_order
         self.gradient_truncation = gradient_truncation
         self.method = method
-        self.alpha = alpha
-        self.beta = beta
 
         n_peakparameters = self.peak_parameters.size
 
@@ -545,15 +525,15 @@ class IHM(TransformerMixin, MultiOutputMixin,
         for i in range(0, self.bl_order+1):
             self._baseline[i, :] = multiplier ** i
 
-    def fit(self, X):
+    def fit(self, X, y=None):
         pass
 
-    def transform(self, X):
+    def transform(self, X, y=None):
         """
         Transform spectra in IHM parameter set
         """
-        Y = np.apply_along_axis(self._adjust2spectrum, 1, X)
-        return Y
+        X_transformed = np.apply_along_axis(self._adjust2spectrum, 1, X)
+        return X_transformed
 
     def _adjust2spectrum(self, spectrum):
         self._current_spectrum = spectrum
@@ -574,7 +554,7 @@ class IHM(TransformerMixin, MultiOutputMixin,
         if self.method == 'LG':
             self._largest_gradient()
         else:
-            raise(KeyError(f'Unkown method {self.method}'))
+            raise(KeyError(f'Unknown method {self.method}'))
 
         linearized_parameters = np.concatenate([
             self._bl,
@@ -666,6 +646,10 @@ class IHM(TransformerMixin, MultiOutputMixin,
     def _compile_spectrum(self, bl, weights, shifts, peak_parameters):
         """
         Generate a spectrum based on provided parameter set
+
+        Returns
+        -------
+        spectra : ndarray (n_components x n_features)
         """
 
         # generate pure component spectra
@@ -681,3 +665,130 @@ class IHM(TransformerMixin, MultiOutputMixin,
         spectra = weights @ pure_spectra
         baseline = bl @ self._baseline
         return spectra + baseline
+
+
+class IHMRegression(IHM):
+    """
+    Indirect Hard Modeling (IHM) of spectra with OLS prediction
+
+    IHM models spectra based on a mechanistic description of multiple
+    pure component spectra each consisting of a set of peaks. The spectra are
+    described by the peak parameters. For new spectra, the mechanistic spectral
+    model is adjusted by a parameter optimization. This allows to correct for
+    a variety of effects such as instrument specific shifts or sensor
+    variability. The weights of the optimized spectral parameter set are used
+    for concentration predictions. Concentrations should be given as
+    molalities. At low concentrations, the solute concentrations may be
+    approximated as mass concentration, molarity, molar fraction, weight
+    fraction etc (see Notes).
+
+    Note: The first component spectra is always assumed to be the
+    solvent. The predicted molalities for the solvent are always constant and
+    should, by definition, be equal to the inverse molar weight 1/M_W [mol/kg].
+
+    Parameters
+    ----------
+    features : ndarray of shape (n_features, 1), default=None
+        feature-related x variable
+    peak_parameters : list of ndarrays
+        List of peak parameter arrays
+    bl_order : int (default: 2)
+        Order of background polynome
+    spectra_generator : function, default=pseudo_voigt_spectra
+        Reference to spectra-generating function
+    method : {'LG'}
+        Algorithm for spectral fit:
+            - 'LG' (default): largest gradient method as descirbed in
+                [EKriesten]_.
+    gradient_truncation : int (default: 20)
+        For peak_parameter fitting, only step along the most important gradient
+        directions up to the number of directions given by
+        `gradient_truncation`.
+
+    Attributes
+    ----------
+    n_components_ : int
+        Number of components in model
+    linearized_breakpoints_ : ndarray
+        Vector which indicates at what point different sections of the
+        linarized parameter vector end. Structure: (background parameters,
+        component weights, component shifts, spectra parameters)
+    regressor_ : LinearRegression
+        Estimator which converts weights to concentrations
+
+    Notes
+    -----
+    The current optimization strategy follows the largest gradient approach
+    described in [EKriesten]_ . To reduce the complexity of the optimization
+    problem, first global parameters are optimized (background, spectral shift,
+    spectral weights). Peak parameters are optimized one by one depending
+    on the gradient size up to a certain number of parameters.
+
+    Concentration: The optical spectroscopic sensor probes an unknown  volume
+    $V$. Each chemical species in the probed volume contributes to the Raman
+    signal with a weight $w_i$ proportional to the number of moles in the
+    probed volume.
+    .. math:: w_i \propto N_i
+
+    We may furthermore expand:
+    .. math::
+        w_i K_i= N_i
+        w_i K_i = N_i
+
+    The solvent is denoted by a subscript $S$. Following the same argument as
+    above, we may define the solvent mass in the probed volume
+    .. math:: m_S = w_S K'_S = w_S \frac{K_S}{M_{W, S}}
+
+    with :math: `M_{W, S}`, the molar mass of the solvent.
+
+    Molality is given by:
+    .. math::
+        b_i = \frac{N_i}{m_S}=\frac{w_i K_i}{w_S K'_S}=k_i \frac{w_i}{w_S}
+
+    Nomenclature
+    ------------
+    features:
+        feature or spectral dimension (e.g. wavelength, wavenumber)
+    peak:
+        a feature-associated effect described by a scaled
+        probablity function
+    component:
+        a chemical species described by a linear combination of peaks
+    baseline:
+        slowely varying effect not associated to a specific component
+    spectra:
+        a linear combination of multiple components and baseline effects
+    """
+    def __init__(self, features, peak_parameters, bl_order=2,
+                 spectra_generator=pseudo_voigt_spectra,
+                 method='LG',
+                 gradient_truncation=20):
+        self.regressor_ = LinearRegression(fit_intercept=False)
+
+        super().__init__(features, peak_parameters, bl_order,
+                         spectra_generator, method, gradient_truncation)
+
+    def fit(self, X, y):
+        """
+        Calibrate regression model of IHM
+        """
+        parameters = self.transform(X)
+
+        weight_range = self.linearized_breakpoints_[0:2]
+        weights = parameters[:, weight_range[0]:weight_range[1]]
+        normalized_weights = weights / weights[:, 0, None]
+
+        self.regressor_ = self.regressor_.fit(normalized_weights, y)
+        return self
+
+    def predict(self, X):
+        """
+        Predict concentrations from given X
+        """
+        parameters = self.transform(X)
+        weight_range = self.linearized_breakpoints_[0:2]
+        weights = parameters[:, weight_range[0]:weight_range[1]]
+        normalized_weights = weights / weights[:, 0, None]
+
+        y = self.regressor_.predict(normalized_weights)
+        return y

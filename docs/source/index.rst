@@ -15,8 +15,7 @@ scikit-learn, chemometrics is mainly intended for interactive work.
 
 .. note::
 
-  chemometrics is work in progress. The API is still changing and new
-  functionalities are continuously added.
+  chemometrics is work in progress. The API might still change from one release to the next.
 
 
 .. toctree::

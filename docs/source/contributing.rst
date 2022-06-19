@@ -35,19 +35,12 @@ Some topics which need improvement:
 
 * Implement readers for commercial spectroscopic and other chemical data
   formats.
-* Implement a PCA class extending the functionality of
-  sklearn.decomposition.PCA with typical chemometric functionality. Some
-  thoughts are necessary on how exactly to implement this. Code doubling
-  compared to :py:class:`chemometrics.PLSRegression` should be prevented.
-  Furthermore, the implementation should enable an easy generalization to other
-  latent variable models. Potentially, this could be solved with mixins or
-  decorators.
-* Integrate existing 3rd party packages into ``chemometrics``. Generally, there
+* Integrate existing 3rd party packages into chemometrics. Generally, there
   are some very useful small packages already available for
   chemometrics in Python. However, those packages are not curated under a
   common framework which reduces reusability and makes it more difficult for
   users to use those methods. Integrating the functionality into
-  ``chemometrics`` simplifies the usage.
+  chemometrics simplifies the usage.
 * Add example sections in docstrings.
 
 

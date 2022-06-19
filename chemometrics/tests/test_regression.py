@@ -1,4 +1,4 @@
-# Copyright 2021 Matthias Rüdt
+# Copyright 2021, 2022 Matthias Rüdt
 #
 # This file is part of chemometrics.
 #
@@ -15,18 +15,19 @@
 # You should have received a copy of the GNU General Public License
 # along with chemometrics.  If not, see <https://www.gnu.org/licenses/>.
 
-import chemometrics as cm  # accounts for relativ path
+import chemometrics as cm
 import numpy as np
+from numpy.testing import assert_allclose, assert_equal
 import unittest
 from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.cross_decomposition import PLSRegression
 from sklearn.model_selection import KFold
 from sklearn.preprocessing import StandardScaler
 import matplotlib
-from scipy.stats import binom
+from chemometrics.tests.test_base import TestLVmixin
 
 
-class TestPLSRegression(unittest.TestCase):
+class TestPLSRegression(unittest.TestCase, TestLVmixin):
     """
     Test adjustments done to PLSRegression child class
     """
@@ -48,8 +49,8 @@ class TestPLSRegression(unittest.TestCase):
             scale=noise,
             size=[self.n_samples, self.n_wl]
         )
-        self.pls = cm.PLSRegression()
-        self.pls = self.pls.fit(self.X, self.Y)
+        self.model = cm.PLSRegression()
+        self.model = self.model.fit(self.X, self.Y)
 
         self.Y_test = np.random.normal(size=[self.n_tests, self.n_conc])
         self.X_test = self.Y_test @ spectra.T + np.random.normal(
@@ -61,87 +62,87 @@ class TestPLSRegression(unittest.TestCase):
         """
         Test the shape of the vip variable
         """
-        self.assertTrue(self.pls.vip_.shape == (self.n_wl, ))
+        self.assertTrue(self.model.vip_.shape == (self.n_wl, ))
 
     def test_vip_value(self):
         """
         Test that sum of squared VIPs == number of X variables (definition!)
         """
-        self.assertTrue(np.isclose(np.sum(self.pls.vip_**2), self.n_wl))
+        self.assertTrue(np.isclose(np.sum(self.model.vip_**2), self.n_wl))
 
     def test_hat_shape(self):
         """
         Test the shape of the vip variable
         """
-        hat = self.pls.hat(self.X)
+        hat = self.model.hat(self.X)
         self.assertTrue(hat.shape == (self.n_samples, self.n_samples))
 
     def test_hat_works(self):
         """
         Test that hat works according to its definition i.e. H * Y = Ŷ
         """
-        hat = self.pls.hat(self.X)
+        hat = self.model.hat(self.X)
         # mean centered prediction
-        Y_hat = self.pls.predict(self.X) - np.mean(self.Y, axis=0)
+        Y_hat = self.model.predict(self.X) - np.mean(self.Y, axis=0)
         self.assertTrue(np.allclose(hat @ self.Y, Y_hat))
 
     def test_hat_symmetric(self):
         """
         Test that hat matrix is symmetric
         """
-        hat = self.pls.hat(self.X)
+        hat = self.model.hat(self.X)
         self.assertTrue(np.allclose(hat, hat.T))
 
     def test_hat_indempotent(self):
         """
         Test that hat matrix is indempotent (hat = hat squared)
         """
-        hat = self.pls.hat(self.X)
+        hat = self.model.hat(self.X)
         self.assertTrue(np.allclose(hat, hat @ hat))
 
     def test_leverage_shape(self):
         """
         Test that leverage provides correct matrix shape
         """
-        leverage = self.pls.leverage(self.X)
+        leverage = self.model.leverage(self.X)
         self.assertTrue(leverage.shape == (self.n_samples, ))
 
     def test_leverage_definition(self):
         """
         Test that leverage is diag of the hat matrix
         """
-        leverage = self.pls.leverage(self.X)
-        hat = self.pls.hat(self.X)
+        leverage = self.model.leverage(self.X)
+        hat = self.model.hat(self.X)
         self.assertTrue(np.allclose(leverage, np.diag(hat)))
 
     def test_residuals_shape(self):
         """
         Test residual function
         """
-        residuals = self.pls.residuals(self.X, self.Y)
+        residuals = self.model.residuals(self.X, self.Y)
         self.assertTrue(residuals.shape == (self.n_samples, self.n_conc))
 
     def test_residuals_raise_TypeError(self):
 
         with self.assertRaises(TypeError):
-            self.pls.residuals(self.X, self.Y, scaling='bla')
+            self.model.residuals(self.X, self.Y, scaling='bla')
 
     def test_residuals_scaling(self):
         """
         Test different scaling options of residuals
         """
-        residuals_unscld = self.pls.residuals(self.X, self.Y, scaling='none')
-        residuals_std = self.pls.residuals(self.X, self.Y,
-                                           scaling='standardize')
-        residuals_stud = self.pls.residuals(self.X, self.Y,
-                                            scaling='studentize')
+        residuals_unscld = self.model.residuals(self.X, self.Y, scaling='none')
+        residuals_std = self.model.residuals(self.X, self.Y,
+                                             scaling='standardize')
+        residuals_stud = self.model.residuals(self.X, self.Y,
+                                              scaling='studentize')
         std_estimated = residuals_unscld / residuals_std
 
         std = np.sqrt(np.sum(residuals_unscld**2, axis=0)
-                      / (self.X.shape[0] - self.pls.n_components))[:, None].T
+                      / (self.X.shape[0] - self.model.n_components))[:, None].T
 
         stud_scaling = residuals_std / residuals_stud
-        true_scaling = np.sqrt(1 - self.pls.leverage(self.X))
+        true_scaling = np.sqrt(1 - self.model.leverage(self.X))
         self.assertTrue(np.allclose(std_estimated, std))
         self.assertTrue(np.allclose(stud_scaling, true_scaling[:, None]))
 
@@ -149,12 +150,12 @@ class TestPLSRegression(unittest.TestCase):
         """
         Test that plot generates 4 subplot in figure
         """
-        axes = self.pls.plot(self.X, self.Y)
+        axes = self.model.plot(self.X, self.Y)
         for ax in axes:
             self.assertIsInstance(ax, matplotlib.axes.Axes)
 
         lines = axes[2].get_lines()
-        p = self.pls.n_components
+        p = self.model.n_components
 
         for line in lines:
             h = line.get_xdata()
@@ -165,131 +166,33 @@ class TestPLSRegression(unittest.TestCase):
             close_to1 = np.allclose(D_rev, 1)
             self.assertTrue(close_to05 or close_to1)
 
-    def test_dmodx_shape(self):
-        """
-        Test that dmodx provides a vector of the correct shape
-        """
-        dmodx = self.pls.dmodx(self.X)
-        self.assertTrue(dmodx.shape == (self.n_samples, ))
-
-        dmodx = self.pls.dmodx(self.X, normalize=False)
-        self.assertTrue(dmodx.shape == (self.n_samples, ))
-
-        dmodx = self.pls.dmodx(self.X, absolute=True)
-        self.assertTrue(dmodx.shape == (self.n_samples, ))
-
-    def test_dmodx_length(self):
-        """
-        Test that dmodx = 0 if data from hyperplan is taken
-        """
-        X_hat = self.pls.inverse_transform(self.pls.transform(self.X))
-        dmodx = self.pls.dmodx(X_hat, normalize=False)
-        self.assertTrue(np.allclose(dmodx, 0))
-
-    def test_score_plus_dmodx_length(self):
-        """
-        Test that the variation on the model plane and the variation
-        orthogonal to the model plane yield the total variation.
-        """
-        dmodx = self.pls.dmodx(self.X, normalize=False)
-        absolut_dmodx = dmodx**2 * (self.X.shape[1] - self.pls.n_components)
-        X_hat_bar = self.pls.x_scores_ @ self.pls.x_loadings_.T
-        ss_X_hat = np.sum(X_hat_bar**2, axis=1)
-        X_bar = self.X - np.mean(self.X, axis=0)
-        ss_X = np.sum(X_bar**2, axis=1)
-        self.assertTrue(np.allclose(ss_X_hat + absolut_dmodx, ss_X,
-                                    atol=1e-2))
-
-    def test_distance_plot_return_arg(self):
-        """
-        Test that distance_plot returns an axis cv_object
-        """
-        ax = self.pls.distance_plot(self.X)
-        self.assertIsInstance(ax, list)
-        for inst in ax:
-            self.assertIsInstance(inst, matplotlib.axes.Subplot)
-
-    def test_crit_dmodx(self):
-        """
-        Test that number of outliers corresponds
-
-        Performs a binomial statistical test. This test fails more often then
-        the confidence level would predict.
-
-        Potential explanation:
-        Since dmodx
-        is only approximately f2 distributed [1], crit_dmodx is not completely
-        accurate. Especially when considering outliers at high confidence, the
-        test seems to be too conservative. As a work-around, the binomial test
-        is performed at a confidence level of 0.5 for the crit_dmodx (50%
-        outliers).
-
-        References
-        ----------
-        .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
-        Wikström, and S. Wold. Multi- and Megavariate Data Analysis, Part I
-        Basic Principles and Applications. Second Edition.
-        """
-        f_confidence = 0.50
-        crit_dmodx = self.pls.crit_dmodx(confidence=f_confidence)
-        dmodx = self.pls.dmodx(self.X_test)
-        count = np.sum(dmodx > crit_dmodx)
-
-        self._test_binom(1-f_confidence, self.n_tests, count)
-
     def test_cooks_distance_return_shape(self):
         "Test that cooks_distance return args has correct shape"
 
-        cook = self.pls.cooks_distance(self.X, self.Y)
+        cook = self.model.cooks_distance(self.X, self.Y)
         self.assertTrue(cook.shape == (self.n_samples, self.n_conc))
 
     def test_cooks_distance_values(self):
         """
         Test reverse function of cooks distance yields residuals
         """
-        cook = self.pls.cooks_distance(self.X, self.Y)
-        residuals = self.pls.residuals(self.X, self.Y, scaling='none')
+        cook = self.model.cooks_distance(self.X, self.Y)
+        residuals = self.model.residuals(self.X, self.Y, scaling='none')
 
-        h = self.pls.leverage(self.X)
+        h = self.model.leverage(self.X)
         weighting = (1-h)**2/h
         mse = (np.sum(residuals**2, axis=0)
-               / (self.X.shape[0] - self.pls.n_components))[:, None].T
-        inverted_res = np.sqrt(cook * self.pls.n_components * mse
+               / (self.X.shape[0] - self.model.n_components))[:, None].T
+        inverted_res = np.sqrt(cook * self.model.n_components * mse
                                * weighting[:, None])
 
         self.assertTrue(np.allclose(np.abs(residuals), inverted_res))
 
-    def test_crit_dhypx(self):
+    def tearDown(self):
         """
-        Test that number of outliers corresponds for crit_dhypx
-
-        Performs a biomial statistical test. This test fails more often
-        then the confidence level would predict. Potential explanation:
-        crit_dhypx is not corrected for the bias in estimating the variance of
-        the scores based on the training set [1]. This leads to a biased
-        normalized dhypx calculations.
-
-        References
-        ----------
-        .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
-        Wikström, and S. Wold. Multi- and Megavariate Data Analysis, Part I
-        Basic Principles and Applications. Second Edition.
+        Clean plots etc
         """
-        f_confidence = 0.95
-        crit_dhypx = self.pls.crit_dhypx(confidence=f_confidence)
-        dhypx = self.pls.dhypx(self.X_test)
-        count = np.sum(dhypx > crit_dhypx)
-        self._test_binom(1-f_confidence, self.n_tests, count)
-
-    def _test_binom(self, p, n_samples, n_positiv, false_positiv=0.005):
-        """
-        Perform a binomial test
-        """
-        pdist = binom(n_samples, p)
-        limit_low = pdist.ppf(false_positiv/2)
-        limit_high = pdist.ppf(1 - false_positiv/2)
-        self.assertTrue(n_positiv >= limit_low)
-        self.assertTrue(n_positiv <= limit_high)
+        matplotlib.pyplot.close()
 
 
 class TestFit_pls(unittest.TestCase):
@@ -356,3 +259,134 @@ class TestFit_pls(unittest.TestCase):
         keys = ['q2', 'r2', 'figure_cv', 'figure_model']
         for key in keys:
             self.assertIn(key, calibration_info)
+
+    def tearDown(self):
+        """
+        Clean plots etc
+        """
+        matplotlib.pyplot.close()
+
+
+class Test_IHM_LG(unittest.TestCase):
+    """
+    Test IHM class
+    """
+    def setUp(self):
+        """
+        Initialize a dummy instance of ihm
+        """
+        self.n_features = 200
+        self.feature_vector = np.arange(self.n_features)
+        self.ini_parameters = [
+            np.array([[50, 1, 0.5, 10], [150, 0.5, 0.2, 5]]).T,
+            np.array([[100, 1, 0.5, 15]]).T
+        ]
+        self.ihm = cm.regression.IHM(self.feature_vector, self.ini_parameters)
+
+        # generate set of target parameters different from starting point
+        self.true_param = self.ihm.peak_parameters.copy()
+        self.true_param *= 1.1
+
+        self.bl = np.array([1, 1, 0.5])
+        self.weights = np.array([0.7, 0.3])
+        self.shift = np.zeros(2)
+
+        # generate spectrum & fit ihm model
+        self.test_spectrum = self.ihm._compile_spectrum(
+            self.bl, self.weights, self.shift, self.true_param
+        )
+        self.ihm._adjust2spectrum(self.test_spectrum)
+
+    def test_init(self):
+        """
+        Assert that initalization of IHM runs as expected
+        """
+        ihm = self.ihm
+        n_components = len(self.ini_parameters)
+        self.assertTrue(
+            self.ihm.peak_parameters.shape == (4, 3))
+        assert_equal(self.ihm.features, self.feature_vector)
+        self.assertTrue(ihm.bl_order == 2)
+        self.assertTrue(ihm.n_components_ == n_components)
+
+        assert_allclose(ihm._component_breaks, np.array([2, 3]))
+        linearized_breakpoints = np.array([3, 2, 2, 12]).cumsum()
+        assert_allclose(ihm.linearized_breakpoints_, linearized_breakpoints)
+
+        assert_allclose(ihm._baseline.shape, np.array([3, self.n_features]))
+
+    def test_compile_spectrum_shape(self):
+        """
+        Test _compile spectrum
+        """
+        bl = np.array([1, 1, 0.001])
+        weights = np.ones([2])
+        shift = np.zeros([2])
+
+        spectrum = self.ihm._compile_spectrum(
+            bl, weights, shift, self.ihm.peak_parameters
+        )
+
+        self.assertTrue(spectrum.shape == (self.n_features, ))
+
+    def test_adjust2spectrum_baseline(self):
+        """
+        Assert that _adjust2spectrum baselin is close in dummy case
+        """
+        # check baseline parameters
+        assert_allclose(self.ihm._bl, self.bl, rtol=1e-1)
+
+    def test_adjust2spectrum_peak_parameters(self):
+        # check peak positions
+        estimated_param = self.ihm._peak_parameters.copy()
+        start = 0
+        for i, end in enumerate(self.ihm._component_breaks):
+            estimated_param[0, start:end] += self.ihm._shifts[i]
+            start = end
+        assert_allclose(estimated_param[0, :], self.true_param[0, :],
+                        rtol=1e-2)
+
+    def test_adjust2spectrum_spectrum(self):
+        # check accuracy of estimated spectrum
+        estimated_spectrum = self.ihm._compile_spectrum(
+            self.ihm._bl, self.ihm._weights, self.ihm._shifts,
+            self.ihm._peak_parameters
+        )
+        assert_allclose(estimated_spectrum, self.test_spectrum, rtol=1e-2)
+
+    def test_transform_shape(self):
+        """
+        Assert that a matrix of parameters is returned by transform
+        """
+        n_spectra = 3
+        spectra = np.zeros([n_spectra, self.n_features])
+        pparam = self.ihm.peak_parameters.copy()
+        rng = np.random.default_rng(0)
+
+        for i in range(n_spectra):
+            bl = rng.uniform(size=[3])
+            weights = rng.uniform(size=[2])
+            shifts = rng.uniform(size=[2])
+            p_scaler = rng.uniform(low=0.5, high=1.5)
+            spectra[i, :] = self.ihm._compile_spectrum(
+                bl, weights, shifts, p_scaler*pparam
+            )
+
+        transformed = self.ihm.transform(spectra)
+        length = self.ihm.linearized_breakpoints_[-1]
+        self.assertTrue(transformed.shape == (n_spectra, length))
+
+    def test_raises_unkown_method(self):
+        """
+        Assert that error is raised if an unkown method is provided to ihm
+        """
+        with self.assertRaises(KeyError):
+            ihm = cm.regression.IHM(self.feature_vector, self.ini_parameters,
+                                    method='unkown method')
+            ihm.transform(self.test_spectrum[:, None])
+
+
+
+
+if __name__ == "__main__":
+    unittest.main()

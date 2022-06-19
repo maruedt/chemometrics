@@ -19,7 +19,7 @@ import chemometrics
 # -- Project information -----------------------------------------------------
 
 project = "chemometrics"
-copyright = "2021, Matthias Rüdt"
+copyright = "2021, 2022 Matthias Rüdt"
 author = "Matthias Rüdt"
 
 # The full version, including alpha/beta/rc tags

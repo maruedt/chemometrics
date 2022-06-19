@@ -1,4 +1,4 @@
-# Copyright 2021 Matthias Rüdt
+# Copyright 2021, 2022 Matthias Rüdt
 #
 # This file is part of chemometrics.
 #
@@ -19,12 +19,20 @@ import sklearn
 from sklearn.cross_decomposition import PLSRegression as _PLSRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import cross_val_score, KFold
+from sklearn.base import (
+    BaseEstimator,
+    TransformerMixin,
+    MultiOutputMixin
+)
 import numpy as np
-from scipy import stats
+from scipy.optimize import least_squares
+from scipy.optimize._numdiff import approx_derivative
 import matplotlib.pyplot as plt
+from .utils import pseudo_voigt_spectra
+from .base import LVmixin
 
 
-class PLSRegression(_PLSRegression):
+class PLSRegression(_PLSRegression, LVmixin):
     r"""
     PLS regression with added chemometric functionality
 
@@ -33,7 +41,7 @@ class PLSRegression(_PLSRegression):
     ----------
     Calculations according to
 
-    .. [1] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
+    .. [Eriksson] L. Eriksson, E. Johansson, N. Kettaneh-Wold, J. Trygg, C.
            Wikström, and S. Wold. Multi- and Megavariate Data Analysis,
            Part I Basic Principles and Applications. Second Edition.
 
@@ -47,6 +55,7 @@ class PLSRegression(_PLSRegression):
 
     def fit(self, X, Y):
         super().fit(X, Y)
+        self.n_samples_ = self.x_scores_.shape[0]
         self.vip_ = self._calculate_vip()
         self.x_residual_std_ = self._calculate_x_residual_std_(X)
         return self
@@ -75,20 +84,6 @@ class PLSRegression(_PLSRegression):
         denominator = np.sum(ss)
         return np.sqrt(self.n_features_in_ * counter / denominator)
 
-    def _calculate_x_residual_std_(self, X):
-        r"""
-        Calculate the standard deviation of the X residuals
-
-        The x residual standard deviation is calculated according to [1]_ not
-        including the correction factor v (since it is not exactly defined in
-        [1]_).
-        """
-        X_hat = self.inverse_transform(self.transform(X))
-        sse_cal = np.sum((X - X_hat)**2)
-        norm_factor = (self.x_scores_.shape[0] - self.n_components
-                       - 1) * (X.shape[1] - self.n_components)
-        return np.sqrt(sse_cal / norm_factor)
-
     def hat(self, X):
         r"""
         Calculate the hat (projection) matrix
@@ -97,7 +92,7 @@ class PLSRegression(_PLSRegression):
         :math:`H` projects the observed :math:`Y` onto the predicted
         :math:`\hat Y`. For  obtaining the standard hat matrix, the provided X
         matrix should  correspond to the matrix used during the calibration
-        (call to `fit`)  [1]_.
+        (call to `fit`)  [Eriksson]_.
 
         Parameters
         ----------
@@ -186,90 +181,6 @@ class PLSRegression(_PLSRegression):
             raise(TypeError(f'unsupported scaling: {scaling}'))
 
         return residuals / scaling_factor
-
-    def dmodx(self, X, normalize=True, absolute=False):
-        r"""
-        Calculate distance to model hyperplane in X (DModX)
-
-        DModX provides the distance to the model hyperplane spanned by the
-        loading vectors. Any information in the predictors that is not captured
-        by the PLS model contributes to DModX. If the DModX is normalized,
-        DModX is devided by the mean residual variance of X observed during
-        model calibration.
-
-        Parameters
-        ----------
-        X : (n, m) ndarray
-            matrix of predictors. n samples x m predictors
-
-        normalize : {True (default); False}
-            normalization of DModX by error in X during calibration
-
-        absolute : {True; False (default)}
-            return the absolute distance to the model plane (not normalized by
-            degrees of freedom)
-
-        Returns
-        -------
-        dmodx : (n, ) ndarray
-            distance of n samples to model hyperplane
-
-        """
-
-        sse = np.sum((X - self.inverse_transform(self.transform(X)))**2,
-                     axis=1)
-        dmodx = np.sqrt(sse)
-
-        if not absolute:
-            dmodx /= np.sqrt(X.shape[1] - self.n_components)
-            if normalize:
-                dmodx /= self.x_residual_std_
-        return dmodx
-
-    def crit_dmodx(self, confidence=0.95):
-        r"""
-        Critical distance to hyperplane based on an F2 test
-
-        The critical distance to the model hyperplane is estimated based on
-        an F2 distribution. Values above crit_dmodx may be considered outliers.
-        dmodx is only approximately F2 distributed [1]_. It is thus worth
-        noting that the estimated critcal distance is biased. It however gives
-        a reasonable indication of points worth investigating.
-
-        """
-        degf_cali = self.n_features_in_ - self.n_components - 1
-        degf_test = self.n_features_in_ - self.n_components
-        f_crit = stats.f.ppf(confidence, degf_test,
-                             degf_cali)
-        return np.sqrt(f_crit)
-
-    def dhypx(self, X):
-        r"""
-        Normalized distance on hyperplane
-
-        Provides a distance on the hyperplane, normalized by the distance
-        observed during calibration. It can be a useful measure to see whether
-        new data is comparable to the calibration data. The normalized dhypx
-        is slightly biased towards larger values since the estimated
-        `x_residual_std_` is slightly underestimated during model calibration
-        [1]_.
-
-        """
-        var_cal = np.var(self.x_scores_, axis=0)
-        x_scores2_norm = self.transform(X)**2 / var_cal
-        return np.sum(x_scores2_norm, axis=1)
-
-    def crit_dhypx(self, confidence=0.95):
-        r"""
-        Calculate critical dhypx according to Hotelling's T2
-
-        """
-        comp = self.n_components
-        samples = self.x_scores_.shape[0]
-        f_crit = stats.f.ppf(confidence, self.n_components,
-                             self.x_scores_.shape[0]-self.n_components)
-        factor = comp * (samples**2 - 1) / (samples * (samples - comp))
-        return f_crit * factor
 
     def cooks_distance(self, X, Y):
         r"""
@@ -408,42 +319,6 @@ class PLSRegression(_PLSRegression):
 
         return fig.axes
 
-    def distance_plot(self, X, sample_id=None, confidence=0.95):
-        r"""
-        Plot distances colinear and orthogonal to model predictor hyperplane
-
-        Generates a figure with two subplots. The subplots provide information
-        on how `X` behaves compared to the calibration data. Subplots:
-        1) Distance in model hyperplane of predictors. Provides insight into
-        the magnitude of variation within the hyperplane compared to the
-        calibration data. Large values indicate samples which are outside of
-        the calibration space but may be described by linearly scaled latent
-        variables.
-        2) Distance orthogonal to model hyperplane. Provides insight into the
-        magnitude of variation orthogonal to the model hyperplane compared to
-        the calibration data. Large values indicate samples which show a
-        significant trend not observed in the calibration data.
-
-        """
-        plt.figure(figsize=(15, 15))
-
-        if not sample_id:
-            sample_id = np.arange(X.shape[0])
-        # make plots
-        # 1) dhypx
-        plt.subplot(211)
-        plt.plot(sample_id, self.dhypx(X))
-        plt.ylabel('X distance on hyperplane')
-        plt.axhline(y=self.crit_dhypx(confidence=confidence))
-
-        plt.subplot(212)
-        plt.plot(sample_id, self.dmodx(X))
-        plt.axhline(y=self.crit_dmodx(confidence=confidence))
-        plt.xlabel('Sample ID')
-        plt.ylabel('Distance to X-hyperplane')
-
-        return plt.gcf().axes
-
 
 def fit_pls(X, Y, pipeline=None, cv_object=None, max_lv=10):
     r"""
@@ -544,3 +419,265 @@ def fit_pls(X, Y, pipeline=None, cv_object=None, max_lv=10):
     }
 
     return pipeline, analysis
+
+
+class IHM(TransformerMixin, MultiOutputMixin,
+          BaseEstimator):
+    """
+    Indirect Hard Modeling (IHM) of spectra
+
+    IHM models spectra based on a mechanistic model of multiple
+    pure component spectra each consisting of flexible peaks. The spectra are
+    described by the peak parameters. For new spectra, the mechanistic spectral
+    model is adjusted by a parameter optimization. This allows to correct for
+    a variety of effects such as instrument specific shifts or sensor
+    variability. The optimized mechanistic spectra are used for concentration
+    predictions. Note: The first component spectra is always assumed to be the
+    solvent.
+
+    Parameters
+    ----------
+    features : ndarray of shape (n_features, 1), default=None
+        feature-related x variable
+
+    peak_parameters : list of ndarrays
+        List of peak parameter arrays
+
+    bl_order : int (default: 2)
+        Order of background polynome
+
+    spectra_generator : function, default=pseudo_voigt_spectra
+        Reference to spectra-generating function
+
+    method : {'LG', 'elastic-net'}
+        Algorithm for spectral fit:
+            - 'LG' (default): largest gradient method as descirbed in
+                [EKriesten]_.
+
+    gradient_truncation : int (default: 20)
+        For peak_parameter fitting, only step along the most important gradient
+        directions up to the number of directions given by
+        `gradient_truncation`.
+
+
+    Attributes
+    ----------
+    coef_ : ndarray of shape (n_components,)
+        Regression coefficient to convert regression weights into a
+        concentration. The first component is always assumed to be the solvent.
+        coef_ is obtained from a CLS regression during the fit.
+
+    n_components_ : int
+        Number of components in model
+
+    linearized_breakpoints_ : ndarray
+        Vector which indicates at what point different sections of the
+        linarized parameter vector end. Structure: (backkground parameters,
+        component weights, component shifts, spectra parameters)
+
+    Notes
+    -----
+    The current optimization strategy follows the largest gradient approach
+    described in [EKriesten]_ . To reduce the complexity of the optimization
+    problem, first global parameters are optimized (background, spectral shift,
+    spectral weights). Peak parameters are optimized one by one depending
+    on the gradient size up to a certain number of parameters.
+
+    Nomenclature
+    ------------
+    features:
+        feature or spectral dimension (e.g. wavelength, wavenumber)
+
+    peak:
+        a feature-associated effect described by a scaled
+        probablity function
+
+    component:
+        a chemical species described by a linear combination of peaks
+
+    baseline:
+        slowely varying effect not associated to a specific component
+
+    spectra:
+        a linear combination of multiple components and baseline effects
+
+    References
+    ----------
+    Implemented according to
+    .. [EKriesten] Kriesten et al. Chemometrics and Intelligent Laboratory
+        Systems 91 (2008) 181-193.
+    """
+
+    def __init__(self, features, peak_parameters, bl_order=2,
+                 spectra_generator=pseudo_voigt_spectra,
+                 method='LG',
+                 gradient_truncation=20,
+                 alpha=0.1, beta=0.1):
+
+        self.features = features
+        self.n_components_ = len(peak_parameters)
+        self.peak_parameters = np.concatenate(peak_parameters, axis=1)
+        self.spectra_generator = spectra_generator
+        self.bl_order = bl_order
+        self.gradient_truncation = gradient_truncation
+        self.method = method
+        self.alpha = alpha
+        self.beta = beta
+
+        n_peakparameters = self.peak_parameters.size
+
+        # summarize breaks in peak_parameters matrix
+        self._component_breaks = np.array(
+            [component.shape[1] for component in peak_parameters]
+        ).cumsum()
+
+        # summarize information on total parameters
+        self.linearized_breakpoints_ = np.array((
+                self.bl_order+1,  # baseline
+                self.n_components_,  # component weights
+                self.n_components_,  # component shifts
+                n_peakparameters  # number of peakparameter
+            )).cumsum()
+
+        # prepare polynomial baseline matrix for later use
+        self._baseline = np.zeros((self.bl_order+1, self.features.shape[0]))
+        multiplier = np.linspace(-1, 1, num=self.features.shape[0])
+        for i in range(0, self.bl_order+1):
+            self._baseline[i, :] = multiplier ** i
+
+    def fit(self, X):
+        pass
+
+    def transform(self, X):
+        """
+        Transform spectra in IHM parameter set
+        """
+        Y = np.apply_along_axis(self._adjust2spectrum, 1, X)
+        return Y
+
+    def _adjust2spectrum(self, spectrum):
+        self._current_spectrum = spectrum
+        # intialize parameter estimates
+        self._weights = np.ones(self.n_components_)
+        self._bl = np.zeros(self.bl_order+1)
+        self._shifts = np.zeros(self.n_components_)
+        self._peak_parameters = self.peak_parameters.copy()
+
+        # fit global parameters
+        ini_par = np.concatenate([self._bl, self._weights, self._shifts])
+        result = least_squares(self._obj_fun_global_par, ini_par)
+        breaks = self.linearized_breakpoints_
+        self._bl = result.x[:breaks[0]]
+        self._weights = result.x[breaks[0]:breaks[1]]
+        self._shifts = result.x[breaks[1]:breaks[2]]
+
+        if self.method == 'LG':
+            self._largest_gradient()
+        else:
+            raise(KeyError(f'Unkown method {self.method}'))
+
+        linearized_parameters = np.concatenate([
+            self._bl,
+            self._weights,
+            self._shifts,
+            self._peak_parameters.ravel()
+        ])
+        return linearized_parameters
+
+    def _largest_gradient(self):
+        breaks = self.linearized_breakpoints_
+        # select parameters for optimization
+        jac = approx_derivative(
+            lambda x: np.sum(self._obj_fun_all_peak_parameters(x)**2),
+            self.peak_parameters.ravel()
+        )
+        parameter_sequence = np.argsort(jac)[::-1]
+        mask = np.zeros(self.peak_parameters.shape)
+
+        if self.gradient_truncation < parameter_sequence.size:
+            mask[parameter_sequence[:self.gradient_truncation]] = 1
+        else:
+            mask[:] = 1
+
+        # adjust peak positions
+        sparsity = np.ones(self.features.shape[0])[:, None]*mask[0, :, None].T
+        estimate_pp = least_squares(
+            self._obj_fun_peak_position,
+            self._peak_parameters[0, :],
+            jac_sparsity=sparsity
+        )
+        self._peak_parameters[0, :] = estimate_pp.x
+
+        # fit baseline, weights
+        ini_par = np.concatenate([self._bl, self._weights])
+        result = least_squares(self._obj_fun_baseline_weights, ini_par)
+        self._bl = result.x[:breaks[0]]
+        self._weights = result.x[breaks[0]:breaks[1]]
+
+        # optimize all peak parameters
+        sparsity = np.ones(
+            self.features.shape[0]
+        )[:, None]*mask.ravel()[:, None].T
+        estimate_pp = least_squares(
+            self._obj_fun_all_peak_parameters,
+            self.peak_parameters.ravel(),
+            jac_sparsity=sparsity
+        )
+        self._peak_parameters = np.reshape(estimate_pp.x,
+                                           self.peak_parameters.shape)
+
+        # fit baseline, weights
+        ini_par = np.concatenate([self._bl, self._weights])
+        result = least_squares(self._obj_fun_baseline_weights, ini_par)
+        self._bl = result.x[:breaks[0]]
+        self._weights = result.x[breaks[0]:breaks[1]]
+
+    def _obj_fun_global_par(self, global_param):
+        breaks = self.linearized_breakpoints_
+        bl = global_param[:breaks[0]]
+        weights = global_param[breaks[0]:breaks[1]]
+        shifts = global_param[breaks[1]:breaks[2]]
+        spectrum = self._compile_spectrum(bl, weights, shifts,
+                                          self._peak_parameters)
+        return self._current_spectrum - spectrum
+
+    def _obj_fun_peak_position(self, peak_positions):
+        # generate adjusted peak parameter set
+        peak_parameters = self._peak_parameters.copy()
+        peak_parameters[0, :] = peak_positions
+        spectrum = self._compile_spectrum(self._bl, self._weights,
+                                          self._shifts, peak_parameters)
+        return self._current_spectrum - spectrum
+
+    def _obj_fun_baseline_weights(self, bl_weights):
+        breaks = self.linearized_breakpoints_
+        bl = bl_weights[:breaks[0]]
+        weights = bl_weights[breaks[0]:breaks[1]]
+        spectrum = self._compile_spectrum(bl, weights, self._shifts,
+                                          self._peak_parameters)
+        return self._current_spectrum - spectrum
+
+    def _obj_fun_all_peak_parameters(self, peak_parameters):
+        peak_parameters = peak_parameters.reshape(self.peak_parameters.shape)
+        spectrum = self._compile_spectrum(self._bl, self._weights,
+                                          self._shifts, peak_parameters)
+        return self._current_spectrum - spectrum
+
+    def _compile_spectrum(self, bl, weights, shifts, peak_parameters):
+        """
+        Generate a spectrum based on provided parameter set
+        """
+
+        # generate pure component spectra
+        pure_spectra = np.zeros([self.n_components_, self.features.shape[0]])
+        start_ind = 0
+        for i, end_ind in enumerate(self._component_breaks):
+            pure_spectra[i, :] = self.spectra_generator(
+                self.features - shifts[i],
+                peak_parameters[:, start_ind:end_ind]
+            ).T
+            start_ind = end_ind
+        # generate spectra
+        spectra = weights @ pure_spectra
+        baseline = bl @ self._baseline
+        return spectra + baseline

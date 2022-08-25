@@ -21,7 +21,7 @@ from numpy.testing import assert_allclose, assert_equal
 import unittest
 from sklearn.pipeline import make_pipeline, Pipeline
 from sklearn.cross_decomposition import PLSRegression
-from sklearn.model_selection import KFold
+from sklearn.model_selection import KFold, GroupKFold
 from sklearn.preprocessing import StandardScaler
 import matplotlib
 from chemometrics.tests.test_base import TestLVmixin
@@ -199,6 +199,14 @@ class TestFit_pls(unittest.TestCase):
     """
     Test fit_pls function.
     """
+    def test_reformate_Y(self):
+        """
+        Test if Y is reformatted from 1d to 2d array without error
+        """
+        X, Y = cm.generate_data()
+        Y = Y[:, 0]
+
+        cm.fit_pls(X, Y)
 
     def test_raise_TypeError_pipeline(self):
         """
@@ -218,7 +226,7 @@ class TestFit_pls(unittest.TestCase):
 
     def test_accept_cv_object(self):
         """
-        Test if function raises a TypeError of wrong CV object is provided
+        Test cross validation
         """
         X, Y = cm.generate_data()
 
@@ -226,6 +234,15 @@ class TestFit_pls(unittest.TestCase):
         model, analysis = cm.fit_pls(X, Y, cv_object=KFold(n_splits=n_splits))
 
         self.assertTrue(analysis['q2'].shape[0] == n_splits)
+
+        rng = np.random.default_rng(1)
+        groups = rng.integers(low=0, high=4, size=X.shape[0])
+        n_splits = 3
+        cv = GroupKFold(n_splits=n_splits)
+        model, analysis = cm.fit_pls(X, Y, cv_object=cv, groups=groups)
+        self.assertTrue(analysis['q2'].shape[0] == n_splits)
+
+
 
     def test_return_type(self):
         """

@@ -25,6 +25,7 @@ from sklearn.base import (
     MultiOutputMixin
 )
 from sklearn.linear_model import LinearRegression
+from sklearn.utils import check_consistent_length
 import numpy as np
 from scipy.optimize import least_squares
 from scipy.optimize._numdiff import approx_derivative
@@ -321,7 +322,7 @@ class PLSRegression(_PLSRegression, LVmixin):
         return fig.axes
 
 
-def fit_pls(X, Y, pipeline: Pipeline = None, cv_object=None, max_lv=10):
+def fit_pls(X, Y, pipeline: Pipeline = None, cv_object=None, groups=None, max_lv=10):
     r"""
     Auto-calibrate PLS model and generate analytical plots
 
@@ -349,6 +350,9 @@ def fit_pls(X, Y, pipeline: Pipeline = None, cv_object=None, max_lv=10):
     cv_object : {None, cv_object}
         An object providing guidance for cross-validation. Typically, it will
         be an instance of an sklearn.model_selection.BaseCrossValidator object.
+    groups : {None, (n,) ndarray}
+        Labels of groups of the samples used for splitting the dataset into train/test
+        set. Only used for group-wise cross-validation.
     max_lv : int
         Number of latent variables up to which the cross-validation score will
         be screened.
@@ -360,6 +364,11 @@ def fit_pls(X, Y, pipeline: Pipeline = None, cv_object=None, max_lv=10):
     summary : dict
         Summary of the model calibration.
     """
+    check_consistent_length(X, Y)
+
+    if Y.ndim == 1:
+        Y = Y.reshape(-1, 1)
+
     if not pipeline:
         pipeline = make_pipeline(PLSRegression())
     elif not (isinstance(pipeline, sklearn.pipeline.Pipeline)):
@@ -383,7 +392,7 @@ def fit_pls(X, Y, pipeline: Pipeline = None, cv_object=None, max_lv=10):
     q2 = []
     for n_lv in range(1, max_lv+1):
         pipeline[-1].n_components = n_lv
-        q2.append(cross_val_score(pipeline, X, Y, cv=cv_object))
+        q2.append(cross_val_score(pipeline, X, Y, cv=cv_object, groups=groups))
         r2.append(pipeline.fit(X, Y).score(X, Y))
 
     q2 = np.stack(q2).T

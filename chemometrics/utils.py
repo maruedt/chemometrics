@@ -19,7 +19,7 @@
 import numpy as np
 
 
-def generate_spectra(n_wl, n_band, bandwidth):
+def generate_spectra(n_wl, n_band, bandwidth, seed=None):
     r"""
     Generate a dummy spectra with n_band
 
@@ -45,6 +45,9 @@ def generate_spectra(n_wl, n_band, bandwidth):
     spectra : ndarray (n_wl, )
         artificial spectra
     """
+    if seed:
+        np.random.seed(seed)
+
     wl = np.arange(n_wl)
     spectra = np.zeros(n_wl)
     for i in range(n_band):

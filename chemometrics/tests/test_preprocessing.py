@@ -121,10 +121,30 @@ class TestEmsc(unittest.TestCase):
         X_pretreated = emsc.fit_transform(X)
         background = np.dot(emsc.coefficients_[:, :-1],
                             emsc.regressor_[:, :-1].T)
-        X_reconstructed =  background \
+        X_reconstructed = background \
                          + emsc.coefficients_[:, -1][:, None]*X_pretreated
 
         assert_allclose(X, X_reconstructed)
+
+    def test_normalize_by_background(self):
+        r"""
+        Test if spectra are normalized by background
+        """
+        n_series, n_variables = (10, 50)
+        bandwidth = 1
+
+        # generate dummy data consisting of linearly scaled additions of target + background
+        target = cm.generate_spectra(n_variables, 5, bandwidth)[:, None]
+        background = cm.generate_spectra(n_variables, 3, bandwidth)[:, None]
+        concentrations = np.arange(n_series)[:, None] + 1
+        X = concentrations @ (target.T + background.T)
+
+        # after processing with the emsc with normalization based on the background
+        # all peak heights must be the same
+        emsc = cm.Emsc(background=background, normalize=1)
+        X_pretreated = emsc.fit_transform(X)
+
+        assert_allclose(np.max(target), np.max(X_pretreated, axis=1), rtol=5e-2)
 
 
 class Testwhittaker(unittest.TestCase):

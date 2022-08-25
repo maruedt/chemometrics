@@ -127,7 +127,7 @@ class Emsc(TransformerMixin, BaseEstimator):
     of data into baseline contributions and chemical information. Baseline
     contributions are modelled by polynomial terms up to order `p_order`. The
     chemical information is summarized by the mean spectrum orthogonalized to
-    the baseline terms. `Emsc` additionally provides a the functionality for
+    the baseline terms. `Emsc` additionally provides the functionality for
     orthogonalizing spectra with respect to background information and for
     normalizing the returned spectra.
 
@@ -138,8 +138,9 @@ class Emsc(TransformerMixin, BaseEstimator):
     background : {None (default), (m, o) ndarray}
         Perform additional orthogonalization with respect to background. If
         ``None`` omitted. Otherwise, ``m`` variables x ``o`` background spectra
-    normalize : {False (default), True}
-        Perform normalization of results
+    normalize : {False (default), True, int}
+        Perform normalization of results. If an int `i` is given, normalize by the
+        contribution of the background vector with index `i`.
     algorithm : {'als' (default)}
         choice of algorithms for regression. Currently, only asymmetric least
         squares is supported
@@ -170,6 +171,8 @@ class Emsc(TransformerMixin, BaseEstimator):
 
     def __init__(self, p_order=2, background=None, normalize=False,
                  algorithm='als', asym_factor=0.1):
+        self.regressor_ = None
+        self.coefficients_ = None
         self.p_order = p_order
         # convert background to two dimensional array if exists
         if background is not None:
@@ -240,7 +243,12 @@ class Emsc(TransformerMixin, BaseEstimator):
         X -= np.dot(self.regressor_[:, :-1], coefficients[:-1, :]).T
 
         if self.normalize:
-            X /= coefficients[-1, :][:, None]
+            if type(self.normalize) == bool:
+                X /= coefficients[-1, :][:, None]
+            else:
+                # calculate index
+                index = self.p_order + self.normalize
+                X /= coefficients[index, :][:, None]
 
         self.coefficients_ = coefficients.T
         return X

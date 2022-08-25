@@ -134,8 +134,10 @@ class TestEmsc(unittest.TestCase):
         bandwidth = 1
 
         # generate dummy data consisting of linearly scaled additions of target + background
-        target = cm.generate_spectra(n_variables, 5, bandwidth)[:, None]
-        background = cm.generate_spectra(n_variables, 3, bandwidth)[:, None]
+        seed = 3
+        target = cm.generate_spectra(n_variables, 5, bandwidth, seed=seed)[:, None]
+        seed = 4
+        background = cm.generate_spectra(n_variables, 3, bandwidth, seed=seed)[:, None]
         concentrations = np.arange(n_series)[:, None] + 1
         X = concentrations @ (target.T + background.T)
 

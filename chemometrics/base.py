@@ -147,7 +147,7 @@ class LVmixin():
 
     def distance_plot(self, X, sample_id=None, confidence=0.95):
         r"""
-        Plot distances colinear and orthogonal to model predictor hyperplane
+        Plot distances on and orthogonal to model predictor hyperplane
 
         Generates a figure with two subplots. The subplots provide information
         on how `X` behaves compared to the calibration data. Subplots:
@@ -162,7 +162,6 @@ class LVmixin():
         significant trend not observed in the calibration data.
 
         """
-        plt.figure(figsize=(15, 15))
 
         if not sample_id:
             sample_id = np.arange(X.shape[0])
@@ -176,7 +175,7 @@ class LVmixin():
         plt.subplot(212)
         plt.plot(sample_id, self.dmodx(X))
         plt.axhline(y=self.crit_dmodx(confidence=confidence))
-        plt.xlabel('Sample ID')
+        plt.xlabel('Sample')
         plt.ylabel('Distance to X-hyperplane')
 
         return plt.gcf().axes

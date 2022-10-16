@@ -209,11 +209,25 @@ def fit_pca(X, pipeline=None, cv_object=None, max_lv=10):
     pipeline[-1].n_components = np.argmax(np.median(q2, axis=0)) + 1
     pipeline = pipeline.fit(X)
 
-    # plot PLS performance after preprocessing
+    # perform preprocessing for plotting
     if len(pipeline) > 1:
         X_preprocessed = pipeline[:-1].transform(X)
     else:
         X_preprocessed = X
+
+    # generate scores and loadings vs signal/sample plot
+    plt.figure()
+    plt.subplot(121)
+    plt.plot(pipeline.transform(X), 'o-')
+    plt.xlabel('Sample')
+    plt.ylabel('Score')
+
+    plt.subplot(122)
+    plt.plot(pipeline[-1].components_.T)
+    plt.xlabel('Feature')
+    plt.ylabel('Loading')
+
+    # generate distance plot
     pipeline[-1].distance_plot(X_preprocessed)
     fig_model = plt.gcf()
 

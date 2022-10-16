@@ -1,7 +1,12 @@
-name: cm_dev
+# To use:
+#
+#   $ conda env create -f environment.yml  # `mamba` works too for this command
+#   $ conda activate chemometrics-dev
+#
+name: chemometrics-dev
 channels:
-  - conda-forge
   - defaults
+  - conda-forge
 dependencies:
   - cython
   - matplotlib
@@ -12,4 +17,3 @@ dependencies:
   - pandas
   - nbsphinx
   - pandoc
-prefix: /home/matthias/anaconda3/envs/cm_dev
